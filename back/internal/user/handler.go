@@ -15,7 +15,18 @@ func NewUserHandler(userService *UserService) *UserHandler {
 	return &UserHandler{userService: userService}
 }
 
-// Create 创建用户 (返回 login_id)
+// Create godoc
+// @Summary      创建用户
+// @Description  创建新用户并返回登录ID和默认密码
+// @Tags         用户管理
+// @Accept       json
+// @Produce      json
+// @Param        request body CreateUserRequest true "用户信息"
+// @Success      200 {object} map[string]interface{} "创建成功"
+// @Failure      400 {object} map[string]string "请求参数错误"
+// @Failure      500 {object} map[string]string "服务器错误"
+// @Security     Bearer
+// @Router       /user [post]
 func (h *UserHandler) Create(c *gin.Context) {
 	var req CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -38,6 +49,17 @@ func (h *UserHandler) Create(c *gin.Context) {
 	})
 }
 
+// Get godoc
+// @Summary      获取用户详情
+// @Description  根据用户ID获取用户详细信息
+// @Tags         用户管理
+// @Accept       json
+// @Produce      json
+// @Param        id path int true "用户ID"
+// @Success      200 {object} UserResponse "获取成功"
+// @Failure      404 {object} map[string]string "用户不存在"
+// @Security     Bearer
+// @Router       /user/{id} [get]
 func (h *UserHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	
@@ -50,6 +72,16 @@ func (h *UserHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, user.ToResponse())
 }
 
+// List godoc
+// @Summary      获取用户列表
+// @Description  获取所有用户列表
+// @Tags         用户管理
+// @Accept       json
+// @Produce      json
+// @Success      200 {array} UserResponse "获取成功"
+// @Failure      500 {object} map[string]string "服务器错误"
+// @Security     Bearer
+// @Router       /user [get]
 func (h *UserHandler) List(c *gin.Context) {
 	users, err := h.userService.List()
 	if err != nil {
@@ -65,6 +97,19 @@ func (h *UserHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, responses)
 }
 
+// Update godoc
+// @Summary      更新用户信息
+// @Description  根据用户ID更新用户信息
+// @Tags         用户管理
+// @Accept       json
+// @Produce      json
+// @Param        id path int true "用户ID"
+// @Param        request body UpdateUserRequest true "更新的用户信息"
+// @Success      200 {object} map[string]string "更新成功"
+// @Failure      400 {object} map[string]string "请求参数错误"
+// @Failure      500 {object} map[string]string "服务器错误"
+// @Security     Bearer
+// @Router       /user/{id} [put]
 func (h *UserHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -82,6 +127,17 @@ func (h *UserHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "更新成功"})
 }
 
+// Delete godoc
+// @Summary      删除用户
+// @Description  根据用户ID删除用户
+// @Tags         用户管理
+// @Accept       json
+// @Produce      json
+// @Param        id path int true "用户ID"
+// @Success      200 {object} map[string]string "删除成功"
+// @Failure      500 {object} map[string]string "服务器错误"
+// @Security     Bearer
+// @Router       /user/{id} [delete]
 func (h *UserHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -93,6 +149,19 @@ func (h *UserHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }
 
+// ChangePassword godoc
+// @Summary      修改密码
+// @Description  当前登录用户修改自己的密码
+// @Tags         用户管理
+// @Accept       json
+// @Produce      json
+// @Param        request body ChangePasswordRequest true "修改密码参数"
+// @Success      200 {object} map[string]string "密码修改成功"
+// @Failure      400 {object} map[string]string "请求参数错误"
+// @Failure      401 {object} map[string]string "未登录"
+// @Failure      404 {object} map[string]string "用户不存在"
+// @Security     Bearer
+// @Router       /user/change-password [post]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
 	// 从中间件获取 login_id
 	loginID, exists := c.Get("login_id")

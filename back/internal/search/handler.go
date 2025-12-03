@@ -14,8 +14,18 @@ func NewSearchHandler(searchService *SearchService) *SearchHandler {
 	return &SearchHandler{searchService: searchService}
 }
 
-// Search 通用搜索接口
-// POST /api/v1/search
+// Search godoc
+// @Summary      通用搜索
+// @Description  执行跨多个索引的通用搜索
+// @Tags         搜索
+// @Accept       json
+// @Produce      json
+// @Param        request body SearchRequest true "搜索请求参数"
+// @Success      200 {object} object "搜索结果"
+// @Failure      400 {object} map[string]string "请求参数错误"
+// @Failure      500 {object} map[string]string "服务器错误"
+// @Security     Bearer
+// @Router       /search [post]
 func (h *SearchHandler) Search(c *gin.Context) {
 	var req SearchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -32,8 +42,19 @@ func (h *SearchHandler) Search(c *gin.Context) {
 	c.JSON(http.StatusOK, results)
 }
 
-// SearchByIndex 按索引搜索
-// POST /api/v1/search/:index
+// SearchByIndex godoc
+// @Summary      按索引搜索
+// @Description  在指定索引中执行搜索
+// @Tags         搜索
+// @Accept       json
+// @Produce      json
+// @Param        index path string true "索引名称" example:"products"
+// @Param        request body SearchRequest true "搜索请求参数"
+// @Success      200 {object} object "搜索结果"
+// @Failure      400 {object} map[string]string "请求参数错误"
+// @Failure      500 {object} map[string]string "服务器错误"
+// @Security     Bearer
+// @Router       /search/{index} [post]
 func (h *SearchHandler) SearchByIndex(c *gin.Context) {
 	index := c.Param("index")
 
@@ -55,8 +76,15 @@ func (h *SearchHandler) SearchByIndex(c *gin.Context) {
 	c.JSON(http.StatusOK, results)
 }
 
-// GetIndices 获取所有可用索引
-// GET /api/v1/search/indices
+// GetIndices godoc
+// @Summary      获取所有可用索引
+// @Description  获取系统中所有可搜索的索引列表
+// @Tags         搜索
+// @Accept       json
+// @Produce      json
+// @Success      200 {object} map[string]interface{} "索引列表"
+// @Security     Bearer
+// @Router       /search/indices [get]
 func (h *SearchHandler) GetIndices(c *gin.Context) {
 	indices := GetAllIndices()
 	

@@ -1,0 +1,91 @@
+basePath: /api/v1
+definitions:
+  auth.LoginRequest:
+    properties:
+      loginId:
+        type: string
+      password:
+        type: string
+    required:
+    - loginId
+    - password
+    type: object
+  auth.LoginResponse:
+    properties:
+      accessToken:
+        type: string
+      requirePasswordChange:
+        type: boolean
+      user:
+        $ref: '#/definitions/auth.UserInfo'
+    type: object
+  auth.UserInfo:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      loginId:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  fields.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      msg:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: 后台管理系统的API文档
+  title: 后台管理系统 API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: 通过登录ID和密码进行用户认证
+      parameters:
+      - description: 登录请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登录成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/fields.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.LoginResponse'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/fields.Response'
+        "401":
+          description: 认证失败
+          schema:
+            $ref: '#/definitions/fields.Response'
+      summary: 用户登录
+      tags:
+      - 认证
+securityDefinitions:
+  Bearer:
+    description: 请输入 Bearer {token}
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

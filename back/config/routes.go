@@ -4,6 +4,9 @@ import (
 	"time"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "back/docs" // 导入生成的 docs
 
 	"back/pkg/auth"
 	"back/internal/vendor"
@@ -29,6 +32,9 @@ func InitRoutes(authWang *auth.AuthWang, services *Services) *gin.Engine {
 		AllowCredentials: false,
 		MaxAge:           12 * time.Hour,
 	}))
+
+	// Swagger 文档路由
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	api := router.Group("/api/v1")
 

@@ -34,4 +34,4 @@ docs/swagger.*
 
 # Cache
 *.cache
-/back/fantasy-back
+fantasy-back
