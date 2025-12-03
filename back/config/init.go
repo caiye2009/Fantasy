@@ -1,0 +1,118 @@
+package config
+
+import (
+	"context"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+	
+	"gorm.io/gorm"
+	"golang.org/x/crypto/bcrypt"
+	
+	applog "back/pkg/log"
+	"back/pkg/es"
+	"back/internal/user"
+)
+
+func Init() error {
+	log.Println("=== Initializing Application ===")
+
+	cfg := LoadConfig()
+	log.Println("✓ Config loaded")
+
+	// 初始化日志
+	if err := applog.Init(cfg.LogLevel, cfg.LogFormat); err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
+	log.Println("✓ Logger initialized")
+
+	db := InitDatabase(cfg)
+	rdb := InitRedis(cfg)
+	esClient := InitElasticsearch(cfg)
+	
+	// 创建 ES 同步服务
+	logger := applog.NewLogger()
+	esSync := es.NewESSync(esClient, logger)
+	log.Println("✓ ES Sync initialized")
+	
+	authWang := InitAuth(db, rdb, cfg)
+
+	log.Println("=== Database Migration ===")
+	if err := AutoMigrate(db); err != nil {
+		return err
+	}
+
+	InitAdminUser(db)
+
+	log.Println("=== Initializing Services ===")
+	services := InitServices(db, rdb, esClient, authWang.GetJWTWang(), esSync)
+	log.Println("✓ Services initialized")
+
+	log.Println("=== Initializing Router ===")
+	router := InitRoutes(authWang, services)
+	log.Println("✓ Router initialized")
+
+	server := &http.Server{
+		Addr:    cfg.ServerAddr,
+		Handler: router,
+	}
+
+	go gracefulShutdown(server, logger)
+
+	log.Printf("=== Server started on %s ===\n", cfg.ServerAddr)
+
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
+}
+
+func InitAdminUser(db *gorm.DB) {
+	var count int64
+	db.Model(&user.User{}).Where("role = ?", "admin").Count(&count)
+
+	if count > 0 {
+		log.Println("✓ Admin user already exists")
+		return
+	}
+
+	// Admin 密码: admin
+	hash, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
+	admin := &user.User{
+		LoginID:      "8000",
+		Username:     "管理员",
+		PasswordHash: string(hash),
+		Email:        "admin@example.com",
+		Role:         "admin",
+		Status:       "active",
+		HasInitPass:  false,
+	}
+	db.Create(admin)
+	log.Println("✓ Default admin user created (login_id: 8000, password: admin)")
+}
+
+func gracefulShutdown(server *http.Server, logger *applog.Logger) {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown:", err)
+	}
+
+	// 同步日志
+	if logger != nil {
+		logger.Sync()
+	}
+
+	log.Println("Server exited")
+}

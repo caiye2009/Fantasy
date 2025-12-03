@@ -1,0 +1,92 @@
+version: "3.9"
+
+services:
+  frontend:
+    image: nginx:alpine
+    container_name: frontend
+    ports:
+      - "8080:80"  # 浏览器访问 localhost:8080
+    volumes:
+      - ./front/dist:/usr/share/nginx/html  # H5 打包文件
+      - ./nginx/conf.d:/etc/nginx/conf.d    # Nginx 配置
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - "8081:8080"   # 本地调试端口
+    environment:
+      - DATABASE_DSN=host=db user=postgres password=postgres dbname=fantasy port=5432 sslmode=disable TimeZone=Asia/Shanghai
+      - REDIS_ADDR=redis:6379
+      - REDIS_PASSWORD=
+      - ES_ADDRESS=http://es:9200
+      - ES_USERNAME=elastic
+      - ES_PASSWORD=123456
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - SERVER_ADDR=:8080
+      - LOG_LEVEL=info
+      - LOG_FORMAT=json
+    depends_on:
+      - db
+      - redis
+      - es
+    networks:
+      - app_network
+
+  db:
+    image: postgres:16-alpine
+    container_name: db
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=fantasy
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # 持久化数据
+    networks:
+      - app_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - app_network
+
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: es
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=123456
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  esdata:
