@@ -34,7 +34,7 @@ func (h *ClientHandler) Create(c *gin.Context) {
 		return
 	}
 
-	client, err := h.clientService.Create(&req)
+	client, err := h.clientService.Create(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -56,11 +56,13 @@ func (h *ClientHandler) Create(c *gin.Context) {
 // @Router       /client/{id} [get]
 func (h *ClientHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	client, err := h.clientService.Get(uint(id))
+	
+	client, err := h.clientService.Get(c.Request.Context(), uint(id))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "客户不存在"})
 		return
 	}
+
 	c.JSON(http.StatusOK, client)
 }
 
@@ -70,17 +72,26 @@ func (h *ClientHandler) Get(c *gin.Context) {
 // @Tags         客户管理
 // @Accept       json
 // @Produce      json
-// @Success      200 {array} Client "获取成功"
+// @Param        limit query int false "每页数量" default(10)
+// @Param        offset query int false "偏移量" default(0)
+// @Success      200 {object} map[string]interface{} "获取成功"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
 // @Router       /client [get]
 func (h *ClientHandler) List(c *gin.Context) {
-	list, err := h.clientService.List()
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	
+	clients, err := h.clientService.List(c.Request.Context(), limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, list)
+
+	c.JSON(http.StatusOK, gin.H{
+		"total":   len(clients),
+		"clients": clients,
+	})
 }
 
 // Update godoc
@@ -105,11 +116,12 @@ func (h *ClientHandler) Update(c *gin.Context) {
 		return
 	}
 
-	if err := h.clientService.Update(uint(id), &req); err != nil {
+	if err := h.clientService.Update(c.Request.Context(), uint(id), &req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "updated"})
+
+	c.JSON(http.StatusOK, gin.H{"message": "更新成功"})
 }
 
 // Delete godoc
@@ -126,9 +138,10 @@ func (h *ClientHandler) Update(c *gin.Context) {
 func (h *ClientHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	if err := h.clientService.Delete(uint(id)); err != nil {
+	if err := h.clientService.Delete(c.Request.Context(), uint(id)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
+
+	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }

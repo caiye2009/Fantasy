@@ -1,27 +1,30 @@
 package user
 
 import (
+	"context"
 	"errors"
+	
+	"back/pkg/repo"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type UserService struct {
-	userRepo *UserRepo
+	db *gorm.DB
 }
 
-func NewUserService(userRepo *UserRepo) *UserService {
-	return &UserService{userRepo: userRepo}
+func NewUserService(db *gorm.DB) *UserService {
+	return &UserService{db: db}
 }
 
-// Create 创建用户 (默认密码 123, has_init_pass = true)
-func (s *UserService) Create(req *CreateUserRequest) (*User, error) {
-	// 检查工号是否已存在
-	existing, _ := s.userRepo.GetByLoginID(req.LoginID)
+func (s *UserService) Create(ctx context.Context, req *CreateUserRequest) (*User, error) {
+	userRepo := repo.NewRepo[User](s.db)
+	
+	existing, _ := userRepo.First(ctx, map[string]interface{}{"login_id": req.LoginID})
 	if existing != nil && existing.ID > 0 {
 		return nil, errors.New("工号已存在")
 	}
 
-	// 默认密码: 123
 	defaultPassword := "123"
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), bcrypt.DefaultCost)
 	if err != nil {
@@ -35,30 +38,35 @@ func (s *UserService) Create(req *CreateUserRequest) (*User, error) {
 		Email:        req.Email,
 		Role:         req.Role,
 		Status:       "active",
-		HasInitPass:  true, // 强制首次登录修改密码
+		HasInitPass:  true,
 	}
 
-	if err := s.userRepo.Create(user); err != nil {
+	if err := userRepo.Create(ctx, user); err != nil {
 		return nil, err
 	}
 
 	return user, nil
 }
 
-func (s *UserService) Get(id uint) (*User, error) {
-	return s.userRepo.GetByID(id)
+func (s *UserService) Get(ctx context.Context, id uint) (*User, error) {
+	userRepo := repo.NewRepo[User](s.db)
+	return userRepo.GetByID(ctx, id)
 }
 
-func (s *UserService) GetByLoginID(loginID string) (*User, error) {
-	return s.userRepo.GetByLoginID(loginID)
+func (s *UserService) GetByLoginID(ctx context.Context, loginID string) (*User, error) {
+	userRepo := repo.NewRepo[User](s.db)
+	return userRepo.First(ctx, map[string]interface{}{"login_id": loginID})
 }
 
-func (s *UserService) List() ([]User, error) {
-	return s.userRepo.List()
+func (s *UserService) List(ctx context.Context, limit, offset int) ([]User, error) {
+	userRepo := repo.NewRepo[User](s.db)
+	return userRepo.List(ctx, limit, offset)
 }
 
-func (s *UserService) Update(id uint, req *UpdateUserRequest) error {
-	user, err := s.userRepo.GetByID(id)
+func (s *UserService) Update(ctx context.Context, id uint, req *UpdateUserRequest) error {
+	userRepo := repo.NewRepo[User](s.db)
+	
+	user, err := userRepo.GetByID(ctx, id)
 	if err != nil {
 		return errors.New("用户不存在")
 	}
@@ -66,34 +74,36 @@ func (s *UserService) Update(id uint, req *UpdateUserRequest) error {
 		return errors.New("用户不存在")
 	}
 
-	data := make(map[string]interface{})
+	fields := make(map[string]interface{})
 	if req.Username != "" {
-		data["username"] = req.Username
+		fields["username"] = req.Username
 	}
 	if req.Email != "" {
-		data["email"] = req.Email
+		fields["email"] = req.Email
 	}
 	if req.Role != "" {
-		data["role"] = req.Role
+		fields["role"] = req.Role
 	}
 	if req.Status != "" {
-		data["status"] = req.Status
+		fields["status"] = req.Status
 	}
 
-	return s.userRepo.Update(id, data)
+	return userRepo.UpdateFields(ctx, id, fields)
 }
 
-func (s *UserService) Delete(id uint) error {
-	return s.userRepo.Delete(id)
+func (s *UserService) Delete(ctx context.Context, id uint) error {
+	userRepo := repo.NewRepo[User](s.db)
+	return userRepo.Delete(ctx, id)
 }
 
-func (s *UserService) ChangePassword(id uint, req *ChangePasswordRequest) error {
-	user, err := s.userRepo.GetByID(id)
+func (s *UserService) ChangePassword(ctx context.Context, id uint, req *ChangePasswordRequest) error {
+	userRepo := repo.NewRepo[User](s.db)
+	
+	user, err := userRepo.GetByID(ctx, id)
 	if err != nil {
 		return errors.New("用户不存在")
 	}
 
-	// 如果不是初始密码,需要验证当前密码
 	if !user.HasInitPass {
 		if req.CurrentPassword == "" {
 			return errors.New("请提供当前密码")
@@ -104,19 +114,17 @@ func (s *UserService) ChangePassword(id uint, req *ChangePasswordRequest) error 
 		}
 	}
 
-	// 生成新密码 hash
 	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
-	// 更新密码并设置 has_init_pass = false
-	data := map[string]interface{}{
+	fields := map[string]interface{}{
 		"password_hash": string(newPasswordHash),
 		"has_init_pass": false,
 	}
 
-	return s.userRepo.Update(id, data)
+	return userRepo.UpdateFields(ctx, id, fields)
 }
 
 func (s *UserService) ValidatePassword(user *User, password string) error {

@@ -31,7 +31,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.authService.Login(&req)
+	resp, err := h.authService.Login(c.Request.Context(), &req)
 	if err != nil {
 		fields.Error(c, err.Error())
 		return

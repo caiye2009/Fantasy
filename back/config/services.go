@@ -33,32 +33,21 @@ type Services struct {
 }
 
 func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client, jwtWang *auth.JWTWang, esSync *es.ESSync) *Services {
-	vendorRepo := vendor.NewVendorRepo(db)
-	vendorService := vendor.NewVendorService(vendorRepo, esSync)
-
-	clientRepo := client.NewClientRepo(db)
-	clientService := client.NewClientService(clientRepo, esSync)
-
-	userRepo := user.NewUserRepo(db)
-	userService := user.NewUserService(userRepo)
-
+	// 直接传 db，不再创建 repo
+	vendorService := vendor.NewVendorService(db, esSync)
+	clientService := client.NewClientService(db, esSync)
+	userService := user.NewUserService(db)
 	authService := internalAuth.NewAuthService(userService, jwtWang)
+	materialService := material.NewMaterialService(db, esSync)
+	processService := process.NewProcessService(db, esSync)
 
-	materialRepo := material.NewMaterialRepo(db)
-	materialService := material.NewMaterialService(materialRepo, esSync)
+	// Price 服务也只传 db
+	materialPriceService := materialPrice.NewMaterialPriceService(db, vendorService, rdb)
+	processPriceService := processPrice.NewProcessPriceService(db, vendorService, rdb)
 
-	materialPriceRepo := materialPrice.NewMaterialPriceRepo(db)
-	materialPriceService := materialPrice.NewMaterialPriceService(materialPriceRepo, vendorService, rdb)
-
-	processRepo := process.NewProcessRepo(db)
-	processService := process.NewProcessService(processRepo, esSync)
-
-	processPriceRepo := processPrice.NewProcessPriceRepo(db)
-	processPriceService := processPrice.NewProcessPriceService(processPriceRepo, vendorService, rdb)
-
-	productRepo := product.NewProductRepo(db)
+	// product 服务传 db
 	productService := product.NewProductService(
-		productRepo,
+		db,
 		materialPriceService,
 		processPriceService,
 		materialService,

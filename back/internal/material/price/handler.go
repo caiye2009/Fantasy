@@ -39,12 +39,12 @@ func (h *MaterialPriceHandler) Quote(c *gin.Context) {
 		return
 	}
 
-	if err := h.priceService.Quote(req.VendorID, req.MaterialID, req.Price); err != nil {
+	if err := h.priceService.Quote(c.Request.Context(), req.VendorID, req.MaterialID, req.Price); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "quoted"})
+	c.JSON(http.StatusOK, gin.H{"message": "报价成功"})
 }
 
 // GetPrice godoc
@@ -54,7 +54,7 @@ func (h *MaterialPriceHandler) Quote(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        id path int true "材料ID"
-// @Success      200 {object} map[string]float64 "价格信息"
+// @Success      200 {object} map[string]interface{} "价格信息"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
 // @Router       /material/price/{id} [get]
@@ -95,7 +95,7 @@ func (h *MaterialPriceHandler) GetHistory(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	materialID := uint(id)
 
-	history, err := h.priceService.GetHistory(materialID)
+	history, err := h.priceService.GetHistory(c.Request.Context(), materialID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

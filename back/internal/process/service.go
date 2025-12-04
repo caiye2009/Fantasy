@@ -1,29 +1,35 @@
 package process
 
 import (
+	"context"
 	"strconv"
+	
 	"back/pkg/es"
+	"back/pkg/repo"
+	"gorm.io/gorm"
 )
 
 type ProcessService struct {
-	processRepo *ProcessRepo
-	esSync      *es.ESSync
+	db     *gorm.DB
+	esSync *es.ESSync
 }
 
-func NewProcessService(processRepo *ProcessRepo, esSync *es.ESSync) *ProcessService {
+func NewProcessService(db *gorm.DB, esSync *es.ESSync) *ProcessService {
 	return &ProcessService{
-		processRepo: processRepo,
-		esSync:      esSync,
+		db:     db,
+		esSync: esSync,
 	}
 }
 
-func (s *ProcessService) Create(req *CreateProcessRequest) (*Process, error) {
+// Create 创建工序
+func (s *ProcessService) Create(ctx context.Context, req *CreateProcessRequest) (*Process, error) {
 	process := &Process{
 		Name:        req.Name,
 		Description: req.Description,
 	}
 
-	if err := s.processRepo.Create(process); err != nil {
+	processRepo := repo.NewRepo[Process](s.db)
+	if err := processRepo.Create(ctx, process); err != nil {
 		return nil, err
 	}
 
@@ -33,42 +39,60 @@ func (s *ProcessService) Create(req *CreateProcessRequest) (*Process, error) {
 	return process, nil
 }
 
-func (s *ProcessService) Get(id uint) (*Process, error) {
-	return s.processRepo.GetByID(id)
+// Get 获取工序
+func (s *ProcessService) Get(ctx context.Context, id uint) (*Process, error) {
+	processRepo := repo.NewRepo[Process](s.db)
+	return processRepo.GetByID(ctx, id)
 }
 
-func (s *ProcessService) List() ([]Process, error) {
-	return s.processRepo.List()
+// List 工序列表
+func (s *ProcessService) List(ctx context.Context, limit, offset int) ([]Process, error) {
+	processRepo := repo.NewRepo[Process](s.db)
+	return processRepo.List(ctx, limit, offset)
 }
 
-func (s *ProcessService) Update(id uint, req *UpdateProcessRequest) error {
-	process, err := s.processRepo.GetByID(id)
+// Update 更新工序
+func (s *ProcessService) Update(ctx context.Context, id uint, req *UpdateProcessRequest) error {
+	processRepo := repo.NewRepo[Process](s.db)
+	
+	// 1. 查询工序
+	process, err := processRepo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	data := make(map[string]interface{})
+	// 2. 构造更新字段
+	fields := make(map[string]interface{})
 	if req.Name != "" {
-		data["name"] = req.Name
+		fields["name"] = req.Name
 		process.Name = req.Name
 	}
 	if req.Description != "" {
-		data["description"] = req.Description
+		fields["description"] = req.Description
 		process.Description = req.Description
 	}
 
-	if err := s.processRepo.Update(id, data); err != nil {
+	// 3. 如果没有要更新的字段，直接返回
+	if len(fields) == 0 {
+		return nil
+	}
+
+	// 4. 更新数据库
+	if err := processRepo.UpdateFields(ctx, id, fields); err != nil {
 		return err
 	}
 
-	// 异步同步到 ES
+	// 5. 异步同步到 ES
 	s.esSync.Update(process)
 
 	return nil
 }
 
-func (s *ProcessService) Delete(id uint) error {
-	if err := s.processRepo.Delete(id); err != nil {
+// Delete 删除工序
+func (s *ProcessService) Delete(ctx context.Context, id uint) error {
+	processRepo := repo.NewRepo[Process](s.db)
+	
+	if err := processRepo.Delete(ctx, id); err != nil {
 		return err
 	}
 

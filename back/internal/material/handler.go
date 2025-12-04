@@ -3,7 +3,7 @@ package material
 import (
 	"net/http"
 	"strconv"
-
+	
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,7 +15,7 @@ func NewMaterialHandler(materialService *MaterialService) *MaterialHandler {
 	return &MaterialHandler{materialService: materialService}
 }
 
-// Create godoc
+// Create 创建材料
 // @Summary      创建材料
 // @Description  创建新的材料信息
 // @Tags         材料管理
@@ -34,7 +34,7 @@ func (h *MaterialHandler) Create(c *gin.Context) {
 		return
 	}
 
-	material, err := h.materialService.Create(&req)
+	material, err := h.materialService.Create(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -43,7 +43,7 @@ func (h *MaterialHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, material)
 }
 
-// Get godoc
+// Get 获取材料详情
 // @Summary      获取材料详情
 // @Description  根据材料ID获取材料详细信息
 // @Tags         材料管理
@@ -56,34 +56,45 @@ func (h *MaterialHandler) Create(c *gin.Context) {
 // @Router       /material/{id} [get]
 func (h *MaterialHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	m, err := h.materialService.Get(uint(id))
+	
+	material, err := h.materialService.Get(c.Request.Context(), uint(id))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "材料不存在"})
 		return
 	}
-	c.JSON(http.StatusOK, m)
+
+	c.JSON(http.StatusOK, material)
 }
 
-// List godoc
+// List 获取材料列表
 // @Summary      获取材料列表
 // @Description  获取所有材料列表
 // @Tags         材料管理
 // @Accept       json
 // @Produce      json
-// @Success      200 {array} Material "获取成功"
+// @Param        limit query int false "每页数量" default(10)
+// @Param        offset query int false "偏移量" default(0)
+// @Success      200 {object} map[string]interface{} "获取成功"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
 // @Router       /material [get]
 func (h *MaterialHandler) List(c *gin.Context) {
-	list, err := h.materialService.List()
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	
+	materials, err := h.materialService.List(c.Request.Context(), limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, list)
+
+	c.JSON(http.StatusOK, gin.H{
+		"total":     len(materials),
+		"materials": materials,
+	})
 }
 
-// Update godoc
+// Update 更新材料信息
 // @Summary      更新材料信息
 // @Description  根据材料ID更新材料信息
 // @Tags         材料管理
@@ -98,21 +109,22 @@ func (h *MaterialHandler) List(c *gin.Context) {
 // @Router       /material/{id} [put]
 func (h *MaterialHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
+	
 	var req UpdateMaterialRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.materialService.Update(uint(id), &req); err != nil {
+	if err := h.materialService.Update(c.Request.Context(), uint(id), &req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "updated"})
+
+	c.JSON(http.StatusOK, gin.H{"message": "更新成功"})
 }
 
-// Delete godoc
+// Delete 删除材料
 // @Summary      删除材料
 // @Description  根据材料ID删除材料
 // @Tags         材料管理
@@ -125,10 +137,11 @@ func (h *MaterialHandler) Update(c *gin.Context) {
 // @Router       /material/{id} [delete]
 func (h *MaterialHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
-	if err := h.materialService.Delete(uint(id)); err != nil {
+	
+	if err := h.materialService.Delete(c.Request.Context(), uint(id)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
+
+	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }

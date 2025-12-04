@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"context"
 	"errors"
+	
 	"back/internal/user"
 	"back/pkg/auth"
 )
@@ -18,9 +20,9 @@ func NewAuthService(userService *user.UserService, jwtWang *auth.JWTWang) *AuthS
 	}
 }
 
-func (s *AuthService) Login(req *LoginRequest) (*LoginResponse, error) {
+func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error) {
 	// 根据 login_id 查询用户
-	u, err := s.userService.GetByLoginID(req.LoginID)
+	u, err := s.userService.GetByLoginID(ctx, req.LoginID)
 	if err != nil {
 		return nil, errors.New("工号或密码错误")
 	}

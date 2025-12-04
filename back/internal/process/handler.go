@@ -3,7 +3,7 @@ package process
 import (
 	"net/http"
 	"strconv"
-
+	
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,7 +34,7 @@ func (h *ProcessHandler) Create(c *gin.Context) {
 		return
 	}
 
-	process, err := h.processService.Create(&req)
+	process, err := h.processService.Create(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -56,12 +56,14 @@ func (h *ProcessHandler) Create(c *gin.Context) {
 // @Router       /process/{id} [get]
 func (h *ProcessHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	p, err := h.processService.Get(uint(id))
+	
+	process, err := h.processService.Get(c.Request.Context(), uint(id))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "工序不存在"})
 		return
 	}
-	c.JSON(http.StatusOK, p)
+
+	c.JSON(http.StatusOK, process)
 }
 
 // List godoc
@@ -70,21 +72,30 @@ func (h *ProcessHandler) Get(c *gin.Context) {
 // @Tags         工序管理
 // @Accept       json
 // @Produce      json
-// @Success      200 {array} Process "获取成功"
+// @Param        limit query int false "每页数量" default(10)
+// @Param        offset query int false "偏移量" default(0)
+// @Success      200 {object} map[string]interface{} "获取成功"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
 // @Router       /process [get]
 func (h *ProcessHandler) List(c *gin.Context) {
-	list, err := h.processService.List()
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	
+	processes, err := h.processService.List(c.Request.Context(), limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, list)
+
+	c.JSON(http.StatusOK, gin.H{
+		"total":     len(processes),
+		"processes": processes,
+	})
 }
 
 // Update godoc
-// @Summary      更新工序信息
+// @Summary      更新工序
 // @Description  根据工序ID更新工序信息
 // @Tags         工序管理
 // @Accept       json
@@ -98,18 +109,19 @@ func (h *ProcessHandler) List(c *gin.Context) {
 // @Router       /process/{id} [put]
 func (h *ProcessHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
+	
 	var req UpdateProcessRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.processService.Update(uint(id), &req); err != nil {
+	if err := h.processService.Update(c.Request.Context(), uint(id), &req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "updated"})
+
+	c.JSON(http.StatusOK, gin.H{"message": "更新成功"})
 }
 
 // Delete godoc
@@ -125,10 +137,11 @@ func (h *ProcessHandler) Update(c *gin.Context) {
 // @Router       /process/{id} [delete]
 func (h *ProcessHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
-	if err := h.processService.Delete(uint(id)); err != nil {
+	
+	if err := h.processService.Delete(c.Request.Context(), uint(id)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
+
+	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }

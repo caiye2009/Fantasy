@@ -1,23 +1,27 @@
 package vendor
 
 import (
+	"context"
 	"strconv"
+	
 	"back/pkg/es"
+	"back/pkg/repo"
+	"gorm.io/gorm"
 )
 
 type VendorService struct {
-	vendorRepo *VendorRepo
-	esSync     *es.ESSync
+	db     *gorm.DB
+	esSync *es.ESSync
 }
 
-func NewVendorService(vendorRepo *VendorRepo, esSync *es.ESSync) *VendorService {
+func NewVendorService(db *gorm.DB, esSync *es.ESSync) *VendorService {
 	return &VendorService{
-		vendorRepo: vendorRepo,
-		esSync:     esSync,
+		db:     db,
+		esSync: esSync,
 	}
 }
 
-func (s *VendorService) Create(req *CreateVendorRequest) (*Vendor, error) {
+func (s *VendorService) Create(ctx context.Context, req *CreateVendorRequest) (*Vendor, error) {
 	vendor := &Vendor{
 		Name:    req.Name,
 		Contact: req.Contact,
@@ -26,69 +30,74 @@ func (s *VendorService) Create(req *CreateVendorRequest) (*Vendor, error) {
 		Address: req.Address,
 	}
 
-	if err := s.vendorRepo.Create(vendor); err != nil {
+	vendorRepo := repo.NewRepo[Vendor](s.db)
+	if err := vendorRepo.Create(ctx, vendor); err != nil {
 		return nil, err
 	}
 
-	// 异步同步到 ES
 	s.esSync.Index(vendor)
-
 	return vendor, nil
 }
 
-func (s *VendorService) Get(id uint) (*Vendor, error) {
-	return s.vendorRepo.GetByID(id)
+func (s *VendorService) Get(ctx context.Context, id uint) (*Vendor, error) {
+	vendorRepo := repo.NewRepo[Vendor](s.db)
+	return vendorRepo.GetByID(ctx, id)
 }
 
-func (s *VendorService) List() ([]Vendor, error) {
-	return s.vendorRepo.List()
+func (s *VendorService) List(ctx context.Context, limit, offset int) ([]Vendor, error) {
+	vendorRepo := repo.NewRepo[Vendor](s.db)
+	return vendorRepo.List(ctx, limit, offset)
 }
 
-func (s *VendorService) Update(id uint, req *UpdateVendorRequest) error {
-	vendor, err := s.vendorRepo.GetByID(id)
+func (s *VendorService) Update(ctx context.Context, id uint, req *UpdateVendorRequest) error {
+	vendorRepo := repo.NewRepo[Vendor](s.db)
+	
+	vendor, err := vendorRepo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	data := make(map[string]interface{})
+	fields := make(map[string]interface{})
 	if req.Name != "" {
-		data["name"] = req.Name
+		fields["name"] = req.Name
 		vendor.Name = req.Name
 	}
 	if req.Contact != "" {
-		data["contact"] = req.Contact
+		fields["contact"] = req.Contact
 		vendor.Contact = req.Contact
 	}
 	if req.Phone != "" {
-		data["phone"] = req.Phone
+		fields["phone"] = req.Phone
 		vendor.Phone = req.Phone
 	}
 	if req.Email != "" {
-		data["email"] = req.Email
+		fields["email"] = req.Email
 		vendor.Email = req.Email
 	}
 	if req.Address != "" {
-		data["address"] = req.Address
+		fields["address"] = req.Address
 		vendor.Address = req.Address
 	}
 
-	if err := s.vendorRepo.Update(id, data); err != nil {
+	if len(fields) == 0 {
+		return nil
+	}
+
+	if err := vendorRepo.UpdateFields(ctx, id, fields); err != nil {
 		return err
 	}
 
-	// 异步同步到 ES
 	s.esSync.Update(vendor)
-
 	return nil
 }
 
-func (s *VendorService) Delete(id uint) error {
-	if err := s.vendorRepo.Delete(id); err != nil {
+func (s *VendorService) Delete(ctx context.Context, id uint) error {
+	vendorRepo := repo.NewRepo[Vendor](s.db)
+	
+	if err := vendorRepo.Delete(ctx, id); err != nil {
 		return err
 	}
 
-	// 异步删除 ES 文档
 	s.esSync.Delete("vendors", strconv.Itoa(int(id)))
-
 	return nil
 }

@@ -1,23 +1,28 @@
 package order
 
 import (
+	"context"
 	"strconv"
+	
 	"back/pkg/es"
+	"back/pkg/repo"
+	"gorm.io/gorm"
 )
 
 type OrderService struct {
-	orderRepo *OrderRepo
-	esSync    *es.ESSync
+	db     *gorm.DB
+	esSync *es.ESSync
 }
 
-func NewOrderService(orderRepo *OrderRepo, esSync *es.ESSync) *OrderService {
+func NewOrderService(db *gorm.DB, esSync *es.ESSync) *OrderService {
 	return &OrderService{
-		orderRepo: orderRepo,
-		esSync:    esSync,
+		db:     db,
+		esSync: esSync,
 	}
 }
 
-func (s *OrderService) Create(req *CreateOrderRequest) (*Order, error) {
+// Create 创建订单
+func (s *OrderService) Create(ctx context.Context, req *CreateOrderRequest) (*Order, error) {
 	order := &Order{
 		OrderNo:    req.OrderNo,
 		ClientID:   req.ClientID,
@@ -29,7 +34,8 @@ func (s *OrderService) Create(req *CreateOrderRequest) (*Order, error) {
 		CreatedBy:  req.CreatedBy,
 	}
 
-	if err := s.orderRepo.Create(order); err != nil {
+	orderRepo := repo.NewRepo[Order](s.db)
+	if err := orderRepo.Create(ctx, order); err != nil {
 		return nil, err
 	}
 
@@ -39,44 +45,62 @@ func (s *OrderService) Create(req *CreateOrderRequest) (*Order, error) {
 	return order, nil
 }
 
-func (s *OrderService) Get(id uint) (*Order, error) {
-	return s.orderRepo.GetByID(id)
+// Get 获取订单
+func (s *OrderService) Get(ctx context.Context, id uint) (*Order, error) {
+	orderRepo := repo.NewRepo[Order](s.db)
+	return orderRepo.GetByID(ctx, id)
 }
 
-func (s *OrderService) List() ([]Order, error) {
-	return s.orderRepo.List()
+// List 订单列表
+func (s *OrderService) List(ctx context.Context, limit, offset int) ([]Order, error) {
+	orderRepo := repo.NewRepo[Order](s.db)
+	return orderRepo.List(ctx, limit, offset)
 }
 
-func (s *OrderService) Update(id uint, req *UpdateOrderRequest) error {
-	order, err := s.orderRepo.GetByID(id)
+// Update 更新订单
+func (s *OrderService) Update(ctx context.Context, id uint, req *UpdateOrderRequest) error {
+	orderRepo := repo.NewRepo[Order](s.db)
+	
+	// 1. 查询订单
+	order, err := orderRepo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	data := make(map[string]interface{})
+	// 2. 构造更新字段
+	fields := make(map[string]interface{})
 	if req.Status != "" {
-		data["status"] = req.Status
+		fields["status"] = req.Status
 		order.Status = req.Status
 	}
 	if req.Quantity > 0 {
-		data["quantity"] = req.Quantity
+		fields["quantity"] = req.Quantity
 		order.Quantity = req.Quantity
 		order.TotalPrice = req.Quantity * order.UnitPrice
-		data["total_price"] = order.TotalPrice
+		fields["total_price"] = order.TotalPrice
 	}
 
-	if err := s.orderRepo.Update(id, data); err != nil {
+	// 3. 如果没有要更新的字段，直接返回
+	if len(fields) == 0 {
+		return nil
+	}
+
+	// 4. 更新数据库
+	if err := orderRepo.UpdateFields(ctx, id, fields); err != nil {
 		return err
 	}
 
-	// 异步同步到 ES
+	// 5. 异步同步到 ES
 	s.esSync.Update(order)
 
 	return nil
 }
 
-func (s *OrderService) Delete(id uint) error {
-	if err := s.orderRepo.Delete(id); err != nil {
+// Delete 删除订单
+func (s *OrderService) Delete(ctx context.Context, id uint) error {
+	orderRepo := repo.NewRepo[Order](s.db)
+	
+	if err := orderRepo.Delete(ctx, id); err != nil {
 		return err
 	}
 

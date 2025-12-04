@@ -1,23 +1,28 @@
 package client
 
 import (
+	"context"
 	"strconv"
+	
 	"back/pkg/es"
+	"back/pkg/repo"
+	"gorm.io/gorm"
 )
 
 type ClientService struct {
-	clientRepo *ClientRepo
-	esSync     *es.ESSync
+	db     *gorm.DB
+	esSync *es.ESSync
 }
 
-func NewClientService(clientRepo *ClientRepo, esSync *es.ESSync) *ClientService {
+func NewClientService(db *gorm.DB, esSync *es.ESSync) *ClientService {
 	return &ClientService{
-		clientRepo: clientRepo,
-		esSync:     esSync,
+		db:     db,
+		esSync: esSync,
 	}
 }
 
-func (s *ClientService) Create(req *CreateClientRequest) (*Client, error) {
+// Create 创建客户
+func (s *ClientService) Create(ctx context.Context, req *CreateClientRequest) (*Client, error) {
 	client := &Client{
 		Name:    req.Name,
 		Contact: req.Contact,
@@ -26,7 +31,9 @@ func (s *ClientService) Create(req *CreateClientRequest) (*Client, error) {
 		Address: req.Address,
 	}
 
-	if err := s.clientRepo.Create(client); err != nil {
+	// 使用通用 repo
+	clientRepo := repo.NewRepo[Client](s.db)
+	if err := clientRepo.Create(ctx, client); err != nil {
 		return nil, err
 	}
 
@@ -36,58 +43,77 @@ func (s *ClientService) Create(req *CreateClientRequest) (*Client, error) {
 	return client, nil
 }
 
-func (s *ClientService) Get(id uint) (*Client, error) {
-	return s.clientRepo.GetByID(id)
+// Get 获取客户
+func (s *ClientService) Get(ctx context.Context, id uint) (*Client, error) {
+	clientRepo := repo.NewRepo[Client](s.db)
+	return clientRepo.GetByID(ctx, id)
 }
 
-func (s *ClientService) List() ([]Client, error) {
-	return s.clientRepo.List()
+// List 客户列表
+func (s *ClientService) List(ctx context.Context, limit, offset int) ([]Client, error) {
+	clientRepo := repo.NewRepo[Client](s.db)
+	return clientRepo.List(ctx, limit, offset)
 }
 
-func (s *ClientService) Update(id uint, req *UpdateClientRequest) error {
-	client, err := s.clientRepo.GetByID(id)
+// Update 更新客户
+func (s *ClientService) Update(ctx context.Context, id uint, req *UpdateClientRequest) error {
+	clientRepo := repo.NewRepo[Client](s.db)
+	
+	// 1. 查询客户
+	client, err := clientRepo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	data := make(map[string]interface{})
+	// 2. 构造更新字段
+	fields := make(map[string]interface{})
 	if req.Name != "" {
-		data["name"] = req.Name
+		fields["name"] = req.Name
 		client.Name = req.Name
 	}
 	if req.Contact != "" {
-		data["contact"] = req.Contact
+		fields["contact"] = req.Contact
 		client.Contact = req.Contact
 	}
 	if req.Phone != "" {
-		data["phone"] = req.Phone
+		fields["phone"] = req.Phone
 		client.Phone = req.Phone
 	}
 	if req.Email != "" {
-		data["email"] = req.Email
+		fields["email"] = req.Email
 		client.Email = req.Email
 	}
 	if req.Address != "" {
-		data["address"] = req.Address
+		fields["address"] = req.Address
 		client.Address = req.Address
 	}
 
-	if err := s.clientRepo.Update(id, data); err != nil {
+	// 3. 如果没有要更新的字段，直接返回
+	if len(fields) == 0 {
+		return nil
+	}
+
+	// 4. 更新数据库
+	if err := clientRepo.UpdateFields(ctx, id, fields); err != nil {
 		return err
 	}
 
-	// 异步同步到 ES
+	// 5. 异步同步到 ES
 	s.esSync.Update(client)
 
 	return nil
 }
 
-func (s *ClientService) Delete(id uint) error {
-	if err := s.clientRepo.Delete(id); err != nil {
+// Delete 删除客户
+func (s *ClientService) Delete(ctx context.Context, id uint) error {
+	clientRepo := repo.NewRepo[Client](s.db)
+	
+	// 1. 删除数据库记录
+	if err := clientRepo.Delete(ctx, id); err != nil {
 		return err
 	}
 
-	// 异步删除 ES 文档
+	// 2. 异步删除 ES 文档
 	s.esSync.Delete("clients", strconv.Itoa(int(id)))
 
 	return nil

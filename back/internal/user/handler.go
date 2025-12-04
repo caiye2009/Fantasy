@@ -34,13 +34,12 @@ func (h *UserHandler) Create(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.Create(&req)
+	user, err := h.userService.Create(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 返回创建成功信息,突出显示 login_id 和默认密码
 	c.JSON(http.StatusOK, gin.H{
 		"message":  "用户创建成功",
 		"login_id": user.LoginID,
@@ -63,7 +62,7 @@ func (h *UserHandler) Create(c *gin.Context) {
 func (h *UserHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	
-	user, err := h.userService.Get(uint(id))
+	user, err := h.userService.Get(c.Request.Context(), uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
 		return
@@ -78,12 +77,17 @@ func (h *UserHandler) Get(c *gin.Context) {
 // @Tags         用户管理
 // @Accept       json
 // @Produce      json
-// @Success      200 {array} UserResponse "获取成功"
+// @Param        limit query int false "每页数量" default(10)
+// @Param        offset query int false "偏移量" default(0)
+// @Success      200 {object} map[string]interface{} "获取成功"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
 // @Router       /user [get]
 func (h *UserHandler) List(c *gin.Context) {
-	users, err := h.userService.List()
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	
+	users, err := h.userService.List(c.Request.Context(), limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -94,7 +98,10 @@ func (h *UserHandler) List(c *gin.Context) {
 		responses[i] = user.ToResponse()
 	}
 
-	c.JSON(http.StatusOK, responses)
+	c.JSON(http.StatusOK, gin.H{
+		"total": len(responses),
+		"users": responses,
+	})
 }
 
 // Update godoc
@@ -119,7 +126,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 		return
 	}
 
-	if err := h.userService.Update(uint(id), &req); err != nil {
+	if err := h.userService.Update(c.Request.Context(), uint(id), &req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -141,7 +148,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 func (h *UserHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	if err := h.userService.Delete(uint(id)); err != nil {
+	if err := h.userService.Delete(c.Request.Context(), uint(id)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -163,15 +170,13 @@ func (h *UserHandler) Delete(c *gin.Context) {
 // @Security     Bearer
 // @Router       /user/change-password [post]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
-	// 从中间件获取 login_id
 	loginID, exists := c.Get("login_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
 		return
 	}
 
-	// 通过 login_id 获取用户
-	user, err := h.userService.GetByLoginID(loginID.(string))
+	user, err := h.userService.GetByLoginID(c.Request.Context(), loginID.(string))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
 		return
@@ -183,7 +188,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.userService.ChangePassword(user.ID, &req); err != nil {
+	if err := h.userService.ChangePassword(c.Request.Context(), user.ID, &req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

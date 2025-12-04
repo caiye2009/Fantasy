@@ -32,12 +32,374 @@ definitions:
       username:
         type: string
     type: object
+  client.Client:
+    properties:
+      address:
+        type: string
+      contact:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phone:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  client.CreateClientRequest:
+    properties:
+      address:
+        maxLength: 200
+        type: string
+      contact:
+        maxLength: 50
+        type: string
+      email:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      phone:
+        maxLength: 20
+        type: string
+    required:
+    - name
+    type: object
+  client.UpdateClientRequest:
+    properties:
+      address:
+        maxLength: 200
+        type: string
+      contact:
+        maxLength: 50
+        type: string
+      email:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      phone:
+        maxLength: 20
+        type: string
+    type: object
   fields.Response:
     properties:
       code:
         type: integer
       data: {}
       msg:
+        type: string
+    type: object
+  material.CreateMaterialRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      spec:
+        maxLength: 200
+        type: string
+      unit:
+        maxLength: 20
+        type: string
+    required:
+    - name
+    type: object
+  material.Material:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      spec:
+        type: string
+      unit:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  material.UpdateMaterialRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      spec:
+        maxLength: 200
+        type: string
+      unit:
+        maxLength: 20
+        type: string
+    type: object
+  order.Order:
+    properties:
+      client_id:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      id:
+        type: integer
+      order_no:
+        type: string
+      product_id:
+        type: integer
+      quantity:
+        type: number
+      status:
+        type: string
+      total_price:
+        type: number
+      unit_price:
+        type: number
+      updated_at:
+        type: string
+    type: object
+  plan.Plan:
+    properties:
+      completed_at:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      id:
+        type: integer
+      order_id:
+        type: integer
+      plan_no:
+        type: string
+      product_id:
+        type: integer
+      quantity:
+        type: number
+      scheduled_at:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  price.MaterialPrice:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      material_id:
+        type: integer
+      price:
+        type: number
+      quoted_at:
+        type: string
+      updated_at:
+        type: string
+      vendor_id:
+        type: integer
+    type: object
+  process.CreateProcessRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  process.Process:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  process.UpdateProcessRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    type: object
+  product.MaterialConfig:
+    properties:
+      material_id:
+        type: integer
+      ratio:
+        type: number
+    type: object
+  product.ProcessConfig:
+    properties:
+      process_id:
+        type: integer
+      quantity:
+        type: number
+    type: object
+  product.Product:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      materials:
+        items:
+          $ref: '#/definitions/product.MaterialConfig'
+        type: array
+      name:
+        type: string
+      processes:
+        items:
+          $ref: '#/definitions/product.ProcessConfig'
+        type: array
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  search.SearchRequest:
+    properties:
+      fields:
+        description: 要搜索的字段列表，空=全部字段
+        items:
+          type: string
+        type: array
+      filters:
+        additionalProperties: true
+        description: '筛选条件 {"status": "已复核"}'
+        type: object
+      from:
+        description: 分页起始，默认0
+        type: integer
+      indices:
+        description: 要搜索的索引列表，空=全部索引
+        items:
+          type: string
+        type: array
+      query:
+        description: 搜索关键词
+        type: string
+      size:
+        description: 每页大小，默认20
+        type: integer
+      sort:
+        description: 排序
+        items:
+          $ref: '#/definitions/search.SortField'
+        type: array
+    type: object
+  search.SortField:
+    properties:
+      field:
+        description: 字段名
+        type: string
+      order:
+        description: asc/desc
+        type: string
+    type: object
+  user.ChangePasswordRequest:
+    properties:
+      current_password:
+        type: string
+      new_password:
+        minLength: 6
+        type: string
+    required:
+    - new_password
+    type: object
+  user.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      login_id:
+        maxLength: 20
+        minLength: 4
+        type: string
+      role:
+        enum:
+        - admin
+        - hr
+        - sales
+        - follower
+        - assistant
+        - user
+        type: string
+      username:
+        maxLength: 50
+        minLength: 2
+        type: string
+    required:
+    - login_id
+    - role
+    - username
+    type: object
+  user.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      role:
+        enum:
+        - admin
+        - hr
+        - sales
+        - follower
+        - assistant
+        - user
+        type: string
+      status:
+        enum:
+        - active
+        - inactive
+        - suspended
+        type: string
+      username:
+        maxLength: 50
+        minLength: 2
+        type: string
+    type: object
+  user.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      has_init_pass:
+        type: boolean
+      id:
+        type: integer
+      login_id:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      username:
         type: string
     type: object
 host: localhost:8080
@@ -82,6 +444,1429 @@ paths:
       summary: 用户登录
       tags:
       - 认证
+  /client:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有客户列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            items:
+              $ref: '#/definitions/client.Client'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取客户列表
+      tags:
+      - 客户管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的客户信息
+      parameters:
+      - description: 客户信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/client.CreateClientRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/client.Client'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 创建客户
+      tags:
+      - 客户管理
+  /client/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据客户ID删除客户
+      parameters:
+      - description: 客户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 删除客户
+      tags:
+      - 客户管理
+    get:
+      consumes:
+      - application/json
+      description: 根据客户ID获取客户详细信息
+      parameters:
+      - description: 客户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/client.Client'
+        "404":
+          description: 客户不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取客户详情
+      tags:
+      - 客户管理
+    put:
+      consumes:
+      - application/json
+      description: 根据客户ID更新客户信息
+      parameters:
+      - description: 客户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新的客户信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/client.UpdateClientRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新客户信息
+      tags:
+      - 客户管理
+  /material:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有材料列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            items:
+              $ref: '#/definitions/material.Material'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取材料列表
+      tags:
+      - 材料管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的材料信息
+      parameters:
+      - description: 材料信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/material.CreateMaterialRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/material.Material'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 创建材料
+      tags:
+      - 材料管理
+  /material/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据材料ID删除材料
+      parameters:
+      - description: 材料ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 删除材料
+      tags:
+      - 材料管理
+    get:
+      consumes:
+      - application/json
+      description: 根据材料ID获取材料详细信息
+      parameters:
+      - description: 材料ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/material.Material'
+        "404":
+          description: 材料不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取材料详情
+      tags:
+      - 材料管理
+    put:
+      consumes:
+      - application/json
+      description: 根据材料ID更新材料信息
+      parameters:
+      - description: 材料ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新的材料信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/material.UpdateMaterialRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新材料信息
+      tags:
+      - 材料管理
+  /material/price/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 查询指定材料的最低价格和最高价格
+      parameters:
+      - description: 材料ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 价格信息
+          schema:
+            additionalProperties:
+              format: float64
+              type: number
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 查询材料价格
+      tags:
+      - 材料价格管理
+  /material/price/{id}/history:
+    get:
+      consumes:
+      - application/json
+      description: 查询指定材料的价格历史记录
+      parameters:
+      - description: 材料ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 价格历史记录
+          schema:
+            items:
+              $ref: '#/definitions/price.MaterialPrice'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 查询价格历史
+      tags:
+      - 材料价格管理
+  /material/price/quote:
+    post:
+      consumes:
+      - application/json
+      description: 厂商为指定材料提交报价
+      parameters:
+      - description: 报价信息
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            material_id:
+              type: integer
+            price:
+              format: float64
+              type: number
+            vendor_id:
+              type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 报价成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 厂商报价
+      tags:
+      - 材料价格管理
+  /order:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有订单列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            items:
+              $ref: '#/definitions/order.Order'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取订单列表
+      tags:
+      - 订单管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的订单
+      parameters:
+      - description: 订单信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/order.Order'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/order.Order'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 创建订单
+      tags:
+      - 订单管理
+  /order/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据订单ID删除订单
+      parameters:
+      - description: 订单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 删除订单
+      tags:
+      - 订单管理
+    get:
+      consumes:
+      - application/json
+      description: 根据订单ID获取订单详细信息
+      parameters:
+      - description: 订单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/order.Order'
+        "404":
+          description: 订单不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取订单详情
+      tags:
+      - 订单管理
+    put:
+      consumes:
+      - application/json
+      description: 根据订单ID更新订单信息
+      parameters:
+      - description: 订单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新的订单信息
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新订单信息
+      tags:
+      - 订单管理
+  /plan:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有生产计划列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            items:
+              $ref: '#/definitions/plan.Plan'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取生产计划列表
+      tags:
+      - 生产计划管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的生产计划
+      parameters:
+      - description: 生产计划信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/plan.Plan'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/plan.Plan'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 创建生产计划
+      tags:
+      - 生产计划管理
+  /plan/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据生产计划ID删除
+      parameters:
+      - description: 生产计划ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 删除生产计划
+      tags:
+      - 生产计划管理
+    get:
+      consumes:
+      - application/json
+      description: 根据生产计划ID获取详细信息
+      parameters:
+      - description: 生产计划ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/plan.Plan'
+        "404":
+          description: 生产计划不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取生产计划详情
+      tags:
+      - 生产计划管理
+    put:
+      consumes:
+      - application/json
+      description: 根据生产计划ID更新信息
+      parameters:
+      - description: 生产计划ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新的生产计划信息
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新生产计划
+      tags:
+      - 生产计划管理
+  /process:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有工序列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            items:
+              $ref: '#/definitions/process.Process'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取工序列表
+      tags:
+      - 工序管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的工序信息
+      parameters:
+      - description: 工序信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/process.CreateProcessRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/process.Process'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 创建工序
+      tags:
+      - 工序管理
+  /process/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据工序ID删除工序
+      parameters:
+      - description: 工序ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 删除工序
+      tags:
+      - 工序管理
+    get:
+      consumes:
+      - application/json
+      description: 根据工序ID获取工序详细信息
+      parameters:
+      - description: 工序ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/process.Process'
+        "404":
+          description: 工序不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取工序详情
+      tags:
+      - 工序管理
+    put:
+      consumes:
+      - application/json
+      description: 根据工序ID更新工序信息
+      parameters:
+      - description: 工序ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新的工序信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/process.UpdateProcessRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新工序信息
+      tags:
+      - 工序管理
+  /product:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有产品列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            items:
+              $ref: '#/definitions/product.Product'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取产品列表
+      tags:
+      - 产品管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的产品信息
+      parameters:
+      - description: 产品信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/product.Product'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/product.Product'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 创建产品
+      tags:
+      - 产品管理
+  /product/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据产品ID删除产品
+      parameters:
+      - description: 产品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 删除产品
+      tags:
+      - 产品管理
+    get:
+      consumes:
+      - application/json
+      description: 根据产品ID获取产品详细信息
+      parameters:
+      - description: 产品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/product.Product'
+        "404":
+          description: 产品不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取产品详情
+      tags:
+      - 产品管理
+    put:
+      consumes:
+      - application/json
+      description: 根据产品ID更新产品信息
+      parameters:
+      - description: 产品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新的产品信息
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新产品信息
+      tags:
+      - 产品管理
+  /product/calculate-cost:
+    post:
+      consumes:
+      - application/json
+      description: 根据产品ID和数量计算产品成本
+      parameters:
+      - description: 成本计算参数
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            product_id:
+              type: integer
+            quantity:
+              format: float64
+              type: number
+            use_min_price:
+              type: boolean
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成本计算结果
+          schema:
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 计算产品成本
+      tags:
+      - 产品管理
+  /search:
+    post:
+      consumes:
+      - application/json
+      description: 执行跨多个索引的通用搜索
+      parameters:
+      - description: 搜索请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/search.SearchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 搜索结果
+          schema:
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 通用搜索
+      tags:
+      - 搜索
+  /search/{index}:
+    post:
+      consumes:
+      - application/json
+      description: 在指定索引中执行搜索
+      parameters:
+      - description: 索引名称
+        in: path
+        name: index
+        required: true
+        type: string
+      - description: 搜索请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/search.SearchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 搜索结果
+          schema:
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 按索引搜索
+      tags:
+      - 搜索
+  /search/indices:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统中所有可搜索的索引列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 索引列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取所有可用索引
+      tags:
+      - 搜索
+  /user:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有用户列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            items:
+              $ref: '#/definitions/user.UserResponse'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取用户列表
+      tags:
+      - 用户管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新用户并返回登录ID和默认密码
+      parameters:
+      - description: 用户信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 创建用户
+      tags:
+      - 用户管理
+  /user/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据用户ID删除用户
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 删除用户
+      tags:
+      - 用户管理
+    get:
+      consumes:
+      - application/json
+      description: 根据用户ID获取用户详细信息
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/user.UserResponse'
+        "404":
+          description: 用户不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取用户详情
+      tags:
+      - 用户管理
+    put:
+      consumes:
+      - application/json
+      description: 根据用户ID更新用户信息
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新的用户信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新用户信息
+      tags:
+      - 用户管理
+  /user/change-password:
+    post:
+      consumes:
+      - application/json
+      description: 当前登录用户修改自己的密码
+      parameters:
+      - description: 修改密码参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 密码修改成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 未登录
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 用户不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 修改密码
+      tags:
+      - 用户管理
 securityDefinitions:
   Bearer:
     description: 请输入 Bearer {token}

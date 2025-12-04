@@ -7,33 +7,34 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
+	
 	"back/internal/vendor"
+	"back/pkg/repo"
 )
 
 type ProcessPriceService struct {
-	priceRepo     *ProcessPriceRepo
+	db            *gorm.DB
 	vendorService interface {
-		Get(id uint) (*vendor.Vendor, error)
+		Get(ctx context.Context, id uint) (*vendor.Vendor, error)
 	}
 	rdb *redis.Client
-	ctx context.Context
 }
 
 func NewProcessPriceService(
-	priceRepo *ProcessPriceRepo,
-	vendorService interface{ Get(id uint) (*vendor.Vendor, error) },
+	db *gorm.DB,
+	vendorService interface{ Get(ctx context.Context, id uint) (*vendor.Vendor, error) },
 	rdb *redis.Client,
 ) *ProcessPriceService {
 	return &ProcessPriceService{
-		priceRepo:     priceRepo,
+		db:            db,
 		vendorService: vendorService,
 		rdb:           rdb,
-		ctx:           context.Background(),
 	}
 }
 
-// 厂商报价
-func (s *ProcessPriceService) Quote(vendorID, processID uint, price float64) error {
+// Quote 厂商报价
+func (s *ProcessPriceService) Quote(ctx context.Context, vendorID, processID uint, price float64) error {
 	// 1. 写入数据库
 	processPrice := &ProcessPrice{
 		VendorID:  vendorID,
@@ -41,12 +42,14 @@ func (s *ProcessPriceService) Quote(vendorID, processID uint, price float64) err
 		Price:     price,
 		QuotedAt:  time.Now(),
 	}
-	if err := s.priceRepo.Create(processPrice); err != nil {
+	
+	priceRepo := repo.NewRepo[ProcessPrice](s.db)
+	if err := priceRepo.Create(ctx, processPrice); err != nil {
 		return err
 	}
 
 	// 2. 获取厂商名称
-	v, err := s.vendorService.Get(vendorID)
+	v, err := s.vendorService.Get(ctx, vendorID)
 	if err != nil {
 		return err
 	}
@@ -61,27 +64,27 @@ func (s *ProcessPriceService) Quote(vendorID, processID uint, price float64) err
 	}
 
 	// 更新最低价
-	if err := s.compareAndUpdateMin(processID, priceData); err != nil {
+	if err := s.compareAndUpdateMin(ctx, processID, priceData); err != nil {
 		return err
 	}
 
 	// 更新最高价
-	if err := s.compareAndUpdateMax(processID, priceData); err != nil {
+	if err := s.compareAndUpdateMax(ctx, processID, priceData); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// 比对并更新最低价
-func (s *ProcessPriceService) compareAndUpdateMin(processID uint, newPrice PriceData) error {
+// compareAndUpdateMin 比对并更新最低价
+func (s *ProcessPriceService) compareAndUpdateMin(ctx context.Context, processID uint, newPrice PriceData) error {
 	key := fmt.Sprintf("price:process:%d:min", processID)
 
 	// 读取当前最低价
-	val, err := s.rdb.Get(s.ctx, key).Result()
+	val, err := s.rdb.Get(ctx, key).Result()
 	if err == redis.Nil {
 		// Redis 中没有,直接写入
-		return s.setPrice(key, newPrice)
+		return s.setPrice(ctx, key, newPrice)
 	} else if err != nil {
 		return err
 	}
@@ -94,21 +97,21 @@ func (s *ProcessPriceService) compareAndUpdateMin(processID uint, newPrice Price
 
 	// 比对
 	if newPrice.Price < currentMin.Price {
-		return s.setPrice(key, newPrice)
+		return s.setPrice(ctx, key, newPrice)
 	}
 
 	return nil
 }
 
-// 比对并更新最高价
-func (s *ProcessPriceService) compareAndUpdateMax(processID uint, newPrice PriceData) error {
+// compareAndUpdateMax 比对并更新最高价
+func (s *ProcessPriceService) compareAndUpdateMax(ctx context.Context, processID uint, newPrice PriceData) error {
 	key := fmt.Sprintf("price:process:%d:max", processID)
 
 	// 读取当前最高价
-	val, err := s.rdb.Get(s.ctx, key).Result()
+	val, err := s.rdb.Get(ctx, key).Result()
 	if err == redis.Nil {
 		// Redis 中没有,直接写入
-		return s.setPrice(key, newPrice)
+		return s.setPrice(ctx, key, newPrice)
 	} else if err != nil {
 		return err
 	}
@@ -121,30 +124,31 @@ func (s *ProcessPriceService) compareAndUpdateMax(processID uint, newPrice Price
 
 	// 比对
 	if newPrice.Price > currentMax.Price {
-		return s.setPrice(key, newPrice)
+		return s.setPrice(ctx, key, newPrice)
 	}
 
 	return nil
 }
 
-// 写入 Redis
-func (s *ProcessPriceService) setPrice(key string, priceData PriceData) error {
+// setPrice 写入 Redis
+func (s *ProcessPriceService) setPrice(ctx context.Context, key string, priceData PriceData) error {
 	data, err := json.Marshal(priceData)
 	if err != nil {
 		return err
 	}
-	return s.rdb.Set(s.ctx, key, data, 0).Err() // 无 TTL
+	return s.rdb.Set(ctx, key, data, 0).Err() // 无 TTL
 }
 
-// 获取最低价
+// GetMinPrice 获取最低价
 func (s *ProcessPriceService) GetMinPrice(processID uint) (*PriceData, error) {
+	ctx := context.Background()
 	key := fmt.Sprintf("price:process:%d:min", processID)
 
 	// 尝试从 Redis 读取
-	val, err := s.rdb.Get(s.ctx, key).Result()
+	val, err := s.rdb.Get(ctx, key).Result()
 	if err == redis.Nil {
 		// Redis 未命中,从数据库加载
-		return s.loadMinPriceFromDB(processID)
+		return s.loadMinPriceFromDB(ctx, processID)
 	} else if err != nil {
 		return nil, err
 	}
@@ -158,15 +162,16 @@ func (s *ProcessPriceService) GetMinPrice(processID uint) (*PriceData, error) {
 	return &priceData, nil
 }
 
-// 获取最高价
+// GetMaxPrice 获取最高价
 func (s *ProcessPriceService) GetMaxPrice(processID uint) (*PriceData, error) {
+	ctx := context.Background()
 	key := fmt.Sprintf("price:process:%d:max", processID)
 
 	// 尝试从 Redis 读取
-	val, err := s.rdb.Get(s.ctx, key).Result()
+	val, err := s.rdb.Get(ctx, key).Result()
 	if err == redis.Nil {
 		// Redis 未命中,从数据库加载
-		return s.loadMaxPriceFromDB(processID)
+		return s.loadMaxPriceFromDB(ctx, processID)
 	} else if err != nil {
 		return nil, err
 	}
@@ -180,14 +185,20 @@ func (s *ProcessPriceService) GetMaxPrice(processID uint) (*PriceData, error) {
 	return &priceData, nil
 }
 
-// 从数据库加载最低价并写入 Redis
-func (s *ProcessPriceService) loadMinPriceFromDB(processID uint) (*PriceData, error) {
-	price, err := s.priceRepo.GetMinPrice(processID)
+// loadMinPriceFromDB 从数据库加载最低价并写入 Redis
+func (s *ProcessPriceService) loadMinPriceFromDB(ctx context.Context, processID uint) (*PriceData, error) {
+	// 查询最低价
+	var price ProcessPrice
+	err := s.db.WithContext(ctx).
+		Where("process_id = ?", processID).
+		Order("price ASC").
+		First(&price).Error
 	if err != nil {
 		return nil, err
 	}
 
-	v, err := s.vendorService.Get(price.VendorID)
+	// 获取厂商名称
+	v, err := s.vendorService.Get(ctx, price.VendorID)
 	if err != nil {
 		return nil, err
 	}
@@ -202,21 +213,27 @@ func (s *ProcessPriceService) loadMinPriceFromDB(processID uint) (*PriceData, er
 
 	// 写入 Redis
 	key := fmt.Sprintf("price:process:%d:min", processID)
-	if err := s.setPrice(key, *priceData); err != nil {
+	if err := s.setPrice(ctx, key, *priceData); err != nil {
 		return nil, err
 	}
 
 	return priceData, nil
 }
 
-// 从数据库加载最高价并写入 Redis
-func (s *ProcessPriceService) loadMaxPriceFromDB(processID uint) (*PriceData, error) {
-	price, err := s.priceRepo.GetMaxPrice(processID)
+// loadMaxPriceFromDB 从数据库加载最高价并写入 Redis
+func (s *ProcessPriceService) loadMaxPriceFromDB(ctx context.Context, processID uint) (*PriceData, error) {
+	// 查询最高价
+	var price ProcessPrice
+	err := s.db.WithContext(ctx).
+		Where("process_id = ?", processID).
+		Order("price DESC").
+		First(&price).Error
 	if err != nil {
 		return nil, err
 	}
 
-	v, err := s.vendorService.Get(price.VendorID)
+	// 获取厂商名称
+	v, err := s.vendorService.Get(ctx, price.VendorID)
 	if err != nil {
 		return nil, err
 	}
@@ -231,14 +248,20 @@ func (s *ProcessPriceService) loadMaxPriceFromDB(processID uint) (*PriceData, er
 
 	// 写入 Redis
 	key := fmt.Sprintf("price:process:%d:max", processID)
-	if err := s.setPrice(key, *priceData); err != nil {
+	if err := s.setPrice(ctx, key, *priceData); err != nil {
 		return nil, err
 	}
 
 	return priceData, nil
 }
 
-// 获取价格历史
-func (s *ProcessPriceService) GetHistory(processID uint) ([]ProcessPrice, error) {
-	return s.priceRepo.GetHistory(processID)
+// GetHistory 获取价格历史
+func (s *ProcessPriceService) GetHistory(ctx context.Context, processID uint) ([]ProcessPrice, error) {
+	var prices []ProcessPrice
+	err := s.db.WithContext(ctx).
+		Where("process_id = ?", processID).
+		Order("quoted_at DESC").
+		Find(&prices).Error
+	
+	return prices, err
 }

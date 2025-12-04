@@ -3,6 +3,7 @@ package order
 import (
 	"net/http"
 	"strconv"
+	
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,29 +17,30 @@ func NewOrderHandler(orderService *OrderService) *OrderHandler {
 
 // Create godoc
 // @Summary      创建订单
-// @Description  创建新的订单
+// @Description  创建新的订单信息
 // @Tags         订单管理
 // @Accept       json
 // @Produce      json
-// @Param        request body Order true "订单信息"
+// @Param        request body CreateOrderRequest true "订单信息"
 // @Success      200 {object} Order "创建成功"
 // @Failure      400 {object} map[string]string "请求参数错误"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
 // @Router       /order [post]
 func (h *OrderHandler) Create(c *gin.Context) {
-	var o Order
-	if err := c.ShouldBindJSON(&o); err != nil {
+	var req CreateOrderRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.orderService.Create(&o); err != nil {
+	order, err := h.orderService.Create(c.Request.Context(), &req)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, o)
+	c.JSON(http.StatusOK, order)
 }
 
 // Get godoc
@@ -54,12 +56,14 @@ func (h *OrderHandler) Create(c *gin.Context) {
 // @Router       /order/{id} [get]
 func (h *OrderHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	o, err := h.orderService.Get(uint(id))
+	
+	order, err := h.orderService.Get(c.Request.Context(), uint(id))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "订单不存在"})
 		return
 	}
-	c.JSON(http.StatusOK, o)
+
+	c.JSON(http.StatusOK, order)
 }
 
 // List godoc
@@ -68,27 +72,36 @@ func (h *OrderHandler) Get(c *gin.Context) {
 // @Tags         订单管理
 // @Accept       json
 // @Produce      json
-// @Success      200 {array} Order "获取成功"
+// @Param        limit query int false "每页数量" default(10)
+// @Param        offset query int false "偏移量" default(0)
+// @Success      200 {object} map[string]interface{} "获取成功"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
 // @Router       /order [get]
 func (h *OrderHandler) List(c *gin.Context) {
-	list, err := h.orderService.List()
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	
+	orders, err := h.orderService.List(c.Request.Context(), limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, list)
+
+	c.JSON(http.StatusOK, gin.H{
+		"total":  len(orders),
+		"orders": orders,
+	})
 }
 
 // Update godoc
-// @Summary      更新订单信息
+// @Summary      更新订单
 // @Description  根据订单ID更新订单信息
 // @Tags         订单管理
 // @Accept       json
 // @Produce      json
 // @Param        id path int true "订单ID"
-// @Param        request body map[string]interface{} true "更新的订单信息"
+// @Param        request body UpdateOrderRequest true "更新的订单信息"
 // @Success      200 {object} map[string]string "更新成功"
 // @Failure      400 {object} map[string]string "请求参数错误"
 // @Failure      500 {object} map[string]string "服务器错误"
@@ -96,18 +109,19 @@ func (h *OrderHandler) List(c *gin.Context) {
 // @Router       /order/{id} [put]
 func (h *OrderHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
-	data := make(map[string]interface{})
-	if err := c.ShouldBindJSON(&data); err != nil {
+	
+	var req UpdateOrderRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.orderService.Update(uint(id), data); err != nil {
+	if err := h.orderService.Update(c.Request.Context(), uint(id), &req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "updated"})
+
+	c.JSON(http.StatusOK, gin.H{"message": "更新成功"})
 }
 
 // Delete godoc
@@ -123,10 +137,11 @@ func (h *OrderHandler) Update(c *gin.Context) {
 // @Router       /order/{id} [delete]
 func (h *OrderHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
-	if err := h.orderService.Delete(uint(id)); err != nil {
+	
+	if err := h.orderService.Delete(c.Request.Context(), uint(id)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
+
+	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }

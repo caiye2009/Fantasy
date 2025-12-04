@@ -1,19 +1,22 @@
 package product
 
 import (
+	"context"
 	"errors"
 	"math"
 	"strconv"
 	
 	"back/pkg/es"
+	"back/pkg/repo"
 	materialPrice "back/internal/material/price"
 	processPrice "back/internal/process/price"
 	"back/internal/material"
 	"back/internal/process"
+	"gorm.io/gorm"
 )
 
 type ProductService struct {
-	productRepo          *ProductRepo
+	db                   *gorm.DB
 	materialPriceService interface {
 		GetMinPrice(materialID uint) (*materialPrice.PriceData, error)
 		GetMaxPrice(materialID uint) (*materialPrice.PriceData, error)
@@ -23,16 +26,16 @@ type ProductService struct {
 		GetMaxPrice(processID uint) (*processPrice.PriceData, error)
 	}
 	materialService interface {
-		Get(id uint) (*material.Material, error)
+		Get(ctx context.Context, id uint) (*material.Material, error)
 	}
 	processService interface {
-		Get(id uint) (*process.Process, error)
+		Get(ctx context.Context, id uint) (*process.Process, error)
 	}
 	esSync *es.ESSync
 }
 
 func NewProductService(
-	productRepo *ProductRepo,
+	db *gorm.DB,
 	materialPriceService interface {
 		GetMinPrice(materialID uint) (*materialPrice.PriceData, error)
 		GetMaxPrice(materialID uint) (*materialPrice.PriceData, error)
@@ -42,15 +45,15 @@ func NewProductService(
 		GetMaxPrice(processID uint) (*processPrice.PriceData, error)
 	},
 	materialService interface {
-		Get(id uint) (*material.Material, error)
+		Get(ctx context.Context, id uint) (*material.Material, error)
 	},
 	processService interface {
-		Get(id uint) (*process.Process, error)
+		Get(ctx context.Context, id uint) (*process.Process, error)
 	},
 	esSync *es.ESSync,
 ) *ProductService {
 	return &ProductService{
-		productRepo:          productRepo,
+		db:                   db,
 		materialPriceService: materialPriceService,
 		processPriceService:  processPriceService,
 		materialService:      materialService,
@@ -59,44 +62,42 @@ func NewProductService(
 	}
 }
 
-func (s *ProductService) Create(p *Product) error {
-	// 默认状态为 draft
+func (s *ProductService) Create(ctx context.Context, p *Product) error {
 	if p.Status == "" {
 		p.Status = "draft"
 	}
 	
-	// 暂不验证,允许创建不完整的产品
-	if err := s.productRepo.Create(p); err != nil {
+	productRepo := repo.NewRepo[Product](s.db)
+	if err := productRepo.Create(ctx, p); err != nil {
 		return err
 	}
 
-	// 异步同步到 ES
 	s.esSync.Index(p)
-
 	return nil
 }
 
-func (s *ProductService) Get(id uint) (*Product, error) {
-	return s.productRepo.GetByID(id)
+func (s *ProductService) Get(ctx context.Context, id uint) (*Product, error) {
+	productRepo := repo.NewRepo[Product](s.db)
+	return productRepo.GetByID(ctx, id)
 }
 
-func (s *ProductService) List() ([]Product, error) {
-	return s.productRepo.List()
+func (s *ProductService) List(ctx context.Context, limit, offset int) ([]Product, error) {
+	productRepo := repo.NewRepo[Product](s.db)
+	return productRepo.List(ctx, limit, offset)
 }
 
-func (s *ProductService) Update(id uint, data map[string]interface{}) error {
-	// 先获取产品
-	product, err := s.productRepo.GetByID(id)
+func (s *ProductService) Update(ctx context.Context, id uint, data map[string]interface{}) error {
+	productRepo := repo.NewRepo[Product](s.db)
+	
+	product, err := productRepo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	// 更新数据库
-	if err := s.productRepo.Update(id, data); err != nil {
+	if err := productRepo.UpdateFields(ctx, id, data); err != nil {
 		return err
 	}
 
-	// 更新内存中的 product 对象
 	if name, ok := data["name"].(string); ok {
 		product.Name = name
 	}
@@ -110,32 +111,29 @@ func (s *ProductService) Update(id uint, data map[string]interface{}) error {
 		product.Processes = processes
 	}
 
-	// 异步同步到 ES
 	s.esSync.Update(product)
-
 	return nil
 }
 
-func (s *ProductService) Delete(id uint) error {
-	if err := s.productRepo.Delete(id); err != nil {
+func (s *ProductService) Delete(ctx context.Context, id uint) error {
+	productRepo := repo.NewRepo[Product](s.db)
+	
+	if err := productRepo.Delete(ctx, id); err != nil {
 		return err
 	}
 
-	// 异步删除 ES 文档
 	s.esSync.Delete("products", strconv.Itoa(int(id)))
-
 	return nil
 }
 
-// CalculateCost 计算产品成本
-func (s *ProductService) CalculateCost(productID uint, quantity float64, useMinPrice bool) (*CostResult, error) {
-	// 1. 获取产品
-	product, err := s.productRepo.GetByID(productID)
+func (s *ProductService) CalculateCost(ctx context.Context, productID uint, quantity float64, useMinPrice bool) (*CostResult, error) {
+	productRepo := repo.NewRepo[Product](s.db)
+	
+	product, err := productRepo.GetByID(ctx, productID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. 检查配置
 	if len(product.Materials) == 0 {
 		return nil, errors.New("产品未配置原料")
 	}
@@ -143,7 +141,6 @@ func (s *ProductService) CalculateCost(productID uint, quantity float64, useMinP
 		return nil, errors.New("产品未配置工艺")
 	}
 
-	// 3. 计算原料成本
 	materialCost := 0.0
 	materialItems := []MaterialCostItem{}
 
@@ -158,8 +155,7 @@ func (s *ProductService) CalculateCost(productID uint, quantity float64, useMinP
 			return nil, err
 		}
 
-		// 获取原料名称
-		mat, err := s.materialService.Get(m.MaterialID)
+		mat, err := s.materialService.Get(ctx, m.MaterialID)
 		if err != nil {
 			return nil, err
 		}
@@ -176,7 +172,6 @@ func (s *ProductService) CalculateCost(productID uint, quantity float64, useMinP
 		})
 	}
 
-	// 4. 计算工艺成本
 	processCost := 0.0
 	processItems := []ProcessCostItem{}
 
@@ -191,8 +186,7 @@ func (s *ProductService) CalculateCost(productID uint, quantity float64, useMinP
 			return nil, err
 		}
 
-		// 获取工艺名称
-		proc, err := s.processService.Get(p.ProcessID)
+		proc, err := s.processService.Get(ctx, p.ProcessID)
 		if err != nil {
 			return nil, err
 		}
@@ -207,7 +201,6 @@ func (s *ProductService) CalculateCost(productID uint, quantity float64, useMinP
 		})
 	}
 
-	// 5. 计算总成本
 	unitCost := materialCost + processCost
 	totalCost := unitCost * quantity
 
@@ -223,19 +216,15 @@ func (s *ProductService) CalculateCost(productID uint, quantity float64, useMinP
 	}, nil
 }
 
-// ValidateForSubmit 验证产品是否可以提交审核 (预留)
 func (s *ProductService) ValidateForSubmit(product *Product) error {
-	// 验证名称
 	if product.Name == "" {
 		return errors.New("产品名称不能为空")
 	}
 
-	// 验证原料
 	if len(product.Materials) == 0 {
 		return errors.New("至少需要一个原料")
 	}
 
-	// 验证占比总和
 	sum := 0.0
 	for _, m := range product.Materials {
 		if m.Ratio <= 0 {
@@ -247,7 +236,6 @@ func (s *ProductService) ValidateForSubmit(product *Product) error {
 		return errors.New("原料占比总和必须为1")
 	}
 
-	// 验证工艺
 	if len(product.Processes) == 0 {
 		return errors.New("至少需要一个工艺")
 	}
