@@ -22,6 +22,7 @@ vendor/
 .idea/
 *.swp
 
+.DS_Store
 
 # Env
 .env
