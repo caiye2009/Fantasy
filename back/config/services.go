@@ -7,66 +7,165 @@ import (
 
 	"back/pkg/auth"
 	"back/pkg/es"
-	"back/internal/vendor"
-	"back/internal/client"
-	"back/internal/user"
-	internalAuth "back/internal/auth"
-	"back/internal/material"
-	materialPrice "back/internal/material/price"
-	"back/internal/process"
-	processPrice "back/internal/process/price"
-	"back/internal/product"
-	"back/internal/search"
+	
+	// Auth
+	authApp "back/internal/auth/application"
+	
+	// Supplier
+	supplierApp "back/internal/supplier/application"
+	supplierInfra "back/internal/supplier/infra"
+	
+	// Client
+	clientApp "back/internal/client/application"
+	clientInfra "back/internal/client/infra"
+	
+	// User
+	userApp "back/internal/user/application"
+	userInfra "back/internal/user/infra"
+	
+	// Material
+	materialApp "back/internal/material/application"
+	materialInfra "back/internal/material/infra"
+	
+	// Process
+	processApp "back/internal/process/application"
+	processInfra "back/internal/process/infra"
+	
+	// Pricing
+	pricingApp "back/internal/pricing/application"
+	pricingInfra "back/internal/pricing/infra"
+	
+	// Product
+	productApp "back/internal/product/application"
+	productInfra "back/internal/product/infra"
+	
+	// Plan
+	planApp "back/internal/plan/application"
+	planInfra "back/internal/plan/infra"
+	
+	// Order
+	orderApp "back/internal/order/application"
+	orderInfra "back/internal/order/infra"
+	
+	// Search
+	searchApp "back/internal/search/application"
+	searchInfra "back/internal/search/infra"
 )
 
 type Services struct {
-	Vendor        *vendor.VendorService
-	Client        *client.ClientService
-	User          *user.UserService
-	Auth          *internalAuth.AuthService
-	Material      *material.MaterialService
-	MaterialPrice *materialPrice.MaterialPriceService
-	Process       *process.ProcessService
-	ProcessPrice  *processPrice.ProcessPriceService
-	Product       *product.ProductService
-	Search        *search.SearchService
+	// Auth
+	Auth *authApp.AuthService
+	
+	// Core Entities
+	Supplier *supplierApp.SupplierService
+	Client   *clientApp.ClientService
+	User     *userApp.UserService
+	Material *materialApp.MaterialService
+	Process  *processApp.ProcessService
+	
+	// Pricing
+	MaterialPrice *pricingApp.MaterialPriceService
+	ProcessPrice  *pricingApp.ProcessPriceService
+	
+	// Product
+	Product               *productApp.ProductService
+	ProductCostCalculator *productApp.CostCalculator
+	
+	// Plan & Order
+	Plan  *planApp.PlanService
+	Order *orderApp.OrderService
+	
+	// Search
+	Search *searchApp.SearchService
 }
 
 func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client, jwtWang *auth.JWTWang, esSync *es.ESSync) *Services {
-	// 直接传 db，不再创建 repo
-	vendorService := vendor.NewVendorService(db, esSync)
-	clientService := client.NewClientService(db, esSync)
-	userService := user.NewUserService(db)
-	authService := internalAuth.NewAuthService(userService, jwtWang)
-	materialService := material.NewMaterialService(db, esSync)
-	processService := process.NewProcessService(db, esSync)
-
-	// Price 服务也只传 db
-	materialPriceService := materialPrice.NewMaterialPriceService(db, vendorService, rdb)
-	processPriceService := processPrice.NewProcessPriceService(db, vendorService, rdb)
-
-	// product 服务传 db
-	productService := product.NewProductService(
-		db,
+	// ========== Supplier ==========
+	supplierRepo := supplierInfra.NewSupplierRepoImpl(db)
+	supplierService := supplierApp.NewSupplierService(supplierRepo, esSync)
+	
+	// ========== Client ==========
+	clientRepo := clientInfra.NewClientRepoImpl(db)
+	clientService := clientApp.NewClientService(clientRepo, esSync)
+	
+	// ========== User ==========
+	userRepo := userInfra.NewUserRepoImpl(db)
+	userService := userApp.NewUserService(userRepo)
+	
+	// ========== Auth ==========
+	jwtAdapter := authApp.NewJWTWangAdapter(jwtWang)
+	authService := authApp.NewAuthService(userService, jwtAdapter)
+	
+	// ========== Material ==========
+	materialRepo := materialInfra.NewMaterialRepoImpl(db)
+	materialService := materialApp.NewMaterialService(materialRepo, esSync)
+	
+	// ========== Process ==========
+	processRepo := processInfra.NewProcessRepoImpl(db)
+	processService := processApp.NewProcessService(processRepo, esSync)
+	
+	// ========== Pricing（使用适配器） ==========
+	supplierPriceRepo := pricingInfra.NewSupplierPriceRepoImpl(db)
+	priceCache := pricingInfra.NewPriceCacheImpl(rdb)
+	
+	// 创建 Supplier 适配器
+	supplierAdapter := supplierApp.NewSupplierServiceAdapter(supplierService)
+	
+	materialPriceService := pricingApp.NewMaterialPriceService(
+		supplierPriceRepo,
+		priceCache,
+		materialService,
+		supplierAdapter, // 使用适配器
+	)
+	
+	processPriceService := pricingApp.NewProcessPriceService(
+		supplierPriceRepo,
+		priceCache,
+		processService,
+		supplierAdapter, // 使用适配器
+	)
+	
+	// ========== Product（使用适配器） ==========
+	productRepo := productInfra.NewProductRepoImpl(db)
+	productService := productApp.NewProductService(productRepo, esSync)
+	
+	// 创建 Material 和 Process 适配器
+	materialAdapter := materialApp.NewMaterialServiceAdapter(materialService)
+	processAdapter := processApp.NewProcessServiceAdapter(processService)
+	
+	productCostCalculator := productApp.NewCostCalculator(
+		productRepo,
+		materialAdapter,  // 使用适配器
+		processAdapter,   // 使用适配器
 		materialPriceService,
 		processPriceService,
-		materialService,
-		processService,
-		esSync,
 	)
-
-	searchService := search.NewSearchService(esClient)
-
+	
+	// ========== Plan ==========
+	planRepo := planInfra.NewPlanRepoImpl(db)
+	planService := planApp.NewPlanService(planRepo, esSync)
+	
+	// ========== Order ==========
+	orderRepo := orderInfra.NewOrderRepoImpl(db)
+	orderService := orderApp.NewOrderService(orderRepo, esSync)
+	
+	// ========== Search ==========
+	searchRepo := searchInfra.NewESSearchRepo(esClient)
+	searchService := searchApp.NewSearchService(searchRepo)
+	
 	return &Services{
-		Vendor:        vendorService,
-		Client:        clientService,
-		User:          userService,
-		Auth:          authService,
-		Material:      materialService,
-		MaterialPrice: materialPriceService,
-		Process:       processService,
-		ProcessPrice:  processPriceService,
-		Product:       productService,
-		Search:        searchService,
+		Auth:                  authService,
+		Supplier:              supplierService,
+		Client:                clientService,
+		User:                  userService,
+		Material:              materialService,
+		Process:               processService,
+		MaterialPrice:         materialPriceService,
+		ProcessPrice:          processPriceService,
+		Product:               productService,
+		ProductCostCalculator: productCostCalculator,
+		Plan:                  planService,
+		Order:                 orderService,
+		Search:                searchService,
 	}
 }

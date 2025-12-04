@@ -4,28 +4,30 @@ import (
 	"log"
 	"gorm.io/gorm"
 
-	"back/internal/vendor"
-	"back/internal/client"
-	"back/internal/user"
-	"back/internal/material"
-	materialPrice "back/internal/material/price"
-	"back/internal/process"
-	processPrice "back/internal/process/price"
-	"back/internal/product"
+	supplierInfra "back/internal/supplier/infra"
+	clientInfra "back/internal/client/infra"
+	userInfra "back/internal/user/infra"
+	materialInfra "back/internal/material/infra"
+	processInfra "back/internal/process/infra"
+	pricingInfra "back/internal/pricing/infra"
+	productInfra "back/internal/product/infra"
+	planInfra "back/internal/plan/infra"
+	orderInfra "back/internal/order/infra"
 )
 
 func AutoMigrate(db *gorm.DB) error {
 	log.Println("=== Starting Database Migration ===")
 
 	err := db.AutoMigrate(
-		&user.User{},
-		&vendor.Vendor{},
-		&client.Client{},
-		&material.Material{},
-		&materialPrice.MaterialPrice{},
-		&process.Process{},
-		&processPrice.ProcessPrice{},
-		&product.Product{},
+		&userInfra.UserPO{},
+		&supplierInfra.SupplierPO{},
+		&clientInfra.ClientPO{},
+		&materialInfra.MaterialPO{},
+		&processInfra.ProcessPO{},
+		&pricingInfra.SupplierPricePO{},
+		&productInfra.ProductPO{},
+		&planInfra.PlanPO{},
+		&orderInfra.OrderPO{},
 	)
 
 	if err != nil {

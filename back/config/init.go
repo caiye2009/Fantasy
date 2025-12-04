@@ -14,7 +14,8 @@ import (
 	
 	applog "back/pkg/log"
 	"back/pkg/es"
-	"back/internal/user"
+	userDomain "back/internal/user/domain"
+	userInfra "back/internal/user/infra"
 )
 
 func Init() error {
@@ -33,9 +34,10 @@ func Init() error {
 	rdb := InitRedis(cfg)
 	esClient := InitElasticsearch(cfg)
 	
-	// 创建 ES 同步服务
+	// 创建 ES 同步服务（使用适配器）
 	logger := applog.NewLogger()
-	esSync := es.NewESSync(esClient, logger)
+	loggerAdapter := es.NewLoggerAdapter(logger)
+	esSync := es.NewESSync(esClient, loggerAdapter)
 	log.Println("✓ ES Sync initialized")
 	
 	authWang := InitAuth(db, rdb, cfg)
@@ -73,7 +75,7 @@ func Init() error {
 
 func InitAdminUser(db *gorm.DB) {
 	var count int64
-	db.Model(&user.User{}).Where("role = ?", "admin").Count(&count)
+	db.Model(&userInfra.UserPO{}).Where("role = ?", "admin").Count(&count)
 
 	if count > 0 {
 		log.Println("✓ Admin user already exists")
@@ -82,13 +84,13 @@ func InitAdminUser(db *gorm.DB) {
 
 	// Admin 密码: admin
 	hash, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
-	admin := &user.User{
+	admin := &userInfra.UserPO{
 		LoginID:      "8000",
 		Username:     "管理员",
 		PasswordHash: string(hash),
 		Email:        "admin@example.com",
-		Role:         "admin",
-		Status:       "active",
+		Role:         string(userDomain.UserRoleAdmin),
+		Status:       string(userDomain.UserStatusActive),
 		HasInitPass:  false,
 	}
 	db.Create(admin)

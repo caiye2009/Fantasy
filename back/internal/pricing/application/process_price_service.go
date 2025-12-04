@@ -1,0 +1,189 @@
+package application
+
+import (
+	"context"
+	"time"
+	
+	"back/internal/pricing/domain"
+)
+
+// ProcessServiceInterface Process 服务接口
+type ProcessServiceInterface interface {
+	Exists(ctx context.Context, id uint) (bool, error)
+}
+
+// ProcessPriceService Process 价格服务
+type ProcessPriceService struct {
+	repo            domain.SupplierPriceRepository
+	cache           PriceCache
+	processService  ProcessServiceInterface
+	supplierService SupplierServiceInterface
+}
+
+// NewProcessPriceService 创建 Process 价格服务
+func NewProcessPriceService(
+	repo domain.SupplierPriceRepository,
+	cache PriceCache,
+	processService ProcessServiceInterface,
+	supplierService SupplierServiceInterface,
+) *ProcessPriceService {
+	return &ProcessPriceService{
+		repo:            repo,
+		cache:           cache,
+		processService:  processService,
+		supplierService: supplierService,
+	}
+}
+
+// Quote 供应商报价
+func (s *ProcessPriceService) Quote(ctx context.Context, req *QuoteRequest) error {
+	// 1. 验证 Process 是否存在
+	exists, err := s.processService.Exists(ctx, req.TargetID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return domain.ErrTargetNotFound
+	}
+	
+	// 2. 创建价格记录
+	price := &domain.SupplierPrice{
+		TargetType: domain.TargetTypeProcess,
+		TargetID:   req.TargetID,
+		SupplierID: req.SupplierID,
+		Price:      req.Price,
+		QuotedAt:   time.Now(),
+	}
+	
+	// 3. 领域验证
+	if err := price.Validate(); err != nil {
+		return err
+	}
+	
+	// 4. 保存到数据库
+	if err := s.repo.Save(ctx, price); err != nil {
+		return err
+	}
+	
+	// 5. 获取供应商信息
+	supplier, err := s.supplierService.GetSupplierInfo(ctx, req.SupplierID)
+	if err != nil {
+		return err
+	}
+	
+	// 6. 更新缓存（最低价和最高价）
+	minPrice, _ := s.repo.FindMinPrice(ctx, domain.TargetTypeProcess, req.TargetID)
+	if minPrice != nil {
+		priceData := &PriceData{
+			Price:        minPrice.Price,
+			SupplierID:   minPrice.SupplierID,
+			SupplierName: supplier.Name,
+			QuotedAt:     minPrice.QuotedAt,
+		}
+		s.cache.UpdateMin(ctx, "process", req.TargetID, priceData)
+	}
+	
+	maxPrice, _ := s.repo.FindMaxPrice(ctx, domain.TargetTypeProcess, req.TargetID)
+	if maxPrice != nil {
+		priceData := &PriceData{
+			Price:        maxPrice.Price,
+			SupplierID:   maxPrice.SupplierID,
+			SupplierName: supplier.Name,
+			QuotedAt:     maxPrice.QuotedAt,
+		}
+		s.cache.UpdateMax(ctx, "process", req.TargetID, priceData)
+	}
+	
+	return nil
+}
+
+// GetMinPrice 获取最低价
+func (s *ProcessPriceService) GetMinPrice(ctx context.Context, processID uint) (*PriceData, error) {
+	// 1. 尝试从缓存获取
+	cachedPrice, err := s.cache.GetMin(ctx, "process", processID)
+	if err == nil {
+		return cachedPrice, nil
+	}
+	
+	// 2. 缓存未命中，从数据库查询
+	price, err := s.repo.FindMinPrice(ctx, domain.TargetTypeProcess, processID)
+	if err != nil {
+		return nil, err
+	}
+	
+	// 3. 获取供应商信息
+	supplier, err := s.supplierService.GetSupplierInfo(ctx, price.SupplierID)
+	if err != nil {
+		return nil, err
+	}
+	
+	priceData := &PriceData{
+		Price:        price.Price,
+		SupplierID:   price.SupplierID,
+		SupplierName: supplier.Name,
+		QuotedAt:     price.QuotedAt,
+	}
+	
+	// 4. 写入缓存
+	s.cache.SetMin(ctx, "process", processID, priceData)
+	
+	return priceData, nil
+}
+
+// GetMaxPrice 获取最高价
+func (s *ProcessPriceService) GetMaxPrice(ctx context.Context, processID uint) (*PriceData, error) {
+	// 1. 尝试从缓存获取
+	cachedPrice, err := s.cache.GetMax(ctx, "process", processID)
+	if err == nil {
+		return cachedPrice, nil
+	}
+	
+	// 2. 缓存未命中，从数据库查询
+	price, err := s.repo.FindMaxPrice(ctx, domain.TargetTypeProcess, processID)
+	if err != nil {
+		return nil, err
+	}
+	
+	// 3. 获取供应商信息
+	supplier, err := s.supplierService.GetSupplierInfo(ctx, price.SupplierID)
+	if err != nil {
+		return nil, err
+	}
+	
+	priceData := &PriceData{
+		Price:        price.Price,
+		SupplierID:   price.SupplierID,
+		SupplierName: supplier.Name,
+		QuotedAt:     price.QuotedAt,
+	}
+	
+	// 4. 写入缓存
+	s.cache.SetMax(ctx, "process", processID, priceData)
+	
+	return priceData, nil
+}
+
+// GetHistory 获取报价历史
+func (s *ProcessPriceService) GetHistory(ctx context.Context, processID uint, limit int) ([]*PriceData, error) {
+	prices, err := s.repo.FindHistory(ctx, domain.TargetTypeProcess, processID, limit)
+	if err != nil {
+		return nil, err
+	}
+	
+	result := make([]*PriceData, len(prices))
+	for i, p := range prices {
+		supplier, err := s.supplierService.GetSupplierInfo(ctx, p.SupplierID)
+		if err != nil {
+			return nil, err
+		}
+		
+		result[i] = &PriceData{
+			Price:        p.Price,
+			SupplierID:   p.SupplierID,
+			SupplierName: supplier.Name,
+			QuotedAt:     p.QuotedAt,
+		}
+	}
+	
+	return result, nil
+}

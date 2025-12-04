@@ -5,224 +5,142 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
+	"log"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
-
-	"back/pkg/log"
 )
 
-// ESSync ES 同步服务
 type ESSync struct {
 	client *elasticsearch.Client
-	logger *log.Logger
+	logger Logger
 }
 
-// NewESSync 创建 ES 同步服务
-func NewESSync(client *elasticsearch.Client, logger *log.Logger) *ESSync {
+type Logger interface {
+	Info(msg string, fields ...interface{})
+	Error(msg string, fields ...interface{})
+}
+
+func NewESSync(client *elasticsearch.Client, logger Logger) *ESSync {
 	return &ESSync{
 		client: client,
-		logger: logger.With(log.String("service", "es-sync")),
+		logger: logger,
 	}
 }
 
-// Index 索引文档 (异步)
-func (es *ESSync) Index(entity Indexable) {
-	go es.indexSync(entity)
-}
-
-// Update 更新文档 (异步)
-func (es *ESSync) Update(entity Indexable) {
-	go es.updateSync(entity)
-}
-
-// Delete 删除文档 (异步)
-func (es *ESSync) Delete(indexName, docID string) {
-	go es.deleteSync(indexName, docID)
-}
-
-// indexSync 同步索引文档
-func (es *ESSync) indexSync(entity Indexable) {
-	start := time.Now()
-	indexName := entity.GetIndexName()
-	docID := entity.GetDocumentID()
-
-	// 转换为文档
-	doc := entity.ToDocument()
-	data, err := json.Marshal(doc)
+// Index 索引文档（参数改为 interface{}）
+func (s *ESSync) Index(doc interface{}) error {
+	// 类型断言检查是否实现 Indexable 接口
+	indexable, ok := doc.(Indexable)
+	if !ok {
+		return fmt.Errorf("document does not implement Indexable interface")
+	}
+	
+	data, err := json.Marshal(indexable.ToDocument())
 	if err != nil {
-		es.logger.Error("索引失败 - 序列化错误",
-			log.String("index", indexName),
-			log.String("doc_id", docID),
-			log.Error(err),
-		)
-		return
+		if s.logger != nil {
+			s.logger.Error("marshal document failed", "error", err)
+		}
+		return err
 	}
 
-	// 执行索引
 	req := esapi.IndexRequest{
-		Index:      indexName,
-		DocumentID: docID,
+		Index:      indexable.GetIndexName(),
+		DocumentID: indexable.GetDocumentID(),
 		Body:       bytes.NewReader(data),
 		Refresh:    "true",
 	}
 
-	res, err := req.Do(context.Background(), es.client)
+	res, err := req.Do(context.Background(), s.client)
 	if err != nil {
-		es.logger.Error("索引失败 - 请求错误",
-			log.String("index", indexName),
-			log.String("doc_id", docID),
-			log.Error(err),
-		)
-		return
+		if s.logger != nil {
+			s.logger.Error("index document failed", "error", err)
+		}
+		return err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		es.logger.Error("索引失败 - ES 错误",
-			log.String("index", indexName),
-			log.String("doc_id", docID),
-			log.String("status", res.Status()),
-			log.String("error", res.String()),
-		)
-		return
+		if s.logger != nil {
+			s.logger.Error("index error", "status", res.Status())
+		}
+		return fmt.Errorf("index error: %s", res.String())
 	}
 
-	elapsed := time.Since(start)
-	es.logger.Info("索引成功",
-		log.String("index", indexName),
-		log.String("doc_id", docID),
-		log.Duration("elapsed", elapsed),
-	)
+	return nil
 }
 
-// updateSync 同步更新文档
-func (es *ESSync) updateSync(entity Indexable) {
-	start := time.Now()
-	indexName := entity.GetIndexName()
-	docID := entity.GetDocumentID()
-
-	// 转换为文档
-	doc := entity.ToDocument()
+// Update 更新文档（参数改为 interface{}）
+func (s *ESSync) Update(doc interface{}) error {
+	// 类型断言检查是否实现 Indexable 接口
+	indexable, ok := doc.(Indexable)
+	if !ok {
+		return fmt.Errorf("document does not implement Indexable interface")
+	}
+	
 	data, err := json.Marshal(map[string]interface{}{
-		"doc": doc,
+		"doc": indexable.ToDocument(),
 	})
 	if err != nil {
-		es.logger.Error("更新失败 - 序列化错误",
-			log.String("index", indexName),
-			log.String("doc_id", docID),
-			log.Error(err),
-		)
-		return
+		if s.logger != nil {
+			s.logger.Error("marshal document failed", "error", err)
+		}
+		return err
 	}
 
-	// 执行更新
 	req := esapi.UpdateRequest{
-		Index:      indexName,
-		DocumentID: docID,
+		Index:      indexable.GetIndexName(),
+		DocumentID: indexable.GetDocumentID(),
 		Body:       bytes.NewReader(data),
 		Refresh:    "true",
 	}
 
-	res, err := req.Do(context.Background(), es.client)
+	res, err := req.Do(context.Background(), s.client)
 	if err != nil {
-		es.logger.Error("更新失败 - 请求错误",
-			log.String("index", indexName),
-			log.String("doc_id", docID),
-			log.Error(err),
-		)
-		return
+		if s.logger != nil {
+			s.logger.Error("update document failed", "error", err)
+		}
+		return err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		es.logger.Error("更新失败 - ES 错误",
-			log.String("index", indexName),
-			log.String("doc_id", docID),
-			log.String("status", res.Status()),
-			log.String("error", res.String()),
-		)
-		return
+		if s.logger != nil {
+			s.logger.Error("update error", "status", res.Status())
+		}
+		return fmt.Errorf("update error: %s", res.String())
 	}
 
-	elapsed := time.Since(start)
-	es.logger.Info("更新成功",
-		log.String("index", indexName),
-		log.String("doc_id", docID),
-		log.Duration("elapsed", elapsed),
-	)
+	return nil
 }
 
-// deleteSync 同步删除文档
-func (es *ESSync) deleteSync(indexName, docID string) {
-	start := time.Now()
-
-	// 执行删除
+// Delete 删除文档
+func (s *ESSync) Delete(indexName, docID string) error {
 	req := esapi.DeleteRequest{
 		Index:      indexName,
 		DocumentID: docID,
 		Refresh:    "true",
 	}
 
-	res, err := req.Do(context.Background(), es.client)
+	res, err := req.Do(context.Background(), s.client)
 	if err != nil {
-		es.logger.Error("删除失败 - 请求错误",
-			log.String("index", indexName),
-			log.String("doc_id", docID),
-			log.Error(err),
-		)
-		return
-	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		// 404 不算错误 (文档不存在)
-		if res.StatusCode != 404 {
-			es.logger.Error("删除失败 - ES 错误",
-				log.String("index", indexName),
-				log.String("doc_id", docID),
-				log.String("status", res.Status()),
-				log.String("error", res.String()),
-			)
-			return
+		if s.logger != nil {
+			s.logger.Error("delete document failed", "error", err)
 		}
-	}
-
-	elapsed := time.Since(start)
-	es.logger.Info("删除成功",
-		log.String("index", indexName),
-		log.String("doc_id", docID),
-		log.Duration("elapsed", elapsed),
-	)
-}
-
-// IndexSync 同步索引 (阻塞版本,用于测试)
-func (es *ESSync) IndexSync(entity Indexable) error {
-	indexName := entity.GetIndexName()
-	docID := entity.GetDocumentID()
-
-	doc := entity.ToDocument()
-	data, err := json.Marshal(doc)
-	if err != nil {
-		return fmt.Errorf("marshal document: %w", err)
-	}
-
-	req := esapi.IndexRequest{
-		Index:      indexName,
-		DocumentID: docID,
-		Body:       bytes.NewReader(data),
-		Refresh:    "true",
-	}
-
-	res, err := req.Do(context.Background(), es.client)
-	if err != nil {
-		return fmt.Errorf("index request: %w", err)
+		return err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return fmt.Errorf("index error: %s", res.String())
+		// 404 not found 不算错误
+		if res.StatusCode == 404 {
+			log.Printf("Document not found: %s/%s", indexName, docID)
+			return nil
+		}
+		if s.logger != nil {
+			s.logger.Error("delete error", "status", res.Status())
+		}
+		return fmt.Errorf("delete error: %s", res.String())
 	}
 
 	return nil

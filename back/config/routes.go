@@ -9,16 +9,17 @@ import (
 	_ "back/docs" // 导入生成的 docs
 
 	"back/pkg/auth"
-	"back/internal/vendor"
-	"back/internal/client"
-	"back/internal/user"
-	internalAuth "back/internal/auth"
-	"back/internal/material"
-	materialPrice "back/internal/material/price"
-	"back/internal/process"
-	processPrice "back/internal/process/price"
-	"back/internal/product"
-	"back/internal/search"
+	authInterfaces "back/internal/auth/interfaces"
+	supplierInterfaces "back/internal/supplier/interfaces"
+	clientInterfaces "back/internal/client/interfaces"
+	userInterfaces "back/internal/user/interfaces"
+	materialInterfaces "back/internal/material/interfaces"
+	processInterfaces "back/internal/process/interfaces"
+	pricingInterfaces "back/internal/pricing/interfaces"
+	productInterfaces "back/internal/product/interfaces"
+	planInterfaces "back/internal/plan/interfaces"
+	orderInterfaces "back/internal/order/interfaces"
+	searchInterfaces "back/internal/search/interfaces"
 )
 
 func InitRoutes(authWang *auth.AuthWang, services *Services) *gin.Engine {
@@ -38,23 +39,27 @@ func InitRoutes(authWang *auth.AuthWang, services *Services) *gin.Engine {
 
 	api := router.Group("/api/v1")
 
+	// 公开路由
 	public := api.Group("")
 	{
-		internalAuth.RegisterPublic(public, services.Auth)
+		authInterfaces.RegisterAuthHandlers(public, services.Auth)
 	}
 
+	// 受保护路由
 	protected := api.Group("")
 	protected.Use(authWang.AuthMiddleware())
 	{
-		user.Register(protected, services.User, authWang)
-		vendor.Register(protected, services.Vendor, authWang)
-		client.Register(protected, services.Client, authWang)
-		material.Register(protected, services.Material, authWang)
-		materialPrice.Register(protected, services.MaterialPrice, authWang)
-		process.Register(protected, services.Process, authWang)
-		processPrice.Register(protected, services.ProcessPrice, authWang)
-		product.Register(protected, services.Product, authWang)
-		search.Register(protected, services.Search, authWang)
+		userInterfaces.RegisterUserHandlers(protected, services.User)
+		supplierInterfaces.RegisterSupplierHandlers(protected, services.Supplier)
+		clientInterfaces.RegisterClientHandlers(protected, services.Client)
+		materialInterfaces.RegisterMaterialHandlers(protected, services.Material)
+		processInterfaces.RegisterProcessHandlers(protected, services.Process)
+		pricingInterfaces.RegisterMaterialPriceHandlers(protected, services.MaterialPrice)
+		pricingInterfaces.RegisterProcessPriceHandlers(protected, services.ProcessPrice)
+		productInterfaces.RegisterProductHandlers(protected, services.Product, services.ProductCostCalculator)
+		planInterfaces.RegisterPlanHandlers(protected, services.Plan)
+		orderInterfaces.RegisterOrderHandlers(protected, services.Order)
+		searchInterfaces.RegisterSearchHandlers(protected, services.Search)
 	}
 
 	return router
