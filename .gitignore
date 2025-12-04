@@ -23,6 +23,7 @@ vendor/
 *.swp
 
 # System
+.DS_Store
 
 # Env
 .env
