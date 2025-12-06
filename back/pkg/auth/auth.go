@@ -42,15 +42,15 @@ func (aw *AuthWang) AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// 2. 验证 JWT
-		claims, err := aw.jwtWang.ValidateToken(tokenString)
+		// 2. 验证 Access Token（改用 ValidateAccessToken）
+		claims, err := aw.jwtWang.ValidateAccessToken(tokenString)
 		if err != nil {
-			c.JSON(401, gin.H{"error": "无效的token"})
+			c.JSON(401, gin.H{"error": "无效的token或token已过期"})
 			c.Abort()
 			return
 		}
 
-		// 3. 查询用户状态 (使用 login_id)
+		// 3. 查询用户状态（使用 loginId）
 		var user struct {
 			ID     uint   `gorm:"column:id"`
 			Status string `gorm:"column:status"`
@@ -67,12 +67,12 @@ func (aw *AuthWang) AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// 4. 特殊路径:修改密码
+		// 4. 特殊路径：修改密码（不需要 Casbin 检查）
 		path := c.Request.URL.Path
 		method := c.Request.Method
 
 		if path == "/api/v1/user/password" && method == "PUT" {
-			c.Set("login_id", claims.LoginID)
+			c.Set("loginId", claims.LoginID) // 改为小驼峰
 			c.Set("role", claims.Role)
 			c.Next()
 			return
@@ -92,14 +92,14 @@ func (aw *AuthWang) AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// 6. 设置上下文
-		c.Set("login_id", claims.LoginID)
+		// 6. 设置上下文（改为小驼峰）
+		c.Set("loginId", claims.LoginID)
 		c.Set("role", claims.Role)
 		c.Next()
 	}
 }
 
-// GetJWTWang 返回 JWTWang (供 config 使用)
+// GetJWTWang 返回 JWTWang（供 config 使用）
 func (aw *AuthWang) GetJWTWang() *JWTWang {
 	return aw.jwtWang
 }

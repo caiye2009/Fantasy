@@ -7,7 +7,9 @@ type JWTWangAdapter struct {
 
 // JWTWangInterface pkg/auth.JWTWang 的接口抽象
 type JWTWangInterface interface {
-	GenerateToken(loginID, role string) (string, error)
+	GenerateAccessToken(loginID, role string) (string, error)
+	GenerateRefreshToken(loginID string) (string, error)
+	ValidateRefreshToken(token string) (string, error)
 }
 
 // NewJWTWangAdapter 创建适配器
@@ -15,7 +17,17 @@ func NewJWTWangAdapter(jwtWang JWTWangInterface) JWTGenerator {
 	return &JWTWangAdapter{jwtWang: jwtWang}
 }
 
-// GenerateToken 生成 Token
-func (a *JWTWangAdapter) GenerateToken(loginID, role string) (string, error) {
-	return a.jwtWang.GenerateToken(loginID, role)
+// GenerateAccessToken 生成 Access Token
+func (a *JWTWangAdapter) GenerateAccessToken(loginID, role string) (string, error) {
+	return a.jwtWang.GenerateAccessToken(loginID, role)
+}
+
+// GenerateRefreshToken 生成 Refresh Token
+func (a *JWTWangAdapter) GenerateRefreshToken(loginID string) (string, error) {
+	return a.jwtWang.GenerateRefreshToken(loginID)
+}
+
+// ValidateRefreshToken 验证 Refresh Token
+func (a *JWTWangAdapter) ValidateRefreshToken(token string) (string, error) {
+	return a.jwtWang.ValidateRefreshToken(token)
 }

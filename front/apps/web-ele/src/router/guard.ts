@@ -29,8 +29,7 @@ function setupCommonGuard(router: Router) {
   });
 
   router.afterEach((to) => {
-    // 记录页面是否加载,如果已经加载，后续的页面切换动画等效果不在重复执行
-
+    // 记录页面是否加载,如果已经加载,后续的页面切换动画等效果不在重复执行
     loadedPaths.add(to.path);
 
     // 关闭页面加载进度条
@@ -91,15 +90,44 @@ function setupAccessGuard(router: Router) {
     }
 
     // 生成路由表
-    // 当前登录用户拥有的角色标识列表
-    const userInfo = userStore.userInfo || (await authStore.fetchUserInfo());
-    const userRoles = userInfo?.roles ?? [];
+    // 从 userStore 获取用户信息（登录时已存储）
+    let userInfo = userStore.userInfo;
+    
+    // 如果 userInfo 不存在，尝试从 localStorage 恢复
+    if (!userInfo) {
+      const storedUserInfo = localStorage.getItem('userInfo');
+      if (storedUserInfo) {
+        try {
+          userInfo = JSON.parse(storedUserInfo);
+          userStore.setUserInfo(userInfo);
+        } catch (error) {
+          console.error('Failed to parse stored userInfo:', error);
+          // 解析失败，重新登录
+          return {
+            path: LOGIN_PATH,
+            query: { redirect: encodeURIComponent(to.fullPath) },
+            replace: true,
+          };
+        }
+      }
+    }
+
+    // 如果还是没有用户信息，跳转到登录页
+    if (!userInfo) {
+      return {
+        path: LOGIN_PATH,
+        query: { redirect: encodeURIComponent(to.fullPath) },
+        replace: true,
+      };
+    }
+
+    // 获取用户角色（从 userInfo.role 转换为 roles 数组）
+    const userRoles = userInfo.role ? [userInfo.role] : [];
 
     // 生成菜单和路由
     const { accessibleMenus, accessibleRoutes } = await generateAccess({
       roles: userRoles,
       router,
-      // 则会在菜单中显示，但是访问会被重定向到403
       routes: accessRoutes,
     });
 
@@ -107,6 +135,7 @@ function setupAccessGuard(router: Router) {
     accessStore.setAccessMenus(accessibleMenus);
     accessStore.setAccessRoutes(accessibleRoutes);
     accessStore.setIsAccessChecked(true);
+    
     const redirectPath = (from.query.redirect ??
       (to.path === preferences.app.defaultHomePath
         ? userInfo?.homePath || preferences.app.defaultHomePath

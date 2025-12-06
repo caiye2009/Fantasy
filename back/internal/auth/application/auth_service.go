@@ -14,7 +14,9 @@ type UserServiceInterface interface {
 
 // JWTGenerator JWT 生成器接口
 type JWTGenerator interface {
-	GenerateToken(loginID, role string) (string, error)
+	GenerateAccessToken(loginID, role string) (string, error)
+	GenerateRefreshToken(loginID string) (string, error)
+	ValidateRefreshToken(token string) (loginID string, err error)
 }
 
 // AuthService 认证应用服务
@@ -33,10 +35,9 @@ func NewAuthService(userService UserServiceInterface, jwtGen JWTGenerator) *Auth
 
 // Login 用户登录
 func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error) {
-	// 1. 验证用户名密码（通过 UserService）
+	// 1. 验证用户名密码
 	user, err := s.userService.ValidatePassword(ctx, req.LoginID, req.Password)
 	if err != nil {
-		// 不暴露具体错误原因（安全考虑）
 		return nil, ErrInvalidCredentials
 	}
 	
@@ -45,35 +46,54 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*LoginRespo
 		return nil, ErrAccountSuspended
 	}
 	
-	// 3. 生成 JWT Token
-	token, err := s.jwtGen.GenerateToken(user.LoginID, string(user.Role))
+	// 3. 生成 Access Token（包含 loginID 和 role）
+	accessToken, err := s.jwtGen.GenerateAccessToken(user.LoginID, string(user.Role))
 	if err != nil {
 		return nil, ErrTokenGenerateFailed
 	}
 	
-	// 4. 构造响应
+	// 4. 生成 Refresh Token（只包含 loginID）
+	refreshToken, err := s.jwtGen.GenerateRefreshToken(user.LoginID)
+	if err != nil {
+		return nil, ErrTokenGenerateFailed
+	}
+	
+	// 5. 构造扁平化响应（直接返回 username 和 role）
 	return &LoginResponse{
-		AccessToken: token,
-		User: &UserInfo{
-			ID:       user.ID,
-			LoginID:  user.LoginID,
-			Username: user.Username,
-			Email:    user.Email,
-			Role:     string(user.Role),
-		},
+		AccessToken:           accessToken,
+		RefreshToken:          refreshToken,
+		Username:              user.Username,
+		Role:                  string(user.Role),
 		RequirePasswordChange: user.HasInitPass,
 	}, nil
 }
 
-// ValidateToken 验证 Token（可选，用于中间件）
-func (s *AuthService) ValidateToken(token string) (string, error) {
-	// 如果需要在这里验证 Token，可以注入 JWT 验证器
-	// 通常在中间件层完成
-	return "", nil
-}
-
-// RefreshToken 刷新 Token（可选）
-func (s *AuthService) RefreshToken(ctx context.Context, oldToken string) (string, error) {
-	// 实现 Token 刷新逻辑
-	return "", nil
+// RefreshToken 刷新 Token
+func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*RefreshTokenResponse, error) {
+	// 1. 验证 Refresh Token
+	loginID, err := s.jwtGen.ValidateRefreshToken(refreshToken)
+	if err != nil {
+		return nil, ErrInvalidToken
+	}
+	
+	// 2. 获取用户信息（需要 role 生成新 token）
+	user, err := s.userService.GetByLoginID(ctx, loginID)
+	if err != nil {
+		return nil, ErrUserNotFound
+	}
+	
+	// 3. 检查用户状态
+	if !user.IsActive() {
+		return nil, ErrAccountSuspended
+	}
+	
+	// 4. 生成新的 Access Token
+	newAccessToken, err := s.jwtGen.GenerateAccessToken(user.LoginID, string(user.Role))
+	if err != nil {
+		return nil, ErrTokenGenerateFailed
+	}
+	
+	return &RefreshTokenResponse{
+		AccessToken: newAccessToken,
+	}, nil
 }

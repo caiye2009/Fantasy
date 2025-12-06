@@ -5,11 +5,16 @@
     "codeLogin": "验证码登录",
     "qrcodeLogin": "二维码登录",
     "forgetPassword": "忘记密码",
-    "profile": "个人中心"
+    "profile": "个人中心",
+    "loginSuccess": "登录成功",
+    "loginSuccessDesc": "欢迎回来",
+    "loginFailed": "登录失败",
+    "error": "错误"
   },
   "dashboard": {
     "title": "概览",
     "analytics": "分析页",
-    "workspace": "工作台"
+    "workspace": "工作台",
+    "list":"list"
   }
 }

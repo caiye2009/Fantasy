@@ -14,10 +14,9 @@ export default defineConfig(async () => {
       server: {
         proxy: {
           '/api': {
+            target: 'http://localhost:8081', // 改为您的后端地址
             changeOrigin: true,
-            rewrite: (path) => path.replace(/^\/api/, ''),
-            // mock代理目标地址
-            target: 'http://localhost:5320/api',
+            rewrite: (path) => path, // 保持 /api 前缀
             ws: true,
           },
         },

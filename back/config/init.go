@@ -85,8 +85,8 @@ func InitAdminUser(db *gorm.DB) {
 	// Admin 密码: admin
 	hash, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
 	admin := &userInfra.UserPO{
-		LoginID:      "8000",
-		Username:     "管理员",
+		LoginID:      "admin",
+		Username:     "admin",
 		PasswordHash: string(hash),
 		Email:        "admin@example.com",
 		Role:         string(userDomain.UserRoleAdmin),
