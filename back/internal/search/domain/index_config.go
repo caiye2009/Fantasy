@@ -2,12 +2,15 @@ package domain
 
 // IndexMeta 索引元数据
 type IndexMeta struct {
-	Name          string   // 索引名称
-	Type          string   // 类型名称
-	DefaultFields []string // 默认搜索字段（带权重）
+	Name             string   // 索引名称
+	Type             string   // 类型名称
+	DefaultFields    []string // 默认搜索字段（带权重，camelCase）
+	FilterableFields []string // 可过滤字段（camelCase）
+	SortableFields   []string // 可排序字段（camelCase）
 }
 
 // IndexConfig 索引配置映射
+// 注意：所有字段名使用 camelCase，会自动转换为 snake_case 传给 ES
 var IndexConfig = map[string]IndexMeta{
 	"vendors": {
 		Name: "vendors",
@@ -18,6 +21,17 @@ var IndexConfig = map[string]IndexMeta{
 			"phone^2",
 			"email^2",
 			"address",
+		},
+		FilterableFields: []string{
+			"id",
+			"status",
+			"createdAt",
+			"updatedAt",
+		},
+		SortableFields: []string{
+			"name",
+			"createdAt",
+			"updatedAt",
 		},
 	},
 	"clients": {
@@ -30,6 +44,17 @@ var IndexConfig = map[string]IndexMeta{
 			"email^2",
 			"address",
 		},
+		FilterableFields: []string{
+			"id",
+			"status",
+			"createdAt",
+			"updatedAt",
+		},
+		SortableFields: []string{
+			"name",
+			"createdAt",
+			"updatedAt",
+		},
 	},
 	"materials": {
 		Name: "materials",
@@ -40,6 +65,20 @@ var IndexConfig = map[string]IndexMeta{
 			"unit^2",
 			"description",
 		},
+		FilterableFields: []string{
+			"id",
+			"supplierId",
+			"status",
+			"unit",
+			"createdAt",
+			"updatedAt",
+		},
+		SortableFields: []string{
+			"name",
+			"price",
+			"createdAt",
+			"updatedAt",
+		},
 	},
 	"processes": {
 		Name: "processes",
@@ -47,6 +86,17 @@ var IndexConfig = map[string]IndexMeta{
 		DefaultFields: []string{
 			"name^5",
 			"description^3",
+		},
+		FilterableFields: []string{
+			"id",
+			"status",
+			"createdAt",
+			"updatedAt",
+		},
+		SortableFields: []string{
+			"name",
+			"createdAt",
+			"updatedAt",
 		},
 	},
 	"products": {
@@ -56,21 +106,58 @@ var IndexConfig = map[string]IndexMeta{
 			"name^5",
 			"status^2",
 		},
+		FilterableFields: []string{
+			"id",
+			"status",
+			"clientId",
+			"createdAt",
+			"updatedAt",
+		},
+		SortableFields: []string{
+			"name",
+			"createdAt",
+			"updatedAt",
+		},
 	},
 	"orders": {
 		Name: "orders",
 		Type: "order",
 		DefaultFields: []string{
-			"order_no^5",
+			"orderNo^5",
 			"status^2",
+		},
+		FilterableFields: []string{
+			"id",
+			"orderNo",
+			"status",
+			"clientId",
+			"createdAt",
+			"updatedAt",
+		},
+		SortableFields: []string{
+			"orderNo",
+			"createdAt",
+			"updatedAt",
 		},
 	},
 	"plans": {
 		Name: "plans",
 		Type: "plan",
 		DefaultFields: []string{
-			"plan_no^5",
+			"planNo^5",
 			"status^2",
+		},
+		FilterableFields: []string{
+			"id",
+			"planNo",
+			"status",
+			"createdAt",
+			"updatedAt",
+		},
+		SortableFields: []string{
+			"planNo",
+			"createdAt",
+			"updatedAt",
 		},
 	},
 }

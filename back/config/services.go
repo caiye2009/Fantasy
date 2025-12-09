@@ -1,3 +1,4 @@
+// back/config/services.go
 package config
 
 import (
@@ -50,6 +51,10 @@ import (
 	// Search
 	searchApp "back/internal/search/application"
 	searchInfra "back/internal/search/infra"
+	
+	// Analytics
+	analyticsApp "back/internal/analytics/application"
+	analyticsInfra "back/internal/analytics/infra"
 )
 
 type Services struct {
@@ -77,6 +82,9 @@ type Services struct {
 	
 	// Search
 	Search *searchApp.SearchService
+	
+	// Analytics
+	ReturnAnalysis *analyticsApp.ReturnAnalysisService
 }
 
 func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client, jwtWang *auth.JWTWang, esSync *es.ESSync) *Services {
@@ -153,6 +161,10 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 	searchRepo := searchInfra.NewESSearchRepo(esClient)
 	searchService := searchApp.NewSearchService(searchRepo)
 	
+	// ========== Analytics ==========
+	returnAnalysisRepo := analyticsInfra.NewReturnAnalysisRepository(db)
+	returnAnalysisService := analyticsApp.NewReturnAnalysisService(returnAnalysisRepo)
+	
 	return &Services{
 		Auth:                  authService,
 		Supplier:              supplierService,
@@ -167,5 +179,6 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 		Plan:                  planService,
 		Order:                 orderService,
 		Search:                searchService,
+		ReturnAnalysis:        returnAnalysisService,
 	}
 }

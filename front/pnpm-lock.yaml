@@ -638,6 +638,9 @@ importers:
       dayjs:
         specifier: 'catalog:'
         version: 1.11.19
+      echarts:
+        specifier: 'catalog:'
+        version: 6.0.0
       element-plus:
         specifier: 'catalog:'
         version: 2.11.8(vue@3.5.24(typescript@5.9.3))

@@ -20,6 +20,7 @@ import (
 	planInterfaces "back/internal/plan/interfaces"
 	orderInterfaces "back/internal/order/interfaces"
 	searchInterfaces "back/internal/search/interfaces"
+	analyticsInterfaces "back/internal/analytics/interfaces"
 )
 
 func InitRoutes(authWang *auth.AuthWang, services *Services) *gin.Engine {
@@ -60,6 +61,10 @@ func InitRoutes(authWang *auth.AuthWang, services *Services) *gin.Engine {
 		planInterfaces.RegisterPlanHandlers(protected, services.Plan)
 		orderInterfaces.RegisterOrderHandlers(protected, services.Order)
 		searchInterfaces.RegisterSearchHandlers(protected, services.Search)
+		
+		// Analytics
+		returnAnalysisHandler := analyticsInterfaces.NewReturnAnalysisHandler(services.ReturnAnalysis)
+		returnAnalysisHandler.RegisterRoutes(protected)
 	}
 
 	return router

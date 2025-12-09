@@ -1,327 +1,29 @@
 basePath: /api/v1
 definitions:
-  auth.LoginRequest:
+  application.AmountDimensionResponse:
     properties:
-      loginId:
-        type: string
-      password:
-        type: string
-    required:
-    - loginId
-    - password
+      returnedOrderCount:
+        description: 有退货的订单数
+        example: 15
+        type: integer
+      totalAmountRMB:
+        description: 退款总金额（RMB，USD已按汇率8换算）
+        example: 120000
+        type: number
     type: object
-  auth.LoginResponse:
+  application.CalculateCostRequest:
     properties:
-      accessToken:
-        type: string
-      requirePasswordChange:
+      product_id:
+        type: integer
+      quantity:
+        type: number
+      use_min_price:
         type: boolean
-      user:
-        $ref: '#/definitions/auth.UserInfo'
-    type: object
-  auth.UserInfo:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      loginId:
-        type: string
-      role:
-        type: string
-      username:
-        type: string
-    type: object
-  client.Client:
-    properties:
-      address:
-        type: string
-      contact:
-        type: string
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      phone:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  client.CreateClientRequest:
-    properties:
-      address:
-        maxLength: 200
-        type: string
-      contact:
-        maxLength: 50
-        type: string
-      email:
-        type: string
-      name:
-        maxLength: 100
-        minLength: 2
-        type: string
-      phone:
-        maxLength: 20
-        type: string
     required:
-    - name
+    - product_id
+    - quantity
     type: object
-  client.UpdateClientRequest:
-    properties:
-      address:
-        maxLength: 200
-        type: string
-      contact:
-        maxLength: 50
-        type: string
-      email:
-        type: string
-      name:
-        maxLength: 100
-        minLength: 2
-        type: string
-      phone:
-        maxLength: 20
-        type: string
-    type: object
-  fields.Response:
-    properties:
-      code:
-        type: integer
-      data: {}
-      msg:
-        type: string
-    type: object
-  material.CreateMaterialRequest:
-    properties:
-      description:
-        type: string
-      name:
-        maxLength: 100
-        minLength: 2
-        type: string
-      spec:
-        maxLength: 200
-        type: string
-      unit:
-        maxLength: 20
-        type: string
-    required:
-    - name
-    type: object
-  material.Material:
-    properties:
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      spec:
-        type: string
-      unit:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  material.UpdateMaterialRequest:
-    properties:
-      description:
-        type: string
-      name:
-        maxLength: 100
-        minLength: 2
-        type: string
-      spec:
-        maxLength: 200
-        type: string
-      unit:
-        maxLength: 20
-        type: string
-    type: object
-  order.Order:
-    properties:
-      client_id:
-        type: integer
-      created_at:
-        type: string
-      created_by:
-        type: integer
-      id:
-        type: integer
-      order_no:
-        type: string
-      product_id:
-        type: integer
-      quantity:
-        type: number
-      status:
-        type: string
-      total_price:
-        type: number
-      unit_price:
-        type: number
-      updated_at:
-        type: string
-    type: object
-  plan.Plan:
-    properties:
-      completed_at:
-        type: string
-      created_at:
-        type: string
-      created_by:
-        type: integer
-      id:
-        type: integer
-      order_id:
-        type: integer
-      plan_no:
-        type: string
-      product_id:
-        type: integer
-      quantity:
-        type: number
-      scheduled_at:
-        type: string
-      status:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  price.MaterialPrice:
-    properties:
-      created_at:
-        type: string
-      id:
-        type: integer
-      material_id:
-        type: integer
-      price:
-        type: number
-      quoted_at:
-        type: string
-      updated_at:
-        type: string
-      vendor_id:
-        type: integer
-    type: object
-  process.CreateProcessRequest:
-    properties:
-      description:
-        type: string
-      name:
-        maxLength: 100
-        minLength: 2
-        type: string
-    required:
-    - name
-    type: object
-  process.Process:
-    properties:
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  process.UpdateProcessRequest:
-    properties:
-      description:
-        type: string
-      name:
-        maxLength: 100
-        minLength: 2
-        type: string
-    type: object
-  product.MaterialConfig:
-    properties:
-      material_id:
-        type: integer
-      ratio:
-        type: number
-    type: object
-  product.ProcessConfig:
-    properties:
-      process_id:
-        type: integer
-      quantity:
-        type: number
-    type: object
-  product.Product:
-    properties:
-      created_at:
-        type: string
-      id:
-        type: integer
-      materials:
-        items:
-          $ref: '#/definitions/product.MaterialConfig'
-        type: array
-      name:
-        type: string
-      processes:
-        items:
-          $ref: '#/definitions/product.ProcessConfig'
-        type: array
-      status:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  search.SearchRequest:
-    properties:
-      fields:
-        description: 要搜索的字段列表，空=全部字段
-        items:
-          type: string
-        type: array
-      filters:
-        additionalProperties: true
-        description: '筛选条件 {"status": "已复核"}'
-        type: object
-      from:
-        description: 分页起始，默认0
-        type: integer
-      indices:
-        description: 要搜索的索引列表，空=全部索引
-        items:
-          type: string
-        type: array
-      query:
-        description: 搜索关键词
-        type: string
-      size:
-        description: 每页大小，默认20
-        type: integer
-      sort:
-        description: 排序
-        items:
-          $ref: '#/definitions/search.SortField'
-        type: array
-    type: object
-  search.SortField:
-    properties:
-      field:
-        description: 字段名
-        type: string
-      order:
-        description: asc/desc
-        type: string
-    type: object
-  user.ChangePasswordRequest:
+  application.ChangePasswordRequest:
     properties:
       current_password:
         type: string
@@ -331,7 +33,159 @@ definitions:
     required:
     - new_password
     type: object
-  user.CreateUserRequest:
+  application.ClientResponse:
+    properties:
+      address:
+        type: string
+      contact:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phone:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  application.CreateClientRequest:
+    properties:
+      address:
+        maxLength: 200
+        type: string
+      contact:
+        maxLength: 50
+        type: string
+      email:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      phone:
+        maxLength: 20
+        type: string
+    required:
+    - name
+    type: object
+  application.CreateMaterialRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      spec:
+        maxLength: 200
+        type: string
+      unit:
+        maxLength: 20
+        type: string
+    required:
+    - name
+    type: object
+  application.CreateOrderRequest:
+    properties:
+      client_id:
+        type: integer
+      created_by:
+        type: integer
+      order_no:
+        maxLength: 50
+        type: string
+      product_id:
+        type: integer
+      quantity:
+        type: number
+      unit_price:
+        minimum: 0
+        type: number
+    required:
+    - client_id
+    - created_by
+    - order_no
+    - product_id
+    - quantity
+    - unit_price
+    type: object
+  application.CreatePlanRequest:
+    properties:
+      created_by:
+        type: integer
+      order_id:
+        type: integer
+      plan_no:
+        maxLength: 50
+        type: string
+      product_id:
+        type: integer
+      quantity:
+        type: number
+      scheduled_at:
+        type: string
+    required:
+    - created_by
+    - order_id
+    - plan_no
+    - product_id
+    - quantity
+    type: object
+  application.CreateProcessRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  application.CreateProductRequest:
+    properties:
+      materials:
+        items:
+          $ref: '#/definitions/domain.MaterialConfig'
+        type: array
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      processes:
+        items:
+          $ref: '#/definitions/domain.ProcessConfig'
+        type: array
+    required:
+    - materials
+    - name
+    - processes
+    type: object
+  application.CreateSupplierRequest:
+    properties:
+      address:
+        maxLength: 200
+        type: string
+      contact:
+        maxLength: 50
+        type: string
+      email:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      phone:
+        maxLength: 20
+        type: string
+    required:
+    - name
+    type: object
+  application.CreateUserRequest:
     properties:
       email:
         type: string
@@ -357,7 +211,530 @@ definitions:
     - role
     - username
     type: object
-  user.UpdateUserRequest:
+  application.CreateUserResponse:
+    properties:
+      login_id:
+        type: string
+      message:
+        type: string
+      password:
+        type: string
+      user:
+        $ref: '#/definitions/application.UserResponse'
+    type: object
+  application.CustomerOptionResponse:
+    properties:
+      customerName:
+        description: 客户名称
+        example: 客户A
+        type: string
+      customerNo:
+        description: 客户编号
+        example: CS0678
+        type: string
+    type: object
+  application.DateRange:
+    properties:
+      end:
+        description: 结束日期 YYYY-MM-DD，可选
+        example: "2024-12-31"
+        type: string
+      start:
+        description: 开始日期 YYYY-MM-DD，可选
+        example: "2024-01-01"
+        type: string
+    type: object
+  application.IndexInfoDTO:
+    properties:
+      fields:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  application.IndexListResponse:
+    properties:
+      indices:
+        items:
+          $ref: '#/definitions/application.IndexInfoDTO'
+        type: array
+    type: object
+  application.LoginRequest:
+    properties:
+      loginId:
+        type: string
+      password:
+        minLength: 3
+        type: string
+    required:
+    - loginId
+    - password
+    type: object
+  application.LoginResponse:
+    properties:
+      accessToken:
+        description: 改为小驼峰
+        type: string
+      refreshToken:
+        description: 新增
+        type: string
+      requirePasswordChange:
+        description: 改为小驼峰
+        type: boolean
+      role:
+        description: 扁平化，直接返回角色
+        type: string
+      username:
+        description: 扁平化，直接返回用户名
+        type: string
+    type: object
+  application.MaterialListResponse:
+    properties:
+      materials:
+        items:
+          $ref: '#/definitions/application.MaterialResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  application.MaterialResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      spec:
+        type: string
+      unit:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  application.MeterDimensionResponse:
+    properties:
+      orderCount:
+        description: 涉及订单数
+        example: 80
+        type: integer
+      returnRate:
+        description: 退货率（百分比字符串或"N/A"）
+        example: 10.00%
+        type: string
+      returnedMeters:
+        description: 退货总米数
+        example: 5000
+        type: number
+      totalMeters:
+        description: 订单总米数
+        example: 50000
+        type: number
+    type: object
+  application.OrderListResponse:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/application.OrderResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  application.OrderResponse:
+    properties:
+      client_id:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      id:
+        type: integer
+      order_no:
+        type: string
+      product_id:
+        type: integer
+      quantity:
+        type: number
+      status:
+        type: string
+      total_price:
+        type: number
+      unit_price:
+        type: number
+      updated_at:
+        type: string
+    type: object
+  application.PlanListResponse:
+    properties:
+      plans:
+        items:
+          $ref: '#/definitions/application.PlanResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  application.PlanResponse:
+    properties:
+      completed_at:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      id:
+        type: integer
+      order_id:
+        type: integer
+      plan_no:
+        type: string
+      product_id:
+        type: integer
+      quantity:
+        type: number
+      scheduled_at:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  application.ProcessListResponse:
+    properties:
+      processes:
+        items:
+          $ref: '#/definitions/application.ProcessResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  application.ProcessResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  application.ProductListResponse:
+    properties:
+      products:
+        items:
+          $ref: '#/definitions/application.ProductResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  application.ProductResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      materials:
+        items:
+          $ref: '#/definitions/domain.MaterialConfig'
+        type: array
+      name:
+        type: string
+      processes:
+        items:
+          $ref: '#/definitions/domain.ProcessConfig'
+        type: array
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  application.QueryConditionsResponse:
+    properties:
+      customerName:
+        description: 客户名称
+        example: 客户A
+        type: string
+      customerNo:
+        description: 客户编号
+        example: CS0678
+        type: string
+      dateRange:
+        allOf:
+        - $ref: '#/definitions/application.DateRange'
+        description: 日期范围
+    type: object
+  application.QuoteRequest:
+    properties:
+      price:
+        type: number
+      supplier_id:
+        type: integer
+      target_id:
+        type: integer
+    required:
+    - price
+    - supplier_id
+    - target_id
+    type: object
+  application.RefreshTokenRequest:
+    properties:
+      refreshToken:
+        type: string
+    required:
+    - refreshToken
+    type: object
+  application.RefreshTokenResponse:
+    properties:
+      accessToken:
+        type: string
+    type: object
+  application.ReturnAnalysisRequest:
+    properties:
+      customerNo:
+        description: 客户编号，空表示所有客户
+        example: CS0678
+        type: string
+      dateRange:
+        allOf:
+        - $ref: '#/definitions/application.DateRange'
+        description: 日期范围，start和end都不传表示查询全部时间
+    type: object
+  application.ReturnAnalysisResponse:
+    properties:
+      amountStats:
+        allOf:
+        - $ref: '#/definitions/application.AmountDimensionResponse'
+        description: 金额统计
+      meterStats:
+        allOf:
+        - $ref: '#/definitions/application.MeterDimensionResponse'
+        description: 米数统计
+      queryConditions:
+        allOf:
+        - $ref: '#/definitions/application.QueryConditionsResponse'
+        description: 查询条件回显
+      totalOrders:
+        description: 总订单数
+        example: 100
+        type: integer
+      weightStats:
+        allOf:
+        - $ref: '#/definitions/application.WeightDimensionResponse'
+        description: 重量统计
+    type: object
+  application.SearchRequest:
+    properties:
+      fields:
+        items:
+          type: string
+        type: array
+      filters:
+        additionalProperties: true
+        type: object
+      from:
+        type: integer
+      indices:
+        items:
+          type: string
+        type: array
+      query:
+        type: string
+      size:
+        type: integer
+      sort:
+        items:
+          $ref: '#/definitions/application.SortFieldDTO'
+        type: array
+    type: object
+  application.SearchResponse:
+    properties:
+      max_score:
+        type: number
+      results:
+        items:
+          $ref: '#/definitions/application.SearchResultDTO'
+        type: array
+      took:
+        type: integer
+      total:
+        type: integer
+    type: object
+  application.SearchResultDTO:
+    properties:
+      highlight:
+        additionalProperties:
+          items:
+            type: string
+          type: array
+        type: object
+      id:
+        type: string
+      index:
+        type: string
+      score:
+        type: number
+      source:
+        additionalProperties: true
+        type: object
+      type:
+        type: string
+    type: object
+  application.SortFieldDTO:
+    properties:
+      field:
+        type: string
+      order:
+        type: string
+    type: object
+  application.SupplierListResponse:
+    properties:
+      suppliers:
+        items:
+          $ref: '#/definitions/application.SupplierResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  application.SupplierResponse:
+    properties:
+      address:
+        type: string
+      contact:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phone:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  application.UpdateClientRequest:
+    properties:
+      address:
+        maxLength: 200
+        type: string
+      contact:
+        maxLength: 50
+        type: string
+      email:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      phone:
+        maxLength: 20
+        type: string
+    type: object
+  application.UpdateMaterialRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      spec:
+        maxLength: 200
+        type: string
+      unit:
+        maxLength: 20
+        type: string
+    type: object
+  application.UpdateOrderRequest:
+    properties:
+      quantity:
+        type: number
+      status:
+        enum:
+        - pending
+        - confirmed
+        - production
+        - completed
+        - cancelled
+        type: string
+      unit_price:
+        minimum: 0
+        type: number
+    type: object
+  application.UpdatePlanRequest:
+    properties:
+      completed_at:
+        type: string
+      quantity:
+        type: number
+      status:
+        enum:
+        - planned
+        - in_progress
+        - completed
+        - cancelled
+        type: string
+    type: object
+  application.UpdateProcessRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    type: object
+  application.UpdateProductRequest:
+    properties:
+      materials:
+        items:
+          $ref: '#/definitions/domain.MaterialConfig'
+        type: array
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      processes:
+        items:
+          $ref: '#/definitions/domain.ProcessConfig'
+        type: array
+      status:
+        enum:
+        - draft
+        - submitted
+        - approved
+        - rejected
+        type: string
+    type: object
+  application.UpdateSupplierRequest:
+    properties:
+      address:
+        maxLength: 200
+        type: string
+      contact:
+        maxLength: 50
+        type: string
+      email:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      phone:
+        maxLength: 20
+        type: string
+    type: object
+  application.UpdateUserRequest:
     properties:
       email:
         type: string
@@ -381,7 +758,16 @@ definitions:
         minLength: 2
         type: string
     type: object
-  user.UserResponse:
+  application.UserListResponse:
+    properties:
+      total:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/application.UserResponse'
+        type: array
+    type: object
+  application.UserResponse:
     properties:
       created_at:
         type: string
@@ -402,7 +788,129 @@ definitions:
       username:
         type: string
     type: object
-host: localhost:8080
+  application.WeightDimensionResponse:
+    properties:
+      orderCount:
+        description: 涉及订单数
+        example: 30
+        type: integer
+      returnRate:
+        description: 退货率（百分比字符串或"N/A"）
+        example: 10.00%
+        type: string
+      returnedWeight:
+        description: 退货总重量
+        example: 2000
+        type: number
+      totalWeight:
+        description: 订单总重量（公斤）
+        example: 20000
+        type: number
+    type: object
+  domain.CostBreakdown:
+    properties:
+      materials:
+        items:
+          $ref: '#/definitions/domain.MaterialCostItem'
+        type: array
+      processes:
+        items:
+          $ref: '#/definitions/domain.ProcessCostItem'
+        type: array
+    type: object
+  domain.CostResult:
+    properties:
+      breakdown:
+        $ref: '#/definitions/domain.CostBreakdown'
+      material_cost:
+        type: number
+      process_cost:
+        type: number
+      product_id:
+        type: integer
+      product_name:
+        type: string
+      quantity:
+        type: number
+      total_cost:
+        type: number
+      unit_cost:
+        type: number
+    type: object
+  domain.MaterialConfig:
+    properties:
+      material_id:
+        type: integer
+      ratio:
+        description: 占比（总和必须为1）
+        type: number
+    type: object
+  domain.MaterialCostItem:
+    properties:
+      cost:
+        type: number
+      material_id:
+        type: integer
+      material_name:
+        type: string
+      price:
+        type: number
+      ratio:
+        type: number
+    type: object
+  domain.ProcessConfig:
+    properties:
+      process_id:
+        type: integer
+      quantity:
+        description: 数量（可选）
+        type: number
+    type: object
+  domain.ProcessCostItem:
+    properties:
+      cost:
+        type: number
+      price:
+        type: number
+      process_id:
+        type: integer
+      process_name:
+        type: string
+    type: object
+  domain.SupplierPrice:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      price:
+        format: float64
+        type: number
+      quotedAt:
+        type: string
+      supplierID:
+        type: integer
+      targetID:
+        type: integer
+      targetType:
+        $ref: '#/definitions/domain.TargetType'
+    type: object
+  domain.TargetType:
+    enum:
+    - material
+    - process
+    type: string
+    x-enum-varnames:
+    - TargetTypeMaterial
+    - TargetTypeProcess
+  fields.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      msg:
+        type: string
+    type: object
 info:
   contact: {}
   description: 后台管理系统的API文档
@@ -420,55 +928,57 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/auth.LoginRequest'
+          $ref: '#/definitions/application.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: 登录成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/fields.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/auth.LoginResponse'
-              type: object
-        "400":
           description: 请求参数错误
-          schema:
-            $ref: '#/definitions/fields.Response'
-        "401":
-          description: 认证失败
           schema:
             $ref: '#/definitions/fields.Response'
       summary: 用户登录
       tags:
       - 认证
-  /client:
-    get:
+  /auth/logout:
+    post:
       consumes:
       - application/json
-      description: 获取所有客户列表
+      description: 用户登出（前端清除 Token）
       produces:
       - application/json
       responses:
         "200":
-          description: 获取成功
+          description: 登出成功
           schema:
-            items:
-              $ref: '#/definitions/client.Client'
-            type: array
-        "500":
-          description: 服务器错误
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/fields.Response'
       security:
       - Bearer: []
-      summary: 获取客户列表
+      summary: 用户登出
       tags:
-      - 客户管理
+      - 认证
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 使用 Refresh Token 获取新的 Access Token
+      parameters:
+      - description: Refresh Token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token 无效
+          schema:
+            $ref: '#/definitions/fields.Response'
+      summary: 刷新访问令牌
+      tags:
+      - 认证
+  /client:
     post:
       consumes:
       - application/json
@@ -479,14 +989,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/client.CreateClientRequest'
+          $ref: '#/definitions/application.CreateClientRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 创建成功
           schema:
-            $ref: '#/definitions/client.Client'
+            $ref: '#/definitions/application.ClientResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -551,7 +1061,7 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/client.Client'
+            $ref: '#/definitions/application.ClientResponse'
         "404":
           description: 客户不存在
           schema:
@@ -578,7 +1088,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/client.UpdateClientRequest'
+          $ref: '#/definitions/application.UpdateClientRequest'
       produces:
       - application/json
       responses:
@@ -610,15 +1120,24 @@ paths:
       consumes:
       - application/json
       description: 获取所有材料列表
+      parameters:
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: 偏移量
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: 获取成功
           schema:
-            items:
-              $ref: '#/definitions/material.Material'
-            type: array
+            $ref: '#/definitions/application.MaterialListResponse'
         "500":
           description: 服务器错误
           schema:
@@ -640,14 +1159,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/material.CreateMaterialRequest'
+          $ref: '#/definitions/application.CreateMaterialRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 创建成功
           schema:
-            $ref: '#/definitions/material.Material'
+            $ref: '#/definitions/application.MaterialResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -665,6 +1184,67 @@ paths:
       summary: 创建材料
       tags:
       - 材料管理
+  /material/:id/price:
+    get:
+      consumes:
+      - application/json
+      description: 查询指定材料的最低价格和最高价格
+      parameters:
+      - description: 材料ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 价格信息
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 查询材料价格
+      tags:
+      - 材料价格管理
+  /material/:id/price/history:
+    get:
+      consumes:
+      - application/json
+      description: 查询指定材料的价格历史记录
+      parameters:
+      - description: 材料ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 价格历史记录
+          schema:
+            items:
+              $ref: '#/definitions/domain.SupplierPrice'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 查询价格历史
+      tags:
+      - 材料价格管理
   /material/{id}:
     delete:
       consumes:
@@ -712,7 +1292,7 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/material.Material'
+            $ref: '#/definitions/application.MaterialResponse'
         "404":
           description: 材料不存在
           schema:
@@ -739,7 +1319,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/material.UpdateMaterialRequest'
+          $ref: '#/definitions/application.UpdateMaterialRequest'
       produces:
       - application/json
       responses:
@@ -766,69 +1346,6 @@ paths:
       summary: 更新材料信息
       tags:
       - 材料管理
-  /material/price/{id}:
-    get:
-      consumes:
-      - application/json
-      description: 查询指定材料的最低价格和最高价格
-      parameters:
-      - description: 材料ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 价格信息
-          schema:
-            additionalProperties:
-              format: float64
-              type: number
-            type: object
-        "500":
-          description: 服务器错误
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - Bearer: []
-      summary: 查询材料价格
-      tags:
-      - 材料价格管理
-  /material/price/{id}/history:
-    get:
-      consumes:
-      - application/json
-      description: 查询指定材料的价格历史记录
-      parameters:
-      - description: 材料ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 价格历史记录
-          schema:
-            items:
-              $ref: '#/definitions/price.MaterialPrice'
-            type: array
-        "500":
-          description: 服务器错误
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - Bearer: []
-      summary: 查询价格历史
-      tags:
-      - 材料价格管理
   /material/price/quote:
     post:
       consumes:
@@ -840,15 +1357,7 @@ paths:
         name: request
         required: true
         schema:
-          properties:
-            material_id:
-              type: integer
-            price:
-              format: float64
-              type: number
-            vendor_id:
-              type: integer
-          type: object
+          $ref: '#/definitions/application.QuoteRequest'
       produces:
       - application/json
       responses:
@@ -880,15 +1389,24 @@ paths:
       consumes:
       - application/json
       description: 获取所有订单列表
+      parameters:
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: 偏移量
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: 获取成功
           schema:
-            items:
-              $ref: '#/definitions/order.Order'
-            type: array
+            $ref: '#/definitions/application.OrderListResponse'
         "500":
           description: 服务器错误
           schema:
@@ -903,21 +1421,21 @@ paths:
     post:
       consumes:
       - application/json
-      description: 创建新的订单
+      description: 创建新的订单信息
       parameters:
       - description: 订单信息
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/order.Order'
+          $ref: '#/definitions/application.CreateOrderRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 创建成功
           schema:
-            $ref: '#/definitions/order.Order'
+            $ref: '#/definitions/application.OrderResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -982,7 +1500,7 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/order.Order'
+            $ref: '#/definitions/application.OrderResponse'
         "404":
           description: 订单不存在
           schema:
@@ -1009,8 +1527,7 @@ paths:
         name: request
         required: true
         schema:
-          additionalProperties: true
-          type: object
+          $ref: '#/definitions/application.UpdateOrderRequest'
       produces:
       - application/json
       responses:
@@ -1034,7 +1551,7 @@ paths:
             type: object
       security:
       - Bearer: []
-      summary: 更新订单信息
+      summary: 更新订单
       tags:
       - 订单管理
   /plan:
@@ -1042,15 +1559,24 @@ paths:
       consumes:
       - application/json
       description: 获取所有生产计划列表
+      parameters:
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: 偏移量
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: 获取成功
           schema:
-            items:
-              $ref: '#/definitions/plan.Plan'
-            type: array
+            $ref: '#/definitions/application.PlanListResponse'
         "500":
           description: 服务器错误
           schema:
@@ -1059,27 +1585,27 @@ paths:
             type: object
       security:
       - Bearer: []
-      summary: 获取生产计划列表
+      summary: 获取计划列表
       tags:
-      - 生产计划管理
+      - 计划管理
     post:
       consumes:
       - application/json
       description: 创建新的生产计划
       parameters:
-      - description: 生产计划信息
+      - description: 计划信息
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/plan.Plan'
+          $ref: '#/definitions/application.CreatePlanRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 创建成功
           schema:
-            $ref: '#/definitions/plan.Plan'
+            $ref: '#/definitions/application.PlanResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1094,16 +1620,16 @@ paths:
             type: object
       security:
       - Bearer: []
-      summary: 创建生产计划
+      summary: 创建计划
       tags:
-      - 生产计划管理
+      - 计划管理
   /plan/{id}:
     delete:
       consumes:
       - application/json
-      description: 根据生产计划ID删除
+      description: 根据计划ID删除计划
       parameters:
-      - description: 生产计划ID
+      - description: 计划ID
         in: path
         name: id
         required: true
@@ -1125,15 +1651,15 @@ paths:
             type: object
       security:
       - Bearer: []
-      summary: 删除生产计划
+      summary: 删除计划
       tags:
-      - 生产计划管理
+      - 计划管理
     get:
       consumes:
       - application/json
-      description: 根据生产计划ID获取详细信息
+      description: 根据计划ID获取计划详细信息
       parameters:
-      - description: 生产计划ID
+      - description: 计划ID
         in: path
         name: id
         required: true
@@ -1144,35 +1670,34 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/plan.Plan'
+            $ref: '#/definitions/application.PlanResponse'
         "404":
-          description: 生产计划不存在
+          description: 计划不存在
           schema:
             additionalProperties:
               type: string
             type: object
       security:
       - Bearer: []
-      summary: 获取生产计划详情
+      summary: 获取计划详情
       tags:
-      - 生产计划管理
+      - 计划管理
     put:
       consumes:
       - application/json
-      description: 根据生产计划ID更新信息
+      description: 根据计划ID更新计划信息
       parameters:
-      - description: 生产计划ID
+      - description: 计划ID
         in: path
         name: id
         required: true
         type: integer
-      - description: 更新的生产计划信息
+      - description: 更新的计划信息
         in: body
         name: request
         required: true
         schema:
-          additionalProperties: true
-          type: object
+          $ref: '#/definitions/application.UpdatePlanRequest'
       produces:
       - application/json
       responses:
@@ -1196,23 +1721,32 @@ paths:
             type: object
       security:
       - Bearer: []
-      summary: 更新生产计划
+      summary: 更新计划
       tags:
-      - 生产计划管理
+      - 计划管理
   /process:
     get:
       consumes:
       - application/json
       description: 获取所有工序列表
+      parameters:
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: 偏移量
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: 获取成功
           schema:
-            items:
-              $ref: '#/definitions/process.Process'
-            type: array
+            $ref: '#/definitions/application.ProcessListResponse'
         "500":
           description: 服务器错误
           schema:
@@ -1234,14 +1768,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/process.CreateProcessRequest'
+          $ref: '#/definitions/application.CreateProcessRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 创建成功
           schema:
-            $ref: '#/definitions/process.Process'
+            $ref: '#/definitions/application.ProcessResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1259,6 +1793,67 @@ paths:
       summary: 创建工序
       tags:
       - 工序管理
+  /process/:id/price:
+    get:
+      consumes:
+      - application/json
+      description: 查询指定工序的最低价格和最高价格
+      parameters:
+      - description: 工序ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 价格信息
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 查询工序价格
+      tags:
+      - 工序价格管理
+  /process/:id/price/history:
+    get:
+      consumes:
+      - application/json
+      description: 查询指定工序的价格历史记录
+      parameters:
+      - description: 工序ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 价格历史记录
+          schema:
+            items:
+              $ref: '#/definitions/domain.SupplierPrice'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 查询价格历史
+      tags:
+      - 工序价格管理
   /process/{id}:
     delete:
       consumes:
@@ -1306,7 +1901,7 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/process.Process'
+            $ref: '#/definitions/application.ProcessResponse'
         "404":
           description: 工序不存在
           schema:
@@ -1333,7 +1928,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/process.UpdateProcessRequest'
+          $ref: '#/definitions/application.UpdateProcessRequest'
       produces:
       - application/json
       responses:
@@ -1357,23 +1952,70 @@ paths:
             type: object
       security:
       - Bearer: []
-      summary: 更新工序信息
+      summary: 更新工序
       tags:
       - 工序管理
+  /process/price/quote:
+    post:
+      consumes:
+      - application/json
+      description: 厂商为指定工序提交报价
+      parameters:
+      - description: 报价信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.QuoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 报价成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 厂商报价
+      tags:
+      - 工序价格管理
   /product:
     get:
       consumes:
       - application/json
       description: 获取所有产品列表
+      parameters:
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: 偏移量
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: 获取成功
           schema:
-            items:
-              $ref: '#/definitions/product.Product'
-            type: array
+            $ref: '#/definitions/application.ProductListResponse'
         "500":
           description: 服务器错误
           schema:
@@ -1395,14 +2037,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/product.Product'
+          $ref: '#/definitions/application.CreateProductRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 创建成功
           schema:
-            $ref: '#/definitions/product.Product'
+            $ref: '#/definitions/application.ProductResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1467,7 +2109,7 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/product.Product'
+            $ref: '#/definitions/application.ProductResponse'
         "404":
           description: 产品不存在
           schema:
@@ -1494,8 +2136,7 @@ paths:
         name: request
         required: true
         schema:
-          additionalProperties: true
-          type: object
+          $ref: '#/definitions/application.UpdateProductRequest'
       produces:
       - application/json
       responses:
@@ -1533,22 +2174,14 @@ paths:
         name: request
         required: true
         schema:
-          properties:
-            product_id:
-              type: integer
-            quantity:
-              format: float64
-              type: number
-            use_min_price:
-              type: boolean
-          type: object
+          $ref: '#/definitions/application.CalculateCostRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 成本计算结果
           schema:
-            type: object
+            $ref: '#/definitions/domain.CostResult'
         "400":
           description: 请求参数错误
           schema:
@@ -1566,6 +2199,65 @@ paths:
       summary: 计算产品成本
       tags:
       - 产品管理
+  /return-analysis/analysis:
+    post:
+      consumes:
+      - application/json
+      description: 获取指定客户和时间范围内的退货分析数据，包括米数、重量、金额三个维度的统计。customerNo 为空时查询所有客户；dateRange
+        的 start 和 end 都不传时查询全部时间，必须同时传或同时不传
+      parameters:
+      - description: 查询参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.ReturnAnalysisRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 退货分析结果
+          schema:
+            $ref: '#/definitions/application.ReturnAnalysisResponse'
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取退货分析数据
+      tags:
+      - 退货分析
+  /return-analysis/customers:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有有完成订单的客户列表，用于前端下拉选择
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 客户列表
+          schema:
+            items:
+              $ref: '#/definitions/application.CustomerOptionResponse'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取客户下拉列表
+      tags:
+      - 退货分析
   /search:
     post:
       consumes:
@@ -1577,14 +2269,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/search.SearchRequest'
+          $ref: '#/definitions/application.SearchRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 搜索结果
           schema:
-            type: object
+            $ref: '#/definitions/application.SearchResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1618,14 +2310,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/search.SearchRequest'
+          $ref: '#/definitions/application.SearchRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 搜索结果
           schema:
-            type: object
+            $ref: '#/definitions/application.SearchResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1654,27 +2346,205 @@ paths:
         "200":
           description: 索引列表
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/application.IndexListResponse'
       security:
       - Bearer: []
       summary: 获取所有可用索引
       tags:
       - 搜索
-  /user:
+  /supplier:
     get:
       consumes:
       - application/json
-      description: 获取所有用户列表
+      description: 获取所有供应商列表
+      parameters:
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: 偏移量
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: 获取成功
           schema:
-            items:
-              $ref: '#/definitions/user.UserResponse'
-            type: array
+            $ref: '#/definitions/application.SupplierListResponse'
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取供应商列表
+      tags:
+      - 供应商管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的供应商信息
+      parameters:
+      - description: 供应商信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.CreateSupplierRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/application.SupplierResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 创建供应商
+      tags:
+      - 供应商管理
+  /supplier/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据供应商ID删除供应商
+      parameters:
+      - description: 供应商ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 删除供应商
+      tags:
+      - 供应商管理
+    get:
+      consumes:
+      - application/json
+      description: 根据供应商ID获取供应商详细信息
+      parameters:
+      - description: 供应商ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/application.SupplierResponse'
+        "404":
+          description: 供应商不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取供应商详情
+      tags:
+      - 供应商管理
+    put:
+      consumes:
+      - application/json
+      description: 根据供应商ID更新供应商信息
+      parameters:
+      - description: 供应商ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新的供应商信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.UpdateSupplierRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新供应商信息
+      tags:
+      - 供应商管理
+  /user:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有用户列表
+      parameters:
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: 偏移量
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/application.UserListResponse'
         "500":
           description: 服务器错误
           schema:
@@ -1696,15 +2566,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/user.CreateUserRequest'
+          $ref: '#/definitions/application.CreateUserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 创建成功
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/application.CreateUserResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1769,7 +2638,7 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/user.UserResponse'
+            $ref: '#/definitions/application.UserResponse'
         "404":
           description: 用户不存在
           schema:
@@ -1796,7 +2665,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/user.UpdateUserRequest'
+          $ref: '#/definitions/application.UpdateUserRequest'
       produces:
       - application/json
       responses:
@@ -1834,7 +2703,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/user.ChangePasswordRequest'
+          $ref: '#/definitions/application.ChangePasswordRequest'
       produces:
       - application/json
       responses:

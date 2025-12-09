@@ -13,6 +13,8 @@ WORKDIR /app
 # 复制所有文件
 COPY . /app
 
+ENV CI=true
+
 # 安装依赖
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 

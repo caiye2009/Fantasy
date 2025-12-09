@@ -8,7 +8,6 @@ import (
 // @title           后台管理系统 API
 // @version         1.0
 // @description     后台管理系统的API文档
-// @host            localhost:8080
 // @BasePath        /api/v1
 // @securityDefinitions.apikey Bearer
 // @in header

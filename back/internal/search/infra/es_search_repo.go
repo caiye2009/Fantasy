@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	
+
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
-	
+
 	"back/internal/search/domain"
+	"back/pkg/fields"
 )
 
 // ESSearchRepo Elasticsearch 搜索仓储实现
@@ -47,26 +48,29 @@ func (r *ESSearchRepo) buildESQuery(query *domain.SearchQuery) map[string]interf
 	
 	// 添加关键词搜索
 	if query.Keyword != "" {
+		// 转换搜索字段为 snake_case
+		searchFields := r.convertFieldsToSnakeCase(query.GetFields())
 		boolQuery["must"] = append(
 			boolQuery["must"].([]interface{}),
 			map[string]interface{}{
 				"multi_match": map[string]interface{}{
 					"query":     query.Keyword,
-					"fields":    query.GetFields(),
+					"fields":    searchFields,
 					"type":      "best_fields",
 					"fuzziness": "AUTO",
 				},
 			},
 		)
 	}
-	
-	// 添加筛选条件
+
+	// 添加筛选条件（转换字段名为 snake_case）
 	for field, value := range query.Filters {
+		snakeField := fields.ToSnakeCase(field)
 		boolQuery["filter"] = append(
 			boolQuery["filter"].([]interface{}),
 			map[string]interface{}{
 				"term": map[string]interface{}{
-					field: value,
+					snakeField: value,
 				},
 			},
 		)
@@ -83,12 +87,13 @@ func (r *ESSearchRepo) buildESQuery(query *domain.SearchQuery) map[string]interf
 		}
 	}
 	
-	// 添加排序
+	// 添加排序（转换字段名为 snake_case）
 	if len(query.Sort) > 0 {
 		sortArray := make([]map[string]interface{}, 0, len(query.Sort))
 		for _, s := range query.Sort {
+			snakeField := fields.ToSnakeCase(s.Field)
 			sortArray = append(sortArray, map[string]interface{}{
-				s.Field: map[string]interface{}{
+				snakeField: map[string]interface{}{
 					"order": s.Order,
 				},
 			})
@@ -107,6 +112,26 @@ func (r *ESSearchRepo) buildESQuery(query *domain.SearchQuery) map[string]interf
 	}
 	
 	return esQuery
+}
+
+// convertFieldsToSnakeCase 转换字段数组为 snake_case
+// 处理带权重的字段，如 "name^5" -> "name^5"（保留权重）
+func (r *ESSearchRepo) convertFieldsToSnakeCase(fieldList []string) []string {
+	result := make([]string, len(fieldList))
+	for i, field := range fieldList {
+		// 检查是否有权重（如 "name^5"）
+		if idx := strings.IndexByte(field, '^'); idx > 0 {
+			// 分离字段名和权重
+			fieldName := field[:idx]
+			boost := field[idx:]
+			// 转换字段名，保留权重
+			result[i] = fields.ToSnakeCase(fieldName) + boost
+		} else {
+			// 普通字段，直接转换
+			result[i] = fields.ToSnakeCase(field)
+		}
+	}
+	return result
 }
 
 // executeSearch 执行搜索

@@ -35,37 +35,75 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.LoginRequest"
+                            "$ref": "#/definitions/application.LoginRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "登录成功",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/fields.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/auth.LoginResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
                         "description": "请求参数错误",
                         "schema": {
                             "$ref": "#/definitions/fields.Response"
                         }
-                    },
-                    "401": {
-                        "description": "认证失败",
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "用户登出（前端清除 Token）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "用户登出",
+                "responses": {
+                    "200": {
+                        "description": "登出成功",
+                        "schema": {
+                            "$ref": "#/definitions/fields.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "使用 Refresh Token 获取新的 Access Token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "刷新访问令牌",
+                "parameters": [
+                    {
+                        "description": "Refresh Token",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.RefreshTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token 无效",
                         "schema": {
                             "$ref": "#/definitions/fields.Response"
                         }
@@ -74,44 +112,6 @@ const docTemplate = `{
             }
         },
         "/client": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "获取所有客户列表",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "客户管理"
-                ],
-                "summary": "获取客户列表",
-                "responses": {
-                    "200": {
-                        "description": "获取成功",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/client.Client"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
             "post": {
                 "security": [
                     {
@@ -136,7 +136,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/client.CreateClientRequest"
+                            "$ref": "#/definitions/application.CreateClientRequest"
                         }
                     }
                 ],
@@ -144,7 +144,7 @@ const docTemplate = `{
                     "200": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/client.Client"
+                            "$ref": "#/definitions/application.ClientResponse"
                         }
                     },
                     "400": {
@@ -199,7 +199,7 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/client.Client"
+                            "$ref": "#/definitions/application.ClientResponse"
                         }
                     },
                     "404": {
@@ -244,7 +244,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/client.UpdateClientRequest"
+                            "$ref": "#/definitions/application.UpdateClientRequest"
                         }
                     }
                 ],
@@ -344,14 +344,27 @@ const docTemplate = `{
                     "材料管理"
                 ],
                 "summary": "获取材料列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "偏移量",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/material.Material"
-                            }
+                            "$ref": "#/definitions/application.MaterialListResponse"
                         }
                     },
                     "500": {
@@ -389,7 +402,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/material.CreateMaterialRequest"
+                            "$ref": "#/definitions/application.CreateMaterialRequest"
                         }
                     }
                 ],
@@ -397,7 +410,7 @@ const docTemplate = `{
                     "200": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/material.Material"
+                            "$ref": "#/definitions/application.MaterialResponse"
                         }
                     },
                     "400": {
@@ -406,6 +419,102 @@ const docTemplate = `{
                             "type": "object",
                             "additionalProperties": {
                                 "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/material/:id/price": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "查询指定材料的最低价格和最高价格",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "材料价格管理"
+                ],
+                "summary": "查询材料价格",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "材料ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "价格信息",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/material/:id/price/history": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "查询指定材料的价格历史记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "材料价格管理"
+                ],
+                "summary": "查询价格历史",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "材料ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "价格历史记录",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.SupplierPrice"
                             }
                         }
                     },
@@ -446,19 +555,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
-                            "properties": {
-                                "material_id": {
-                                    "type": "integer"
-                                },
-                                "price": {
-                                    "type": "number",
-                                    "format": "float64"
-                                },
-                                "vendor_id": {
-                                    "type": "integer"
-                                }
-                            }
+                            "$ref": "#/definitions/application.QuoteRequest"
                         }
                     }
                 ],
@@ -478,105 +575,6 @@ const docTemplate = `{
                             "type": "object",
                             "additionalProperties": {
                                 "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/material/price/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "查询指定材料的最低价格和最高价格",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "材料价格管理"
-                ],
-                "summary": "查询材料价格",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "材料ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "价格信息",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "number",
-                                "format": "float64"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/material/price/{id}/history": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "查询指定材料的价格历史记录",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "材料价格管理"
-                ],
-                "summary": "查询价格历史",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "材料ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "价格历史记录",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/price.MaterialPrice"
                             }
                         }
                     },
@@ -623,7 +621,7 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/material.Material"
+                            "$ref": "#/definitions/application.MaterialResponse"
                         }
                     },
                     "404": {
@@ -668,7 +666,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/material.UpdateMaterialRequest"
+                            "$ref": "#/definitions/application.UpdateMaterialRequest"
                         }
                     }
                 ],
@@ -768,14 +766,27 @@ const docTemplate = `{
                     "订单管理"
                 ],
                 "summary": "获取订单列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "偏移量",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/order.Order"
-                            }
+                            "$ref": "#/definitions/application.OrderListResponse"
                         }
                     },
                     "500": {
@@ -795,7 +806,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "创建新的订单",
+                "description": "创建新的订单信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -813,7 +824,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/order.Order"
+                            "$ref": "#/definitions/application.CreateOrderRequest"
                         }
                     }
                 ],
@@ -821,7 +832,7 @@ const docTemplate = `{
                     "200": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/order.Order"
+                            "$ref": "#/definitions/application.OrderResponse"
                         }
                     },
                     "400": {
@@ -876,7 +887,7 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/order.Order"
+                            "$ref": "#/definitions/application.OrderResponse"
                         }
                     },
                     "404": {
@@ -906,7 +917,7 @@ const docTemplate = `{
                 "tags": [
                     "订单管理"
                 ],
-                "summary": "更新订单信息",
+                "summary": "更新订单",
                 "parameters": [
                     {
                         "type": "integer",
@@ -921,8 +932,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/application.UpdateOrderRequest"
                         }
                     }
                 ],
@@ -1019,17 +1029,30 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "生产计划管理"
+                    "计划管理"
                 ],
-                "summary": "获取生产计划列表",
+                "summary": "获取计划列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "偏移量",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/plan.Plan"
-                            }
+                            "$ref": "#/definitions/application.PlanListResponse"
                         }
                     },
                     "500": {
@@ -1057,17 +1080,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "生产计划管理"
+                    "计划管理"
                 ],
-                "summary": "创建生产计划",
+                "summary": "创建计划",
                 "parameters": [
                     {
-                        "description": "生产计划信息",
+                        "description": "计划信息",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/plan.Plan"
+                            "$ref": "#/definitions/application.CreatePlanRequest"
                         }
                     }
                 ],
@@ -1075,7 +1098,7 @@ const docTemplate = `{
                     "200": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/plan.Plan"
+                            "$ref": "#/definitions/application.PlanResponse"
                         }
                     },
                     "400": {
@@ -1106,7 +1129,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "根据生产计划ID获取详细信息",
+                "description": "根据计划ID获取计划详细信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -1114,13 +1137,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "生产计划管理"
+                    "计划管理"
                 ],
-                "summary": "获取生产计划详情",
+                "summary": "获取计划详情",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "生产计划ID",
+                        "description": "计划ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1130,11 +1153,11 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/plan.Plan"
+                            "$ref": "#/definitions/application.PlanResponse"
                         }
                     },
                     "404": {
-                        "description": "生产计划不存在",
+                        "description": "计划不存在",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1150,7 +1173,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "根据生产计划ID更新信息",
+                "description": "根据计划ID更新计划信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -1158,25 +1181,24 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "生产计划管理"
+                    "计划管理"
                 ],
-                "summary": "更新生产计划",
+                "summary": "更新计划",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "生产计划ID",
+                        "description": "计划ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "更新的生产计划信息",
+                        "description": "更新的计划信息",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/application.UpdatePlanRequest"
                         }
                     }
                 ],
@@ -1216,7 +1238,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "根据生产计划ID删除",
+                "description": "根据计划ID删除计划",
                 "consumes": [
                     "application/json"
                 ],
@@ -1224,13 +1246,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "生产计划管理"
+                    "计划管理"
                 ],
-                "summary": "删除生产计划",
+                "summary": "删除计划",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "生产计划ID",
+                        "description": "计划ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1276,14 +1298,27 @@ const docTemplate = `{
                     "工序管理"
                 ],
                 "summary": "获取工序列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "偏移量",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/process.Process"
-                            }
+                            "$ref": "#/definitions/application.ProcessListResponse"
                         }
                     },
                     "500": {
@@ -1321,7 +1356,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/process.CreateProcessRequest"
+                            "$ref": "#/definitions/application.CreateProcessRequest"
                         }
                     }
                 ],
@@ -1329,7 +1364,163 @@ const docTemplate = `{
                     "200": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/process.Process"
+                            "$ref": "#/definitions/application.ProcessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/process/:id/price": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "查询指定工序的最低价格和最高价格",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "工序价格管理"
+                ],
+                "summary": "查询工序价格",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "工序ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "价格信息",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/process/:id/price/history": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "查询指定工序的价格历史记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "工序价格管理"
+                ],
+                "summary": "查询价格历史",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "工序ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "价格历史记录",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.SupplierPrice"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/process/price/quote": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "厂商为指定工序提交报价",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "工序价格管理"
+                ],
+                "summary": "厂商报价",
+                "parameters": [
+                    {
+                        "description": "报价信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.QuoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "报价成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
@@ -1384,7 +1575,7 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/process.Process"
+                            "$ref": "#/definitions/application.ProcessResponse"
                         }
                     },
                     "404": {
@@ -1414,7 +1605,7 @@ const docTemplate = `{
                 "tags": [
                     "工序管理"
                 ],
-                "summary": "更新工序信息",
+                "summary": "更新工序",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1429,7 +1620,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/process.UpdateProcessRequest"
+                            "$ref": "#/definitions/application.UpdateProcessRequest"
                         }
                     }
                 ],
@@ -1529,14 +1720,27 @@ const docTemplate = `{
                     "产品管理"
                 ],
                 "summary": "获取产品列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "偏移量",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/product.Product"
-                            }
+                            "$ref": "#/definitions/application.ProductListResponse"
                         }
                     },
                     "500": {
@@ -1574,7 +1778,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product.Product"
+                            "$ref": "#/definitions/application.CreateProductRequest"
                         }
                     }
                 ],
@@ -1582,7 +1786,7 @@ const docTemplate = `{
                     "200": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/product.Product"
+                            "$ref": "#/definitions/application.ProductResponse"
                         }
                     },
                     "400": {
@@ -1631,19 +1835,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
-                            "properties": {
-                                "product_id": {
-                                    "type": "integer"
-                                },
-                                "quantity": {
-                                    "type": "number",
-                                    "format": "float64"
-                                },
-                                "use_min_price": {
-                                    "type": "boolean"
-                                }
-                            }
+                            "$ref": "#/definitions/application.CalculateCostRequest"
                         }
                     }
                 ],
@@ -1651,7 +1843,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成本计算结果",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/domain.CostResult"
                         }
                     },
                     "400": {
@@ -1706,7 +1898,7 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/product.Product"
+                            "$ref": "#/definitions/application.ProductResponse"
                         }
                     },
                     "404": {
@@ -1751,8 +1943,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/application.UpdateProductRequest"
                         }
                     }
                 ],
@@ -1834,6 +2025,97 @@ const docTemplate = `{
                 }
             }
         },
+        "/return-analysis/analysis": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "获取指定客户和时间范围内的退货分析数据，包括米数、重量、金额三个维度的统计。customerNo 为空时查询所有客户；dateRange 的 start 和 end 都不传时查询全部时间，必须同时传或同时不传",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "退货分析"
+                ],
+                "summary": "获取退货分析数据",
+                "parameters": [
+                    {
+                        "description": "查询参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.ReturnAnalysisRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "退货分析结果",
+                        "schema": {
+                            "$ref": "#/definitions/application.ReturnAnalysisResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/return-analysis/customers": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "获取所有有完成订单的客户列表，用于前端下拉选择",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "退货分析"
+                ],
+                "summary": "获取客户下拉列表",
+                "responses": {
+                    "200": {
+                        "description": "客户列表",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/application.CustomerOptionResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/search": {
             "post": {
                 "security": [
@@ -1859,7 +2141,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/search.SearchRequest"
+                            "$ref": "#/definitions/application.SearchRequest"
                         }
                     }
                 ],
@@ -1867,7 +2149,7 @@ const docTemplate = `{
                     "200": {
                         "description": "搜索结果",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/application.SearchResponse"
                         }
                     },
                     "400": {
@@ -1913,8 +2195,7 @@ const docTemplate = `{
                     "200": {
                         "description": "索引列表",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/application.IndexListResponse"
                         }
                     }
                 }
@@ -1952,7 +2233,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/search.SearchRequest"
+                            "$ref": "#/definitions/application.SearchRequest"
                         }
                     }
                 ],
@@ -1960,11 +2241,277 @@ const docTemplate = `{
                     "200": {
                         "description": "搜索结果",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/application.SearchResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/supplier": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "获取所有供应商列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "供应商管理"
+                ],
+                "summary": "获取供应商列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "偏移量",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.SupplierListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "创建新的供应商信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "供应商管理"
+                ],
+                "summary": "创建供应商",
+                "parameters": [
+                    {
+                        "description": "供应商信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.CreateSupplierRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.SupplierResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/supplier/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "根据供应商ID获取供应商详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "供应商管理"
+                ],
+                "summary": "获取供应商详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "供应商ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.SupplierResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "供应商不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "根据供应商ID更新供应商信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "供应商管理"
+                ],
+                "summary": "更新供应商信息",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "供应商ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新的供应商信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.UpdateSupplierRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "根据供应商ID删除供应商",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "供应商管理"
+                ],
+                "summary": "删除供应商",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "供应商ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -2002,14 +2549,27 @@ const docTemplate = `{
                     "用户管理"
                 ],
                 "summary": "获取用户列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "偏移量",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/user.UserResponse"
-                            }
+                            "$ref": "#/definitions/application.UserListResponse"
                         }
                     },
                     "500": {
@@ -2047,7 +2607,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.CreateUserRequest"
+                            "$ref": "#/definitions/application.CreateUserRequest"
                         }
                     }
                 ],
@@ -2055,8 +2615,7 @@ const docTemplate = `{
                     "200": {
                         "description": "创建成功",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/application.CreateUserResponse"
                         }
                     },
                     "400": {
@@ -2105,7 +2664,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.ChangePasswordRequest"
+                            "$ref": "#/definitions/application.ChangePasswordRequest"
                         }
                     }
                 ],
@@ -2180,7 +2739,7 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/user.UserResponse"
+                            "$ref": "#/definitions/application.UserResponse"
                         }
                     },
                     "404": {
@@ -2225,7 +2784,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.UpdateUserRequest"
+                            "$ref": "#/definitions/application.UpdateUserRequest"
                         }
                     }
                 ],
@@ -2309,7 +2868,380 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "auth.LoginRequest": {
+        "application.AmountDimensionResponse": {
+            "type": "object",
+            "properties": {
+                "returnedOrderCount": {
+                    "description": "有退货的订单数",
+                    "type": "integer",
+                    "example": 15
+                },
+                "totalAmountRMB": {
+                    "description": "退款总金额（RMB，USD已按汇率8换算）",
+                    "type": "number",
+                    "example": 120000
+                }
+            }
+        },
+        "application.CalculateCostRequest": {
+            "type": "object",
+            "required": [
+                "product_id",
+                "quantity"
+            ],
+            "properties": {
+                "product_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "use_min_price": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "application.ChangePasswordRequest": {
+            "type": "object",
+            "required": [
+                "new_password"
+            ],
+            "properties": {
+                "current_password": {
+                    "type": "string"
+                },
+                "new_password": {
+                    "type": "string",
+                    "minLength": 6
+                }
+            }
+        },
+        "application.ClientResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "contact": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "application.CreateClientRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "contact": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 20
+                }
+            }
+        },
+        "application.CreateMaterialRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "spec": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "unit": {
+                    "type": "string",
+                    "maxLength": 20
+                }
+            }
+        },
+        "application.CreateOrderRequest": {
+            "type": "object",
+            "required": [
+                "client_id",
+                "created_by",
+                "order_no",
+                "product_id",
+                "quantity",
+                "unit_price"
+            ],
+            "properties": {
+                "client_id": {
+                    "type": "integer"
+                },
+                "created_by": {
+                    "type": "integer"
+                },
+                "order_no": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "unit_price": {
+                    "type": "number",
+                    "minimum": 0
+                }
+            }
+        },
+        "application.CreatePlanRequest": {
+            "type": "object",
+            "required": [
+                "created_by",
+                "order_id",
+                "plan_no",
+                "product_id",
+                "quantity"
+            ],
+            "properties": {
+                "created_by": {
+                    "type": "integer"
+                },
+                "order_id": {
+                    "type": "integer"
+                },
+                "plan_no": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "scheduled_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "application.CreateProcessRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                }
+            }
+        },
+        "application.CreateProductRequest": {
+            "type": "object",
+            "required": [
+                "materials",
+                "name",
+                "processes"
+            ],
+            "properties": {
+                "materials": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.MaterialConfig"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "processes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.ProcessConfig"
+                    }
+                }
+            }
+        },
+        "application.CreateSupplierRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "contact": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 20
+                }
+            }
+        },
+        "application.CreateUserRequest": {
+            "type": "object",
+            "required": [
+                "login_id",
+                "role",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "login_id": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "minLength": 4
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "hr",
+                        "sales",
+                        "follower",
+                        "assistant",
+                        "user"
+                    ]
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                }
+            }
+        },
+        "application.CreateUserResponse": {
+            "type": "object",
+            "properties": {
+                "login_id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/application.UserResponse"
+                }
+            }
+        },
+        "application.CustomerOptionResponse": {
+            "type": "object",
+            "properties": {
+                "customerName": {
+                    "description": "客户名称",
+                    "type": "string",
+                    "example": "客户A"
+                },
+                "customerNo": {
+                    "description": "客户编号",
+                    "type": "string",
+                    "example": "CS0678"
+                }
+            }
+        },
+        "application.DateRange": {
+            "type": "object",
+            "properties": {
+                "end": {
+                    "description": "结束日期 YYYY-MM-DD，可选",
+                    "type": "string",
+                    "example": "2024-12-31"
+                },
+                "start": {
+                    "description": "开始日期 YYYY-MM-DD，可选",
+                    "type": "string",
+                    "example": "2024-01-01"
+                }
+            }
+        },
+        "application.IndexInfoDTO": {
+            "type": "object",
+            "properties": {
+                "fields": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "application.IndexListResponse": {
+            "type": "object",
+            "properties": {
+                "indices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.IndexInfoDTO"
+                    }
+                }
+            }
+        },
+        "application.LoginRequest": {
             "type": "object",
             "required": [
                 "loginId",
@@ -2320,163 +3252,51 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 3
                 }
             }
         },
-        "auth.LoginResponse": {
+        "application.LoginResponse": {
             "type": "object",
             "properties": {
                 "accessToken": {
+                    "description": "改为小驼峰",
+                    "type": "string"
+                },
+                "refreshToken": {
+                    "description": "新增",
                     "type": "string"
                 },
                 "requirePasswordChange": {
+                    "description": "改为小驼峰",
                     "type": "boolean"
                 },
-                "user": {
-                    "$ref": "#/definitions/auth.UserInfo"
-                }
-            }
-        },
-        "auth.UserInfo": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "loginId": {
-                    "type": "string"
-                },
                 "role": {
+                    "description": "扁平化，直接返回角色",
                     "type": "string"
                 },
                 "username": {
+                    "description": "扁平化，直接返回用户名",
                     "type": "string"
                 }
             }
         },
-        "client.Client": {
+        "application.MaterialListResponse": {
             "type": "object",
             "properties": {
-                "address": {
-                    "type": "string"
+                "materials": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.MaterialResponse"
+                    }
                 },
-                "contact": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
+                "total": {
                     "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
                 }
             }
         },
-        "client.CreateClientRequest": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "address": {
-                    "type": "string",
-                    "maxLength": 200
-                },
-                "contact": {
-                    "type": "string",
-                    "maxLength": 50
-                },
-                "email": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2
-                },
-                "phone": {
-                    "type": "string",
-                    "maxLength": 20
-                }
-            }
-        },
-        "client.UpdateClientRequest": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string",
-                    "maxLength": 200
-                },
-                "contact": {
-                    "type": "string",
-                    "maxLength": 50
-                },
-                "email": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2
-                },
-                "phone": {
-                    "type": "string",
-                    "maxLength": 20
-                }
-            }
-        },
-        "fields.Response": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {},
-                "msg": {
-                    "type": "string"
-                }
-            }
-        },
-        "material.CreateMaterialRequest": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2
-                },
-                "spec": {
-                    "type": "string",
-                    "maxLength": 200
-                },
-                "unit": {
-                    "type": "string",
-                    "maxLength": 20
-                }
-            }
-        },
-        "material.Material": {
+        "application.MaterialResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2502,28 +3322,46 @@ const docTemplate = `{
                 }
             }
         },
-        "material.UpdateMaterialRequest": {
+        "application.MeterDimensionResponse": {
             "type": "object",
             "properties": {
-                "description": {
-                    "type": "string"
+                "orderCount": {
+                    "description": "涉及订单数",
+                    "type": "integer",
+                    "example": 80
                 },
-                "name": {
+                "returnRate": {
+                    "description": "退货率（百分比字符串或\"N/A\"）",
                     "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2
+                    "example": "10.00%"
                 },
-                "spec": {
-                    "type": "string",
-                    "maxLength": 200
+                "returnedMeters": {
+                    "description": "退货总米数",
+                    "type": "number",
+                    "example": 5000
                 },
-                "unit": {
-                    "type": "string",
-                    "maxLength": 20
+                "totalMeters": {
+                    "description": "订单总米数",
+                    "type": "number",
+                    "example": 50000
                 }
             }
         },
-        "order.Order": {
+        "application.OrderListResponse": {
+            "type": "object",
+            "properties": {
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.OrderResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "application.OrderResponse": {
             "type": "object",
             "properties": {
                 "client_id": {
@@ -2561,7 +3399,21 @@ const docTemplate = `{
                 }
             }
         },
-        "plan.Plan": {
+        "application.PlanListResponse": {
+            "type": "object",
+            "properties": {
+                "plans": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.PlanResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "application.PlanResponse": {
             "type": "object",
             "properties": {
                 "completed_at": {
@@ -2599,49 +3451,21 @@ const docTemplate = `{
                 }
             }
         },
-        "price.MaterialPrice": {
+        "application.ProcessListResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
-                    "type": "string"
+                "processes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.ProcessResponse"
+                    }
                 },
-                "id": {
-                    "type": "integer"
-                },
-                "material_id": {
-                    "type": "integer"
-                },
-                "price": {
-                    "type": "number"
-                },
-                "quoted_at": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "vendor_id": {
+                "total": {
                     "type": "integer"
                 }
             }
         },
-        "process.CreateProcessRequest": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2
-                }
-            }
-        },
-        "process.Process": {
+        "application.ProcessResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2661,42 +3485,21 @@ const docTemplate = `{
                 }
             }
         },
-        "process.UpdateProcessRequest": {
+        "application.ProductListResponse": {
             "type": "object",
             "properties": {
-                "description": {
-                    "type": "string"
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.ProductResponse"
+                    }
                 },
-                "name": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2
-                }
-            }
-        },
-        "product.MaterialConfig": {
-            "type": "object",
-            "properties": {
-                "material_id": {
+                "total": {
                     "type": "integer"
-                },
-                "ratio": {
-                    "type": "number"
                 }
             }
         },
-        "product.ProcessConfig": {
-            "type": "object",
-            "properties": {
-                "process_id": {
-                    "type": "integer"
-                },
-                "quantity": {
-                    "type": "number"
-                }
-            }
-        },
-        "product.Product": {
+        "application.ProductResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2708,7 +3511,7 @@ const docTemplate = `{
                 "materials": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product.MaterialConfig"
+                        "$ref": "#/definitions/domain.MaterialConfig"
                     }
                 },
                 "name": {
@@ -2717,7 +3520,7 @@ const docTemplate = `{
                 "processes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product.ProcessConfig"
+                        "$ref": "#/definitions/domain.ProcessConfig"
                     }
                 },
                 "status": {
@@ -2728,112 +3531,425 @@ const docTemplate = `{
                 }
             }
         },
-        "search.SearchRequest": {
+        "application.QueryConditionsResponse": {
+            "type": "object",
+            "properties": {
+                "customerName": {
+                    "description": "客户名称",
+                    "type": "string",
+                    "example": "客户A"
+                },
+                "customerNo": {
+                    "description": "客户编号",
+                    "type": "string",
+                    "example": "CS0678"
+                },
+                "dateRange": {
+                    "description": "日期范围",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/application.DateRange"
+                        }
+                    ]
+                }
+            }
+        },
+        "application.QuoteRequest": {
+            "type": "object",
+            "required": [
+                "price",
+                "supplier_id",
+                "target_id"
+            ],
+            "properties": {
+                "price": {
+                    "type": "number"
+                },
+                "supplier_id": {
+                    "type": "integer"
+                },
+                "target_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "application.RefreshTokenRequest": {
+            "type": "object",
+            "required": [
+                "refreshToken"
+            ],
+            "properties": {
+                "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "application.RefreshTokenResponse": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "application.ReturnAnalysisRequest": {
+            "type": "object",
+            "properties": {
+                "customerNo": {
+                    "description": "客户编号，空表示所有客户",
+                    "type": "string",
+                    "example": "CS0678"
+                },
+                "dateRange": {
+                    "description": "日期范围，start和end都不传表示查询全部时间",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/application.DateRange"
+                        }
+                    ]
+                }
+            }
+        },
+        "application.ReturnAnalysisResponse": {
+            "type": "object",
+            "properties": {
+                "amountStats": {
+                    "description": "金额统计",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/application.AmountDimensionResponse"
+                        }
+                    ]
+                },
+                "meterStats": {
+                    "description": "米数统计",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/application.MeterDimensionResponse"
+                        }
+                    ]
+                },
+                "queryConditions": {
+                    "description": "查询条件回显",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/application.QueryConditionsResponse"
+                        }
+                    ]
+                },
+                "totalOrders": {
+                    "description": "总订单数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "weightStats": {
+                    "description": "重量统计",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/application.WeightDimensionResponse"
+                        }
+                    ]
+                }
+            }
+        },
+        "application.SearchRequest": {
             "type": "object",
             "properties": {
                 "fields": {
-                    "description": "要搜索的字段列表，空=全部字段",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "filters": {
-                    "description": "筛选条件 {\"status\": \"已复核\"}",
                     "type": "object",
                     "additionalProperties": true
                 },
                 "from": {
-                    "description": "分页起始，默认0",
                     "type": "integer"
                 },
                 "indices": {
-                    "description": "要搜索的索引列表，空=全部索引",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "query": {
-                    "description": "搜索关键词",
                     "type": "string"
                 },
                 "size": {
-                    "description": "每页大小，默认20",
                     "type": "integer"
                 },
                 "sort": {
-                    "description": "排序",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/search.SortField"
+                        "$ref": "#/definitions/application.SortFieldDTO"
                     }
                 }
             }
         },
-        "search.SortField": {
+        "application.SearchResponse": {
+            "type": "object",
+            "properties": {
+                "max_score": {
+                    "type": "number"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.SearchResultDTO"
+                    }
+                },
+                "took": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "application.SearchResultDTO": {
+            "type": "object",
+            "properties": {
+                "highlight": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "index": {
+                    "type": "string"
+                },
+                "score": {
+                    "type": "number"
+                },
+                "source": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "application.SortFieldDTO": {
             "type": "object",
             "properties": {
                 "field": {
-                    "description": "字段名",
                     "type": "string"
                 },
                 "order": {
-                    "description": "asc/desc",
                     "type": "string"
                 }
             }
         },
-        "user.ChangePasswordRequest": {
+        "application.SupplierListResponse": {
             "type": "object",
-            "required": [
-                "new_password"
-            ],
             "properties": {
-                "current_password": {
+                "suppliers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.SupplierResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "application.SupplierResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
                     "type": "string"
                 },
-                "new_password": {
-                    "type": "string",
-                    "minLength": 6
-                }
-            }
-        },
-        "user.CreateUserRequest": {
-            "type": "object",
-            "required": [
-                "login_id",
-                "role",
-                "username"
-            ],
-            "properties": {
+                "contact": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },
-                "login_id": {
-                    "type": "string",
-                    "maxLength": 20,
-                    "minLength": 4
+                "id": {
+                    "type": "integer"
                 },
-                "role": {
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "application.UpdateClientRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "contact": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 20
+                }
+            }
+        },
+        "application.UpdateMaterialRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "spec": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "unit": {
+                    "type": "string",
+                    "maxLength": 20
+                }
+            }
+        },
+        "application.UpdateOrderRequest": {
+            "type": "object",
+            "properties": {
+                "quantity": {
+                    "type": "number"
+                },
+                "status": {
                     "type": "string",
                     "enum": [
-                        "admin",
-                        "hr",
-                        "sales",
-                        "follower",
-                        "assistant",
-                        "user"
+                        "pending",
+                        "confirmed",
+                        "production",
+                        "completed",
+                        "cancelled"
                     ]
                 },
-                "username": {
+                "unit_price": {
+                    "type": "number",
+                    "minimum": 0
+                }
+            }
+        },
+        "application.UpdatePlanRequest": {
+            "type": "object",
+            "properties": {
+                "completed_at": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "status": {
                     "type": "string",
-                    "maxLength": 50,
+                    "enum": [
+                        "planned",
+                        "in_progress",
+                        "completed",
+                        "cancelled"
+                    ]
+                }
+            }
+        },
+        "application.UpdateProcessRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
                     "minLength": 2
                 }
             }
         },
-        "user.UpdateUserRequest": {
+        "application.UpdateProductRequest": {
+            "type": "object",
+            "properties": {
+                "materials": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.MaterialConfig"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "processes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.ProcessConfig"
+                    }
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "draft",
+                        "submitted",
+                        "approved",
+                        "rejected"
+                    ]
+                }
+            }
+        },
+        "application.UpdateSupplierRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "contact": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 20
+                }
+            }
+        },
+        "application.UpdateUserRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -2865,7 +3981,21 @@ const docTemplate = `{
                 }
             }
         },
-        "user.UserResponse": {
+        "application.UserListResponse": {
+            "type": "object",
+            "properties": {
+                "total": {
+                    "type": "integer"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.UserResponse"
+                    }
+                }
+            }
+        },
+        "application.UserResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2896,6 +4026,188 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "application.WeightDimensionResponse": {
+            "type": "object",
+            "properties": {
+                "orderCount": {
+                    "description": "涉及订单数",
+                    "type": "integer",
+                    "example": 30
+                },
+                "returnRate": {
+                    "description": "退货率（百分比字符串或\"N/A\"）",
+                    "type": "string",
+                    "example": "10.00%"
+                },
+                "returnedWeight": {
+                    "description": "退货总重量",
+                    "type": "number",
+                    "example": 2000
+                },
+                "totalWeight": {
+                    "description": "订单总重量（公斤）",
+                    "type": "number",
+                    "example": 20000
+                }
+            }
+        },
+        "domain.CostBreakdown": {
+            "type": "object",
+            "properties": {
+                "materials": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.MaterialCostItem"
+                    }
+                },
+                "processes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.ProcessCostItem"
+                    }
+                }
+            }
+        },
+        "domain.CostResult": {
+            "type": "object",
+            "properties": {
+                "breakdown": {
+                    "$ref": "#/definitions/domain.CostBreakdown"
+                },
+                "material_cost": {
+                    "type": "number"
+                },
+                "process_cost": {
+                    "type": "number"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "product_name": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "total_cost": {
+                    "type": "number"
+                },
+                "unit_cost": {
+                    "type": "number"
+                }
+            }
+        },
+        "domain.MaterialConfig": {
+            "type": "object",
+            "properties": {
+                "material_id": {
+                    "type": "integer"
+                },
+                "ratio": {
+                    "description": "占比（总和必须为1）",
+                    "type": "number"
+                }
+            }
+        },
+        "domain.MaterialCostItem": {
+            "type": "object",
+            "properties": {
+                "cost": {
+                    "type": "number"
+                },
+                "material_id": {
+                    "type": "integer"
+                },
+                "material_name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "ratio": {
+                    "type": "number"
+                }
+            }
+        },
+        "domain.ProcessConfig": {
+            "type": "object",
+            "properties": {
+                "process_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "description": "数量（可选）",
+                    "type": "number"
+                }
+            }
+        },
+        "domain.ProcessCostItem": {
+            "type": "object",
+            "properties": {
+                "cost": {
+                    "type": "number"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "process_id": {
+                    "type": "integer"
+                },
+                "process_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.SupplierPrice": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "number",
+                    "format": "float64"
+                },
+                "quotedAt": {
+                    "type": "string"
+                },
+                "supplierID": {
+                    "type": "integer"
+                },
+                "targetID": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "$ref": "#/definitions/domain.TargetType"
+                }
+            }
+        },
+        "domain.TargetType": {
+            "type": "string",
+            "enum": [
+                "material",
+                "process"
+            ],
+            "x-enum-varnames": [
+                "TargetTypeMaterial",
+                "TargetTypeProcess"
+            ]
+        },
+        "fields.Response": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {},
+                "msg": {
+                    "type": "string"
+                }
+            }
         }
     },
     "securityDefinitions": {
@@ -2911,7 +4223,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "后台管理系统 API",

@@ -86,7 +86,7 @@ func (h *ProcessPriceHandler) GetPrice(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        id path int true "工序ID"
-// @Success      200 {array} domain.VendorPrice "价格历史记录"
+// @Success      200 {array} domain.SupplierPrice "价格历史记录"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
 // @Router       /process/:id/price/history [get]

@@ -22,15 +22,97 @@ func (q *SearchQuery) Validate() error {
 	if q.Size < 0 {
 		return ErrInvalidSize
 	}
-	
+
 	if q.Size > 100 {
 		return ErrSizeTooLarge
 	}
-	
+
 	if q.From < 0 {
 		return ErrInvalidFrom
 	}
-	
+
+	// 验证过滤字段
+	if err := q.ValidateFilterFields(); err != nil {
+		return err
+	}
+
+	// 验证排序字段
+	if err := q.ValidateSortFields(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ValidateFilterFields 验证过滤字段是否在白名单内
+func (q *SearchQuery) ValidateFilterFields() error {
+	if len(q.Filters) == 0 {
+		return nil
+	}
+
+	// 获取所有索引
+	indices := q.GetIndices()
+
+	// 收集所有允许的过滤字段
+	allowedFields := make(map[string]bool)
+	for _, index := range indices {
+		meta, ok := IndexConfig[index]
+		if !ok {
+			continue
+		}
+		for _, field := range meta.FilterableFields {
+			allowedFields[field] = true
+		}
+	}
+
+	// 验证每个过滤字段
+	for field := range q.Filters {
+		if !allowedFields[field] {
+			// 返回第一个索引名称用于错误信息
+			indexName := "unknown"
+			if len(indices) > 0 {
+				indexName = indices[0]
+			}
+			return ErrInvalidFilterField(field, indexName)
+		}
+	}
+
+	return nil
+}
+
+// ValidateSortFields 验证排序字段是否在白名单内
+func (q *SearchQuery) ValidateSortFields() error {
+	if len(q.Sort) == 0 {
+		return nil
+	}
+
+	// 获取所有索引
+	indices := q.GetIndices()
+
+	// 收集所有允许的排序字段
+	allowedFields := make(map[string]bool)
+	for _, index := range indices {
+		meta, ok := IndexConfig[index]
+		if !ok {
+			continue
+		}
+		for _, field := range meta.SortableFields {
+			allowedFields[field] = true
+		}
+	}
+
+	// 验证每个排序字段
+	for _, sortField := range q.Sort {
+		if !allowedFields[sortField.Field] {
+			// 返回第一个索引名称用于错误信息
+			indexName := "unknown"
+			if len(indices) > 0 {
+				indexName = indices[0]
+			}
+			return ErrInvalidSortField(sortField.Field, indexName)
+		}
+	}
+
 	return nil
 }
 

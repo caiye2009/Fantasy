@@ -33,3 +33,5 @@ docs/swagger.*
 
 # Cache
 *.cache
+
+CLAUDE.md
