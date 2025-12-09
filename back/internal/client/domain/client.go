@@ -8,6 +8,7 @@ import (
 // Client 客户聚合根
 type Client struct {
 	ID        uint
+	Code      string
 	Name      string
 	Contact   string
 	Phone     string

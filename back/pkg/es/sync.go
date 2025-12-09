@@ -1,3 +1,4 @@
+// back/pkg/es/sync.go
 package es
 
 import (
@@ -28,15 +29,35 @@ func NewESSync(client *elasticsearch.Client, logger Logger) *ESSync {
 	}
 }
 
-// Index 索引文档（参数改为 interface{}）
+// Index 索引文档（支持自动评分）
 func (s *ESSync) Index(doc interface{}) error {
 	// 类型断言检查是否实现 Indexable 接口
 	indexable, ok := doc.(Indexable)
 	if !ok {
 		return fmt.Errorf("document does not implement Indexable interface")
 	}
-	
-	data, err := json.Marshal(indexable.ToDocument())
+
+	// 获取文档数据
+	docData := indexable.ToDocument()
+
+	// 如果实现了 ScoredIndexable，自动注入 priorityScore
+	if scoredDoc, ok := doc.(ScoredIndexable); ok {
+		scorer := scoredDoc.GetScorer()
+		if scorer != nil {
+			priorityScore := scorer.CalculateScore(doc)
+			docData["priorityScore"] = priorityScore
+
+			if s.logger != nil {
+				s.logger.Info("calculated priority score",
+					"index", indexable.GetIndexName(),
+					"docId", indexable.GetDocumentID(),
+					"score", priorityScore,
+				)
+			}
+		}
+	}
+
+	data, err := json.Marshal(docData)
 	if err != nil {
 		if s.logger != nil {
 			s.logger.Error("marshal document failed", "error", err)
@@ -70,16 +91,36 @@ func (s *ESSync) Index(doc interface{}) error {
 	return nil
 }
 
-// Update 更新文档（参数改为 interface{}）
+// Update 更新文档（支持自动评分）
 func (s *ESSync) Update(doc interface{}) error {
 	// 类型断言检查是否实现 Indexable 接口
 	indexable, ok := doc.(Indexable)
 	if !ok {
 		return fmt.Errorf("document does not implement Indexable interface")
 	}
-	
+
+	// 获取文档数据
+	docData := indexable.ToDocument()
+
+	// 如果实现了 ScoredIndexable，自动注入 priorityScore
+	if scoredDoc, ok := doc.(ScoredIndexable); ok {
+		scorer := scoredDoc.GetScorer()
+		if scorer != nil {
+			priorityScore := scorer.CalculateScore(doc)
+			docData["priorityScore"] = priorityScore
+
+			if s.logger != nil {
+				s.logger.Info("calculated priority score",
+					"index", indexable.GetIndexName(),
+					"docId", indexable.GetDocumentID(),
+					"score", priorityScore,
+				)
+			}
+		}
+	}
+
 	data, err := json.Marshal(map[string]interface{}{
-		"doc": indexable.ToDocument(),
+		"doc": docData,
 	})
 	if err != nil {
 		if s.logger != nil {

@@ -2,15 +2,16 @@ package infra
 
 import (
 	"time"
-	
+
 	"gorm.io/gorm"
-	
+
 	"back/internal/client/domain"
 )
 
 // ClientPO 客户持久化对象
 type ClientPO struct {
 	ID        uint           `gorm:"primaryKey"`
+	Code      string         `gorm:"size:50;index"` // 新增 Code 字段
 	Name      string         `gorm:"size:100;not null;index"`
 	Contact   string         `gorm:"size:50"`
 	Phone     string         `gorm:"size:20;index"`
@@ -30,6 +31,7 @@ func (ClientPO) TableName() string {
 func (po *ClientPO) ToDomain() *domain.Client {
 	return &domain.Client{
 		ID:        po.ID,
+		Code:      po.Code,    // 转换 Code 字段
 		Name:      po.Name,
 		Contact:   po.Contact,
 		Phone:     po.Phone,
@@ -44,6 +46,7 @@ func (po *ClientPO) ToDomain() *domain.Client {
 func FromDomain(c *domain.Client) *ClientPO {
 	return &ClientPO{
 		ID:        c.ID,
+		Code:      c.Code,     // 转换 Code 字段
 		Name:      c.Name,
 		Contact:   c.Contact,
 		Phone:     c.Phone,
