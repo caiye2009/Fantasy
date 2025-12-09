@@ -62,20 +62,8 @@ func (s *ProcessService) Get(ctx context.Context, id uint) (*ProcessResponse, er
 	return ToProcessResponse(process), nil
 }
 
-// List 工序列表
-func (s *ProcessService) List(ctx context.Context, limit, offset int) (*ProcessListResponse, error) {
-	processes, err := s.repo.FindAll(ctx, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-	
-	total, err := s.repo.Count(ctx)
-	if err != nil {
-		return nil, err
-	}
-	
-	return ToProcessListResponse(processes, total), nil
-}
+// List 功能已移至 search 模块，通过 ES 实现
+// 使用 POST /api/v1/search 并指定 indices: ["processes"]
 
 // Update 更新工序
 func (s *ProcessService) Update(ctx context.Context, id uint, req *UpdateProcessRequest) error {

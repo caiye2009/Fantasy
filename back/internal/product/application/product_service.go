@@ -62,21 +62,6 @@ func (s *ProductService) Get(ctx context.Context, id uint) (*ProductResponse, er
 	return ToProductResponse(product), nil
 }
 
-// List 产品列表
-func (s *ProductService) List(ctx context.Context, limit, offset int) (*ProductListResponse, error) {
-	products, err := s.repo.FindAll(ctx, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-	
-	total, err := s.repo.Count(ctx)
-	if err != nil {
-		return nil, err
-	}
-	
-	return ToProductListResponse(products, total), nil
-}
-
 // Update 更新产品
 func (s *ProductService) Update(ctx context.Context, id uint, req *UpdateProductRequest) error {
 	// 1. 查询产品

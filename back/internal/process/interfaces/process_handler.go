@@ -76,30 +76,8 @@ func (h *ProcessHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// List 获取工序列表
-// @Summary      获取工序列表
-// @Description  获取所有工序列表
-// @Tags         工序管理
-// @Accept       json
-// @Produce      json
-// @Param        limit query int false "每页数量" default(10)
-// @Param        offset query int false "偏移量" default(0)
-// @Success      200 {object} application.ProcessListResponse "获取成功"
-// @Failure      500 {object} map[string]string "服务器错误"
-// @Security     Bearer
-// @Router       /process [get]
-func (h *ProcessHandler) List(c *gin.Context) {
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
-	
-	resp, err := h.service.List(c.Request.Context(), limit, offset)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	
-	c.JSON(http.StatusOK, resp)
-}
+// List 功能已迁移至 /search 接口
+// 使用 POST /search 并指定 indices: ["processes"] 来获取工序列表
 
 // Update 更新工序
 // @Summary      更新工序
@@ -164,10 +142,10 @@ func (h *ProcessHandler) Delete(c *gin.Context) {
 // RegisterProcessHandlers 注册路由
 func RegisterProcessHandlers(rg *gin.RouterGroup, service *application.ProcessService) {
 	handler := NewProcessHandler(service)
-	
+
 	rg.POST("/process", handler.Create)
 	rg.GET("/process/:id", handler.Get)
-	rg.GET("/process", handler.List)
+	// List 接口已移除，使用 POST /search 替代
 	rg.PUT("/process/:id", handler.Update)
 	rg.DELETE("/process/:id", handler.Delete)
 }

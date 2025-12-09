@@ -39,42 +39,42 @@ const routes: RouteRecordRaw[] = [
           title: $t('page.dashboard.list'),
         },
       },
-      {
-        name: 'material',
-        path: '/material',
-        component: () => import('#/views/dashboard/material/index.vue'),
-        meta: {
-          icon: 'carbon:workspace',
-          title: $t('page.dashboard.material'),
-        },
-      },
-      {
-        name: 'client',
-        path: '/client',
-        component: () => import('#/views/dashboard/client/index.vue'),
-        meta: {
-          icon: 'carbon:workspace',
-          title: $t('page.dashboard.client'),
-        },
-      },
-      {
-        name: 'product',
-        path: '/product',
-        component: () => import('#/views/dashboard/product/index.vue'),
-        meta: {
-          icon: 'carbon:workspace',
-          title: $t('page.dashboard.product'),
-        },
-      },
-      {
-        name: 'process',
-        path: '/process',
-        component: () => import('#/views/dashboard/process/index.vue'),
-        meta: {
-          icon: 'carbon:workspace',
-          title: $t('page.dashboard.process'),
-        },
-      },
+      // {
+      //   name: 'material',
+      //   path: '/material',
+      //   component: () => import('#/views/dashboard/material/index.vue'),
+      //   meta: {
+      //     icon: 'carbon:workspace',
+      //     title: $t('page.dashboard.material'),
+      //   },
+      // },
+      // {
+      //   name: 'client',
+      //   path: '/client',
+      //   component: () => import('#/views/dashboard/client/index.vue'),
+      //   meta: {
+      //     icon: 'carbon:workspace',
+      //     title: $t('page.dashboard.client'),
+      //   },
+      // },
+      // {
+      //   name: 'product',
+      //   path: '/product',
+      //   component: () => import('#/views/dashboard/product/index.vue'),
+      //   meta: {
+      //     icon: 'carbon:workspace',
+      //     title: $t('page.dashboard.product'),
+      //   },
+      // },
+      // {
+      //   name: 'process',
+      //   path: '/process',
+      //   component: () => import('#/views/dashboard/process/index.vue'),
+      //   meta: {
+      //     icon: 'carbon:workspace',
+      //     title: $t('page.dashboard.process'),
+      //   },
+      // },
     ],
   },
 ];

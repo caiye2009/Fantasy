@@ -62,21 +62,6 @@ func (s *MaterialService) Get(ctx context.Context, id uint) (*MaterialResponse, 
 	return ToMaterialResponse(material), nil
 }
 
-// List 材料列表
-func (s *MaterialService) List(ctx context.Context, limit, offset int) (*MaterialListResponse, error) {
-	materials, err := s.repo.FindAll(ctx, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-	
-	total, err := s.repo.Count(ctx)
-	if err != nil {
-		return nil, err
-	}
-	
-	return ToMaterialListResponse(materials, total), nil
-}
-
 // Update 更新材料
 func (s *MaterialService) Update(ctx context.Context, id uint, req *UpdateMaterialRequest) error {
 	// 1. 查询材料

@@ -13,15 +13,26 @@ func ToSearchQuery(req *SearchRequest) *domain.SearchQuery {
 			Order: s.Order,
 		}
 	}
-	
+
+	// 处理默认值
+	from := 0
+	if req.From != nil {
+		from = *req.From
+	}
+
+	size := 10 // 默认每页 10 条
+	if req.Size != nil {
+		size = *req.Size
+	}
+
 	return &domain.SearchQuery{
 		Keyword: req.Query,
 		Indices: req.Indices,
 		Fields:  req.Fields,
 		Filters: req.Filters,
 		Sort:    sortFields,
-		From:    req.From,
-		Size:    req.Size,
+		From:    from,
+		Size:    size,
 	}
 }
 

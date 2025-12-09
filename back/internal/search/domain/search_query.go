@@ -118,11 +118,11 @@ func (q *SearchQuery) ValidateSortFields() error {
 
 // NormalizeSize 标准化分页大小
 func (q *SearchQuery) NormalizeSize() {
-	if q.Size == 0 {
-		q.Size = 20
+	if q.Size <= 0 {
+		q.Size = 10 // 默认每页 10 条
 	}
 	if q.Size > 100 {
-		q.Size = 100
+		q.Size = 100 // 最大每页 100 条
 	}
 }
 

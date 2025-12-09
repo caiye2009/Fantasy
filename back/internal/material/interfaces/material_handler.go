@@ -76,31 +76,6 @@ func (h *MaterialHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// List 获取材料列表
-// @Summary      获取材料列表
-// @Description  获取所有材料列表
-// @Tags         材料管理
-// @Accept       json
-// @Produce      json
-// @Param        limit query int false "每页数量" default(10)
-// @Param        offset query int false "偏移量" default(0)
-// @Success      200 {object} application.MaterialListResponse "获取成功"
-// @Failure      500 {object} map[string]string "服务器错误"
-// @Security     Bearer
-// @Router       /material [get]
-func (h *MaterialHandler) List(c *gin.Context) {
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
-	
-	resp, err := h.service.List(c.Request.Context(), limit, offset)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	
-	c.JSON(http.StatusOK, resp)
-}
-
 // Update 更新材料信息
 // @Summary      更新材料信息
 // @Description  根据材料ID更新材料信息
@@ -164,10 +139,10 @@ func (h *MaterialHandler) Delete(c *gin.Context) {
 // RegisterMaterialHandlers 注册路由
 func RegisterMaterialHandlers(rg *gin.RouterGroup, service *application.MaterialService) {
 	handler := NewMaterialHandler(service)
-	
+
 	rg.POST("/material", handler.Create)
 	rg.GET("/material/:id", handler.Get)
-	rg.GET("/material", handler.List)
+	// List 接口已移除，使用 POST /search 替代
 	rg.PUT("/material/:id", handler.Update)
 	rg.DELETE("/material/:id", handler.Delete)
 }

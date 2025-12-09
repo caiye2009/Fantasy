@@ -291,15 +291,6 @@ definitions:
         description: 扁平化，直接返回用户名
         type: string
     type: object
-  application.MaterialListResponse:
-    properties:
-      materials:
-        items:
-          $ref: '#/definitions/application.MaterialResponse'
-        type: array
-      total:
-        type: integer
-    type: object
   application.MaterialResponse:
     properties:
       created_at:
@@ -404,14 +395,16 @@ definitions:
       updated_at:
         type: string
     type: object
-  application.ProcessListResponse:
+  application.PriceData:
     properties:
-      processes:
-        items:
-          $ref: '#/definitions/application.ProcessResponse'
-        type: array
-      total:
+      price:
+        type: number
+      quoted_at:
+        type: string
+      supplier_id:
         type: integer
+      supplier_name:
+        type: string
     type: object
   application.ProcessResponse:
     properties:
@@ -425,15 +418,6 @@ definitions:
         type: string
       updated_at:
         type: string
-    type: object
-  application.ProductListResponse:
-    properties:
-      products:
-        items:
-          $ref: '#/definitions/application.ProductResponse'
-        type: array
-      total:
-        type: integer
     type: object
   application.ProductResponse:
     properties:
@@ -540,6 +524,7 @@ definitions:
         additionalProperties: true
         type: object
       from:
+        description: 使用指针，支持 nil（默认 0）
         type: integer
       indices:
         items:
@@ -548,6 +533,7 @@ definitions:
       query:
         type: string
       size:
+        description: 使用指针，支持 nil（默认 10）
         type: integer
       sort:
         items:
@@ -1116,39 +1102,6 @@ paths:
       tags:
       - 客户管理
   /material:
-    get:
-      consumes:
-      - application/json
-      description: 获取所有材料列表
-      parameters:
-      - default: 10
-        description: 每页数量
-        in: query
-        name: limit
-        type: integer
-      - default: 0
-        description: 偏移量
-        in: query
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            $ref: '#/definitions/application.MaterialListResponse'
-        "500":
-          description: 服务器错误
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - Bearer: []
-      summary: 获取材料列表
-      tags:
-      - 材料管理
     post:
       consumes:
       - application/json
@@ -1232,7 +1185,7 @@ paths:
           description: 价格历史记录
           schema:
             items:
-              $ref: '#/definitions/domain.SupplierPrice'
+              $ref: '#/definitions/application.PriceData'
             type: array
         "500":
           description: 服务器错误
@@ -1725,39 +1678,6 @@ paths:
       tags:
       - 计划管理
   /process:
-    get:
-      consumes:
-      - application/json
-      description: 获取所有工序列表
-      parameters:
-      - default: 10
-        description: 每页数量
-        in: query
-        name: limit
-        type: integer
-      - default: 0
-        description: 偏移量
-        in: query
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            $ref: '#/definitions/application.ProcessListResponse'
-        "500":
-          description: 服务器错误
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - Bearer: []
-      summary: 获取工序列表
-      tags:
-      - 工序管理
     post:
       consumes:
       - application/json
@@ -1994,39 +1914,6 @@ paths:
       tags:
       - 工序价格管理
   /product:
-    get:
-      consumes:
-      - application/json
-      description: 获取所有产品列表
-      parameters:
-      - default: 10
-        description: 每页数量
-        in: query
-        name: limit
-        type: integer
-      - default: 0
-        description: 偏移量
-        in: query
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            $ref: '#/definitions/application.ProductListResponse'
-        "500":
-          description: 服务器错误
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - Bearer: []
-      summary: 获取产品列表
-      tags:
-      - 产品管理
     post:
       consumes:
       - application/json
@@ -2218,17 +2105,20 @@ paths:
         "200":
           description: 退货分析结果
           schema:
-            $ref: '#/definitions/application.ReturnAnalysisResponse'
+            allOf:
+            - $ref: '#/definitions/fields.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/application.ReturnAnalysisResponse'
+              type: object
         "400":
           description: 参数错误
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/fields.Response'
         "500":
           description: 服务器错误
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/fields.Response'
       security:
       - Bearer: []
       summary: 获取退货分析数据
@@ -2245,14 +2135,18 @@ paths:
         "200":
           description: 客户列表
           schema:
-            items:
-              $ref: '#/definitions/application.CustomerOptionResponse'
-            type: array
+            allOf:
+            - $ref: '#/definitions/fields.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/application.CustomerOptionResponse'
+                  type: array
+              type: object
         "500":
           description: 服务器错误
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/fields.Response'
       security:
       - Bearer: []
       summary: 获取客户下拉列表
@@ -2292,47 +2186,6 @@ paths:
       security:
       - Bearer: []
       summary: 通用搜索
-      tags:
-      - 搜索
-  /search/{index}:
-    post:
-      consumes:
-      - application/json
-      description: 在指定索引中执行搜索
-      parameters:
-      - description: 索引名称
-        in: path
-        name: index
-        required: true
-        type: string
-      - description: 搜索请求参数
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/application.SearchRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 搜索结果
-          schema:
-            $ref: '#/definitions/application.SearchResponse'
-        "400":
-          description: 请求参数错误
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: 服务器错误
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - Bearer: []
-      summary: 按索引搜索
       tags:
       - 搜索
   /search/indices:

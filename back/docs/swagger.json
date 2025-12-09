@@ -320,57 +320,6 @@
             }
         },
         "/material": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "获取所有材料列表",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "材料管理"
-                ],
-                "summary": "获取材料列表",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "每页数量",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "偏移量",
-                        "name": "offset",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "获取成功",
-                        "schema": {
-                            "$ref": "#/definitions/application.MaterialListResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
             "post": {
                 "security": [
                     {
@@ -507,7 +456,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/domain.SupplierPrice"
+                                "$ref": "#/definitions/application.PriceData"
                             }
                         }
                     },
@@ -1274,57 +1223,6 @@
             }
         },
         "/process": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "获取所有工序列表",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "工序管理"
-                ],
-                "summary": "获取工序列表",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "每页数量",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "偏移量",
-                        "name": "offset",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "获取成功",
-                        "schema": {
-                            "$ref": "#/definitions/application.ProcessListResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
             "post": {
                 "security": [
                     {
@@ -1696,57 +1594,6 @@
             }
         },
         "/product": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "获取所有产品列表",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "产品管理"
-                ],
-                "summary": "获取产品列表",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "每页数量",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "偏移量",
-                        "name": "offset",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "获取成功",
-                        "schema": {
-                            "$ref": "#/definitions/application.ProductListResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
             "post": {
                 "security": [
                     {
@@ -2051,21 +1898,31 @@
                     "200": {
                         "description": "退货分析结果",
                         "schema": {
-                            "$ref": "#/definitions/application.ReturnAnalysisResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/fields.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/application.ReturnAnalysisResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "参数错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/fields.Response"
                         }
                     },
                     "500": {
                         "description": "服务器错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/fields.Response"
                         }
                     }
                 }
@@ -2093,17 +1950,28 @@
                     "200": {
                         "description": "客户列表",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/application.CustomerOptionResponse"
-                            }
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/fields.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/application.CustomerOptionResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "500": {
                         "description": "服务器错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/fields.Response"
                         }
                     }
                 }
@@ -2189,70 +2057,6 @@
                         "description": "索引列表",
                         "schema": {
                             "$ref": "#/definitions/application.IndexListResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/search/{index}": {
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "在指定索引中执行搜索",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "搜索"
-                ],
-                "summary": "按索引搜索",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "索引名称",
-                        "name": "index",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "搜索请求参数",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/application.SearchRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "搜索结果",
-                        "schema": {
-                            "$ref": "#/definitions/application.SearchResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
                         }
                     }
                 }
@@ -3275,20 +3079,6 @@
                 }
             }
         },
-        "application.MaterialListResponse": {
-            "type": "object",
-            "properties": {
-                "materials": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/application.MaterialResponse"
-                    }
-                },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
         "application.MaterialResponse": {
             "type": "object",
             "properties": {
@@ -3444,17 +3234,20 @@
                 }
             }
         },
-        "application.ProcessListResponse": {
+        "application.PriceData": {
             "type": "object",
             "properties": {
-                "processes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/application.ProcessResponse"
-                    }
+                "price": {
+                    "type": "number"
                 },
-                "total": {
+                "quoted_at": {
+                    "type": "string"
+                },
+                "supplier_id": {
                     "type": "integer"
+                },
+                "supplier_name": {
+                    "type": "string"
                 }
             }
         },
@@ -3475,20 +3268,6 @@
                 },
                 "updated_at": {
                     "type": "string"
-                }
-            }
-        },
-        "application.ProductListResponse": {
-            "type": "object",
-            "properties": {
-                "products": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/application.ProductResponse"
-                    }
-                },
-                "total": {
-                    "type": "integer"
                 }
             }
         },
@@ -3659,6 +3438,7 @@
                     "additionalProperties": true
                 },
                 "from": {
+                    "description": "使用指针，支持 nil（默认 0）",
                     "type": "integer"
                 },
                 "indices": {
@@ -3671,6 +3451,7 @@
                     "type": "string"
                 },
                 "size": {
+                    "description": "使用指针，支持 nil（默认 10）",
                     "type": "integer"
                 },
                 "sort": {

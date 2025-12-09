@@ -71,21 +71,6 @@ func (s *ClientService) Get(ctx context.Context, id uint) (*ClientResponse, erro
 	return ToClientResponse(client), nil
 }
 
-// List 客户列表
-func (s *ClientService) List(ctx context.Context, limit, offset int) (*ClientListResponse, error) {
-	clients, err := s.repo.FindAll(ctx, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-	
-	total, err := s.repo.Count(ctx)
-	if err != nil {
-		return nil, err
-	}
-	
-	return ToClientListResponse(clients, total), nil
-}
-
 // Update 更新客户
 func (s *ClientService) Update(ctx context.Context, id uint, req *UpdateClientRequest) error {
 	// 1. 查询客户

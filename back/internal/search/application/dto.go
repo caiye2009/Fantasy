@@ -2,13 +2,13 @@ package application
 
 // SearchRequest 搜索请求
 type SearchRequest struct {
-	Query   string                 `json:"query"`
+	Query   string                 `json:"query,omitempty"`
 	Indices []string               `json:"indices,omitempty"`
 	Fields  []string               `json:"fields,omitempty"`
 	Filters map[string]interface{} `json:"filters,omitempty"`
 	Sort    []SortFieldDTO         `json:"sort,omitempty"`
-	From    int                    `json:"from"`
-	Size    int                    `json:"size"`
+	From    *int                   `json:"from,omitempty"`    // 使用指针，支持 nil（默认 0）
+	Size    *int                   `json:"size,omitempty"`    // 使用指针，支持 nil（默认 10）
 }
 
 // SortFieldDTO 排序字段 DTO
