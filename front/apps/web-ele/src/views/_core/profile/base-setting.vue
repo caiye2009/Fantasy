@@ -56,7 +56,7 @@ const formSchema = computed((): VbenFormSchema[] => {
 });
 
 onMounted(async () => {
-  // const data = await getUserInfoApi();
+  const data = await getUserInfoApi();
   profileBaseSettingRef.value.getFormApi().setValues(data);
 });
 </script>

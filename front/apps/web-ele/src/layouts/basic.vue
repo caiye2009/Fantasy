@@ -92,24 +92,24 @@ const menus = computed(() => [
     icon: 'lucide:user',
     text: $t('page.auth.profile'),
   },
-  // {
-  //   handler: () => {
-  //     openWindow(VBEN_DOC_URL, {
-  //       target: '_blank',
-  //     });
-  //   },
-  //   icon: BookOpenText,
-  //   text: $t('ui.widgets.document'),
-  // },
-  // {
-  //   handler: () => {
-  //     openWindow(VBEN_GITHUB_URL, {
-  //       target: '_blank',
-  //     });
-  //   },
-  //   icon: SvgGithubIcon,
-  //   text: 'GitHub',
-  // },
+  {
+    handler: () => {
+      openWindow(VBEN_DOC_URL, {
+        target: '_blank',
+      });
+    },
+    icon: BookOpenText,
+    text: $t('ui.widgets.document'),
+  },
+  {
+    handler: () => {
+      openWindow(VBEN_GITHUB_URL, {
+        target: '_blank',
+      });
+    },
+    icon: SvgGithubIcon,
+    text: 'GitHub',
+  },
   {
     handler: () => {
       openWindow(`${VBEN_GITHUB_URL}/issues`, {

@@ -4,7 +4,7 @@ export namespace AuthApi {
   /** 登录接口参数 */
   export interface LoginParams {
     password?: string;
-    loginId?: string;
+    username?: string;
   }
 
   /** 登录接口返回值 */

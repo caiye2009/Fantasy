@@ -50,14 +50,8 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
    */
   async function doRefreshToken() {
     const accessStore = useAccessStore();
-    const refreshToken = localStorage.getItem('refreshToken');
-    
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
-    
-    const resp = await refreshTokenApi({ refreshToken });
-    const newToken = resp.accessToken; // 注意这里改为小驼峰
+    const resp = await refreshTokenApi();
+    const newToken = resp.data;
     accessStore.setAccessToken(newToken);
     return newToken;
   }

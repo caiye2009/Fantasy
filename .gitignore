@@ -8,7 +8,6 @@ bin/
 
 # Build output
 build/
-dist/
 out/
 
 # Go mod vendor
@@ -24,14 +23,10 @@ vendor/
 
 .DS_Store
 
-# Env
-# .env
-# .env.*
-
 # Swagger generated
 docs/swagger.*
 
 # Cache
 *.cache
 
-*.md
+CLAUDE.md

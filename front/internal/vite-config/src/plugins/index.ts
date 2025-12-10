@@ -142,12 +142,12 @@ async function loadApplicationPlugins(
         return [await viteVxeTableImportsPlugin()];
       },
     },
-    {
-      condition: nitroMock,
-      plugins: async () => {
-        return [await viteNitroMockPlugin(nitroMockOptions)];
-      },
-    },
+    // {
+    //   condition: nitroMock,
+    //   plugins: async () => {
+    //     return [await viteNitroMockPlugin(nitroMockOptions)];
+    //   },
+    // },
 
     {
       condition: injectAppLoading,

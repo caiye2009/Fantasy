@@ -1,4 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router';
+
 import { $t } from '#/locales';
 
 const routes: RouteRecordRaw[] = [
@@ -30,51 +31,6 @@ const routes: RouteRecordRaw[] = [
           title: $t('page.dashboard.workspace'),
         },
       },
-      {
-        name: 'list',
-        path: '/list',
-        component: () => import('#/views/dashboard/list/index.vue'),
-        meta: {
-          icon: 'carbon:workspace',
-          title: $t('page.dashboard.list'),
-        },
-      },
-      // {
-      //   name: 'material',
-      //   path: '/material',
-      //   component: () => import('#/views/dashboard/material/index.vue'),
-      //   meta: {
-      //     icon: 'carbon:workspace',
-      //     title: $t('page.dashboard.material'),
-      //   },
-      // },
-      // {
-      //   name: 'client',
-      //   path: '/client',
-      //   component: () => import('#/views/dashboard/client/index.vue'),
-      //   meta: {
-      //     icon: 'carbon:workspace',
-      //     title: $t('page.dashboard.client'),
-      //   },
-      // },
-      // {
-      //   name: 'product',
-      //   path: '/product',
-      //   component: () => import('#/views/dashboard/product/index.vue'),
-      //   meta: {
-      //     icon: 'carbon:workspace',
-      //     title: $t('page.dashboard.product'),
-      //   },
-      // },
-      // {
-      //   name: 'process',
-      //   path: '/process',
-      //   component: () => import('#/views/dashboard/process/index.vue'),
-      //   meta: {
-      //     icon: 'carbon:workspace',
-      //     title: $t('page.dashboard.process'),
-      //   },
-      // },
     ],
   },
 ];
