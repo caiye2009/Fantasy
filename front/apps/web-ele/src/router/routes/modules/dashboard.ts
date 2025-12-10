@@ -1,16 +1,19 @@
 import type { RouteRecordRaw } from 'vue-router';
 
+import { BasicLayout } from '#/layouts';
 import { $t } from '#/locales';
 
 const routes: RouteRecordRaw[] = [
   {
+    component: BasicLayout,
     meta: {
       icon: 'lucide:layout-dashboard',
       order: -1,
       title: $t('page.dashboard.title'),
     },
     name: 'Dashboard',
-    path: '/dashboard',
+    path: '/',
+    redirect: '/analytics',
     children: [
       {
         name: 'Analytics',
@@ -20,6 +23,8 @@ const routes: RouteRecordRaw[] = [
           affixTab: true,
           icon: 'lucide:area-chart',
           title: $t('page.dashboard.analytics'),
+          // 只有 admin 和 manager 角色可以访问
+          roles: ['admin', 'manager'],
         },
       },
       {
@@ -29,6 +34,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           icon: 'carbon:workspace',
           title: $t('page.dashboard.workspace'),
+          // 所有角色都可以访问（不设置 roles 或设置为空数组）
         },
       },
     ],
