@@ -91,6 +91,8 @@
     "turbo": "catalog:",
     "typescript": "catalog:",
     "unbuild": "catalog:",
+    "unplugin-auto-import": "^20.3.0",
+    "unplugin-vue-components": "^30.0.0",
     "vite": "catalog:",
     "vitest": "catalog:",
     "vue": "catalog:",
@@ -120,5 +122,10 @@
       "canvas",
       "node-gyp"
     ]
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "axios": "catalog:",
+    "element-plus": "catalog:"
   }
 }

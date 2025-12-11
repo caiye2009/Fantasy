@@ -113,8 +113,22 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
   return client;
 }
 
+function formatToken(token: null | string) {
+  return token ? `Bearer ${token}` : null;
+}
+
 export const requestClient = createRequestClient(apiURL, {
   responseReturn: 'data',
 });
 
 export const baseRequestClient = new RequestClient({ baseURL: apiURL });
+
+// 为 baseRequestClient 也添加请求头拦截器
+baseRequestClient.addRequestInterceptor({
+  fulfilled: async (config) => {
+    const accessStore = useAccessStore();
+    config.headers.Authorization = formatToken(accessStore.accessToken);
+    config.headers['Accept-Language'] = preferences.app.locale;
+    return config;
+  },
+});

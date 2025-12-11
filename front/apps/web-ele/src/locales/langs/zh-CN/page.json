@@ -9,7 +9,9 @@
   },
   "dashboard": {
     "title": "概览",
+    "workspace": "工作台",
+    "materials": "原料管理",
     "analytics": "分析页",
-    "workspace": "工作台"
+    "list": "退货分析"
   }
 }
