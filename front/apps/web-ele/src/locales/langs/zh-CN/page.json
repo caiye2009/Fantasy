@@ -8,10 +8,11 @@
     "profile": "个人中心"
   },
   "dashboard": {
-    "title": "概览",
+    "clients": "客户管理",
     "workspace": "工作台",
     "materials": "原料管理",
+    "processes": "工艺管理",
     "analytics": "分析页",
-    "list": "退货分析"
+    "demo": "退货分析"
   }
 }
