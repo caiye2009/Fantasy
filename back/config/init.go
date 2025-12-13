@@ -8,14 +8,13 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	
+
 	"gorm.io/gorm"
 	"golang.org/x/crypto/bcrypt"
-	
+
 	applog "back/pkg/log"
 	"back/pkg/es"
 	userDomain "back/internal/user/domain"
-	userInfra "back/internal/user/infra"
 )
 
 func Init() error {
@@ -75,7 +74,7 @@ func Init() error {
 
 func InitAdminUser(db *gorm.DB) {
 	var count int64
-	db.Model(&userInfra.UserPO{}).Where("role = ?", "admin").Count(&count)
+	db.Model(&userDomain.User{}).Where("role = ?", "admin").Count(&count)
 
 	if count > 0 {
 		log.Println("✓ Admin user already exists")
@@ -84,13 +83,13 @@ func InitAdminUser(db *gorm.DB) {
 
 	// Admin 密码: admin
 	hash, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
-	admin := &userInfra.UserPO{
+	admin := &userDomain.User{
 		LoginID:      "admin",
 		Username:     "admin",
 		PasswordHash: string(hash),
 		Email:        "admin@example.com",
-		Role:         string(userDomain.UserRoleAdmin),
-		Status:       string(userDomain.UserStatusActive),
+		Role:         userDomain.UserRoleAdmin,
+		Status:       userDomain.UserStatusActive,
 		HasInitPass:  false,
 	}
 	db.Create(admin)

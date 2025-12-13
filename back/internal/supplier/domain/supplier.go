@@ -3,18 +3,26 @@ package domain
 import (
 	"regexp"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // Supplier 供应商聚合根
 type Supplier struct {
-	ID        uint
-	Name      string
-	Contact   string
-	Phone     string
-	Email     string
-	Address   string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        uint           `gorm:"primaryKey" json:"id"`
+	Name      string         `gorm:"size:100;not null;index" json:"name"`
+	Contact   string         `gorm:"size:50" json:"contact"`
+	Phone     string         `gorm:"size:20;index" json:"phone"`
+	Email     string         `gorm:"size:100;index" json:"email"`
+	Address   string         `gorm:"size:200" json:"address"`
+	CreatedAt time.Time      `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// TableName 表名
+func (Supplier) TableName() string {
+	return "suppliers"
 }
 
 // Validate 验证供应商数据

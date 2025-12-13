@@ -2,31 +2,37 @@ package domain
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
-// PlanStatus 计划状态
-type PlanStatus string
-
+// 计划状态常量
 const (
-	PlanStatusPlanned   PlanStatus = "planned"   // 已计划
-	PlanStatusInProgress PlanStatus = "in_progress" // 进行中
-	PlanStatusCompleted PlanStatus = "completed" // 已完成
-	PlanStatusCancelled PlanStatus = "cancelled" // 已取消
+	PlanStatusPlanned    = "planned"     // 已计划
+	PlanStatusInProgress = "in_progress" // 进行中
+	PlanStatusCompleted  = "completed"   // 已完成
+	PlanStatusCancelled  = "cancelled"   // 已取消
 )
 
 // Plan 计划聚合根
 type Plan struct {
-	ID          uint
-	PlanNo      string
-	OrderID     uint
-	ProductID   uint
-	Quantity    float64
-	Status      PlanStatus
-	ScheduledAt *time.Time
-	CompletedAt *time.Time
-	CreatedBy   uint
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          uint           `gorm:"primaryKey" json:"id"`
+	PlanNo      string         `gorm:"size:50;uniqueIndex;not null" json:"plan_no"`
+	OrderID     uint           `gorm:"not null;index" json:"order_id"`
+	ProductID   uint           `gorm:"not null;index" json:"product_id"`
+	Quantity    float64        `gorm:"type:decimal(10,2);not null" json:"quantity"`
+	Status      string         `gorm:"size:20;default:planned;index" json:"status"`
+	ScheduledAt *time.Time     `gorm:"type:timestamp" json:"scheduled_at,omitempty"`
+	CompletedAt *time.Time     `gorm:"type:timestamp" json:"completed_at,omitempty"`
+	CreatedBy   uint           `gorm:"not null;index" json:"created_by"`
+	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// TableName 表名
+func (Plan) TableName() string {
+	return "plans"
 }
 
 // Validate 验证计划数据
@@ -123,19 +129,19 @@ func (p *Plan) ToDocument() map[string]interface{} {
 		"order_id":   p.OrderID,
 		"product_id": p.ProductID,
 		"quantity":   p.Quantity,
-		"status":     string(p.Status),
+		"status":     p.Status,
 		"created_by": p.CreatedBy,
 		"created_at": p.CreatedAt,
 		"updated_at": p.UpdatedAt,
 	}
-	
+
 	if p.ScheduledAt != nil {
 		doc["scheduled_at"] = p.ScheduledAt
 	}
 	if p.CompletedAt != nil {
 		doc["completed_at"] = p.CompletedAt
 	}
-	
+
 	return doc
 }
 

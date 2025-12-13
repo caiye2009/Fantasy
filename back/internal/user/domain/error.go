@@ -18,4 +18,20 @@ var (
 	ErrUserAlreadyActive         = errors.New("user is already active")
 	ErrUserAlreadySuspended      = errors.New("user is already suspended")
 	ErrCannotDeleteAdmin         = errors.New("cannot delete admin user")
+	ErrInvalidRole               = errors.New("invalid user role")
+
+	// Department errors
+	ErrDepartmentNotFound      = errors.New("department not found")
+	ErrDepartmentNameEmpty     = errors.New("department name cannot be empty")
+	ErrDepartmentNameInvalid   = errors.New("department name must be between 2 and 100 characters")
+	ErrDepartmentCodeInvalid   = errors.New("department code must be between 2 and 50 characters")
+	ErrDepartmentCodeDuplicate = errors.New("department code already exists")
+
+	// Role errors
+	ErrRoleNotFound      = errors.New("role not found")
+	ErrRoleNameEmpty     = errors.New("role name cannot be empty")
+	ErrRoleNameInvalid   = errors.New("role name must be between 2 and 100 characters")
+	ErrRoleCodeEmpty     = errors.New("role code cannot be empty")
+	ErrRoleCodeInvalid   = errors.New("role code must be between 2 and 50 characters")
+	ErrRoleCodeDuplicate = errors.New("role code already exists")
 )

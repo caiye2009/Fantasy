@@ -23,7 +23,7 @@ func ToPlanResponse(p *domain.Plan) *PlanResponse {
 		OrderID:     p.OrderID,
 		ProductID:   p.ProductID,
 		Quantity:    p.Quantity,
-		Status:      string(p.Status),
+		Status:      p.Status,
 		ScheduledAt: p.ScheduledAt,
 		CompletedAt: p.CompletedAt,
 		CreatedBy:   p.CreatedBy,

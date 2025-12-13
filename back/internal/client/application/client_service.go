@@ -3,8 +3,9 @@ package application
 import (
 	"context"
 	"strconv"
-	
+
 	"back/internal/client/domain"
+	"back/internal/client/infra"
 )
 
 // ESSync ES 同步接口
@@ -16,12 +17,12 @@ type ESSync interface {
 
 // ClientService 客户应用服务
 type ClientService struct {
-	repo   domain.ClientRepository
+	repo   *infra.ClientRepo
 	esSync ESSync
 }
 
 // NewClientService 创建客户服务
-func NewClientService(repo domain.ClientRepository, esSync ESSync) *ClientService {
+func NewClientService(repo *infra.ClientRepo, esSync ESSync) *ClientService {
 	return &ClientService{
 		repo:   repo,
 		esSync: esSync,

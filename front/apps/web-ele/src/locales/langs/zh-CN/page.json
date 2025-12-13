@@ -13,6 +13,9 @@
     "materials": "原料管理",
     "processes": "工艺管理",
     "analytics": "分析页",
-    "demo": "退货分析"
+    "demo": "退货分析",
+    "users": "用户管理",
+    "departments": "部门管理",
+    "roles": "职位管理"
   }
 }

@@ -2,9 +2,10 @@ package application
 
 import (
 	"context"
-	
+
 	"back/internal/product/domain"
-	pricingApp "back/internal/pricing/application"
+	"back/internal/product/infra"
+	pricingDomain "back/internal/pricing/domain"
 )
 
 // MaterialServiceInterface Material 服务接口
@@ -19,14 +20,14 @@ type ProcessServiceInterface interface {
 
 // MaterialPriceServiceInterface Material 价格服务接口
 type MaterialPriceServiceInterface interface {
-	GetMinPrice(ctx context.Context, materialID uint) (*pricingApp.PriceData, error)
-	GetMaxPrice(ctx context.Context, materialID uint) (*pricingApp.PriceData, error)
+	GetMinPrice(ctx context.Context, materialID uint) (*pricingDomain.PriceData, error)
+	GetMaxPrice(ctx context.Context, materialID uint) (*pricingDomain.PriceData, error)
 }
 
 // ProcessPriceServiceInterface Process 价格服务接口
 type ProcessPriceServiceInterface interface {
-	GetMinPrice(ctx context.Context, processID uint) (*pricingApp.PriceData, error)
-	GetMaxPrice(ctx context.Context, processID uint) (*pricingApp.PriceData, error)
+	GetMinPrice(ctx context.Context, processID uint) (*pricingDomain.PriceData, error)
+	GetMaxPrice(ctx context.Context, processID uint) (*pricingDomain.PriceData, error)
 }
 
 // MaterialInfo Material 信息
@@ -43,7 +44,7 @@ type ProcessInfo struct {
 
 // CostCalculator 成本计算器
 type CostCalculator struct {
-	productRepo      domain.ProductRepository
+	productRepo      *infra.ProductRepo
 	materialService  MaterialServiceInterface
 	processService   ProcessServiceInterface
 	materialPriceSvc MaterialPriceServiceInterface
@@ -52,7 +53,7 @@ type CostCalculator struct {
 
 // NewCostCalculator 创建成本计算器
 func NewCostCalculator(
-	productRepo domain.ProductRepository,
+	productRepo *infra.ProductRepo,
 	materialService MaterialServiceInterface,
 	processService ProcessServiceInterface,
 	materialPriceSvc MaterialPriceServiceInterface,
@@ -86,7 +87,7 @@ func (c *CostCalculator) Calculate(ctx context.Context, req *CalculateCostReques
 	
 	for _, m := range product.Materials {
 		// 获取价格
-		var priceData *pricingApp.PriceData
+		var priceData *pricingDomain.PriceData
 		if req.UseMinPrice {
 			priceData, err = c.materialPriceSvc.GetMinPrice(ctx, m.MaterialID)
 		} else {
@@ -121,7 +122,7 @@ func (c *CostCalculator) Calculate(ctx context.Context, req *CalculateCostReques
 	
 	for _, p := range product.Processes {
 		// 获取价格
-		var priceData *pricingApp.PriceData
+		var priceData *pricingDomain.PriceData
 		if req.UseMinPrice {
 			priceData, err = c.processPriceSvc.GetMinPrice(ctx, p.ProcessID)
 		} else {

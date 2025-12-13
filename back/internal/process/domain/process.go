@@ -2,15 +2,23 @@ package domain
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // Process 工序聚合根
 type Process struct {
-	ID          uint
-	Name        string
-	Description string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          uint           `gorm:"primaryKey" json:"id"`
+	Name        string         `gorm:"size:100;not null;index" json:"name"`
+	Description string         `gorm:"type:text" json:"description"`
+	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// TableName 表名
+func (Process) TableName() string {
+	return "processes"
 }
 
 // Validate 验证工序数据

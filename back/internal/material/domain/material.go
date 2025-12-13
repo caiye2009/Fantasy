@@ -2,17 +2,25 @@ package domain
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // Material 材料聚合根
 type Material struct {
-	ID          uint
-	Name        string
-	Spec        string
-	Unit        string
-	Description string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          uint           `gorm:"primaryKey" json:"id"`
+	Name        string         `gorm:"size:100;not null;index" json:"name"`
+	Spec        string         `gorm:"size:200" json:"spec"`
+	Unit        string         `gorm:"size:20" json:"unit"`
+	Description string         `gorm:"type:text" json:"description"`
+	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// TableName 表名
+func (Material) TableName() string {
+	return "materials"
 }
 
 // Validate 验证材料数据
@@ -67,6 +75,7 @@ func (m *Material) ToDocument() map[string]interface{} {
 		"description": m.Description,
 		"created_at":  m.CreatedAt,
 		"updated_at":  m.UpdatedAt,
+		"deleted_at":  m.DeletedAt,
 	}
 }
 

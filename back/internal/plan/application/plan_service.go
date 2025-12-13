@@ -5,6 +5,7 @@ import (
 	"strconv"
 	
 	"back/internal/plan/domain"
+	"back/internal/plan/infra"
 )
 
 // ESSync ES 同步接口
@@ -16,12 +17,12 @@ type ESSync interface {
 
 // PlanService 计划应用服务
 type PlanService struct {
-	repo   domain.PlanRepository
+	repo   *infra.PlanRepo
 	esSync ESSync
 }
 
 // NewPlanService 创建计划服务
-func NewPlanService(repo domain.PlanRepository, esSync ESSync) *PlanService {
+func NewPlanService(repo *infra.PlanRepo, esSync ESSync) *PlanService {
 	return &PlanService{
 		repo:   repo,
 		esSync: esSync,
@@ -96,10 +97,8 @@ func (s *PlanService) Update(ctx context.Context, id uint, req *UpdatePlanReques
 	
 	// 2. 更新字段（通过领域方法）
 	if req.Status != "" {
-		targetStatus := domain.PlanStatus(req.Status)
-		
 		// 根据状态转换调用不同的领域方法
-		switch targetStatus {
+		switch req.Status {
 		case domain.PlanStatusInProgress:
 			if err := plan.Start(); err != nil {
 				return err
@@ -201,17 +200,15 @@ func (s *PlanService) GetByProductID(ctx context.Context, productID uint) ([]*Pl
 
 // GetByStatus 根据状态查询计划
 func (s *PlanService) GetByStatus(ctx context.Context, status string, limit, offset int) (*PlanListResponse, error) {
-	planStatus := domain.PlanStatus(status)
-	
-	plans, err := s.repo.FindByStatus(ctx, planStatus, limit, offset)
+	plans, err := s.repo.FindByStatus(ctx, status, limit, offset)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	total, err := s.repo.Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return ToPlanListResponse(plans, total), nil
 }

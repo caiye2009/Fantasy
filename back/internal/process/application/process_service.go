@@ -5,6 +5,7 @@ import (
 	"strconv"
 	
 	"back/internal/process/domain"
+	"back/internal/process/infra"
 )
 
 // ESSync ES 同步接口
@@ -16,12 +17,12 @@ type ESSync interface {
 
 // ProcessService 工序应用服务
 type ProcessService struct {
-	repo   domain.ProcessRepository
+	repo   *infra.ProcessRepo
 	esSync ESSync
 }
 
 // NewProcessService 创建工序服务
-func NewProcessService(repo domain.ProcessRepository, esSync ESSync) *ProcessService {
+func NewProcessService(repo *infra.ProcessRepo, esSync ESSync) *ProcessService {
 	return &ProcessService{
 		repo:   repo,
 		esSync: esSync,

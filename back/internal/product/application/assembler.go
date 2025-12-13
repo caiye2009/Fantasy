@@ -17,7 +17,7 @@ func ToProductResponse(p *domain.Product) *ProductResponse {
 	return &ProductResponse{
 		ID:        p.ID,
 		Name:      p.Name,
-		Status:    string(p.Status),
+		Status:    p.Status,
 		Materials: p.Materials,
 		Processes: p.Processes,
 		CreatedAt: p.CreatedAt,

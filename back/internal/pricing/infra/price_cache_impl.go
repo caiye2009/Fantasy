@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	
+
 	"github.com/redis/go-redis/v9"
-	
-	"back/internal/pricing/application"
+
+	"back/internal/pricing/domain"
 )
 
 var ErrCacheMiss = errors.New("cache miss")
@@ -19,12 +19,12 @@ type PriceCacheImpl struct {
 }
 
 // NewPriceCacheImpl 创建缓存实现
-func NewPriceCacheImpl(rdb *redis.Client) application.PriceCache {
+func NewPriceCacheImpl(rdb *redis.Client) domain.PriceCache {
 	return &PriceCacheImpl{rdb: rdb}
 }
 
 // GetMin 获取最低价
-func (c *PriceCacheImpl) GetMin(ctx context.Context, targetType string, targetID uint) (*application.PriceData, error) {
+func (c *PriceCacheImpl) GetMin(ctx context.Context, targetType string, targetID uint) (*domain.PriceData, error) {
 	key := fmt.Sprintf("price:%s:%d:min", targetType, targetID)
 	
 	val, err := c.rdb.Get(ctx, key).Result()
@@ -35,7 +35,7 @@ func (c *PriceCacheImpl) GetMin(ctx context.Context, targetType string, targetID
 		return nil, err
 	}
 	
-	var data application.PriceData
+	var data domain.PriceData
 	if err := json.Unmarshal([]byte(val), &data); err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (c *PriceCacheImpl) GetMin(ctx context.Context, targetType string, targetID
 }
 
 // SetMin 设置最低价
-func (c *PriceCacheImpl) SetMin(ctx context.Context, targetType string, targetID uint, data *application.PriceData) error {
+func (c *PriceCacheImpl) SetMin(ctx context.Context, targetType string, targetID uint, data *domain.PriceData) error {
 	key := fmt.Sprintf("price:%s:%d:min", targetType, targetID)
 	
 	jsonData, err := json.Marshal(data)
@@ -56,7 +56,7 @@ func (c *PriceCacheImpl) SetMin(ctx context.Context, targetType string, targetID
 }
 
 // UpdateMin 更新最低价
-func (c *PriceCacheImpl) UpdateMin(ctx context.Context, targetType string, targetID uint, newPrice *application.PriceData) error {
+func (c *PriceCacheImpl) UpdateMin(ctx context.Context, targetType string, targetID uint, newPrice *domain.PriceData) error {
 	current, err := c.GetMin(ctx, targetType, targetID)
 	if errors.Is(err, ErrCacheMiss) {
 		// 没有缓存，直接写入
@@ -75,7 +75,7 @@ func (c *PriceCacheImpl) UpdateMin(ctx context.Context, targetType string, targe
 }
 
 // GetMax 获取最高价
-func (c *PriceCacheImpl) GetMax(ctx context.Context, targetType string, targetID uint) (*application.PriceData, error) {
+func (c *PriceCacheImpl) GetMax(ctx context.Context, targetType string, targetID uint) (*domain.PriceData, error) {
 	key := fmt.Sprintf("price:%s:%d:max", targetType, targetID)
 	
 	val, err := c.rdb.Get(ctx, key).Result()
@@ -86,7 +86,7 @@ func (c *PriceCacheImpl) GetMax(ctx context.Context, targetType string, targetID
 		return nil, err
 	}
 	
-	var data application.PriceData
+	var data domain.PriceData
 	if err := json.Unmarshal([]byte(val), &data); err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (c *PriceCacheImpl) GetMax(ctx context.Context, targetType string, targetID
 }
 
 // SetMax 设置最高价
-func (c *PriceCacheImpl) SetMax(ctx context.Context, targetType string, targetID uint, data *application.PriceData) error {
+func (c *PriceCacheImpl) SetMax(ctx context.Context, targetType string, targetID uint, data *domain.PriceData) error {
 	key := fmt.Sprintf("price:%s:%d:max", targetType, targetID)
 	
 	jsonData, err := json.Marshal(data)
@@ -107,7 +107,7 @@ func (c *PriceCacheImpl) SetMax(ctx context.Context, targetType string, targetID
 }
 
 // UpdateMax 更新最高价
-func (c *PriceCacheImpl) UpdateMax(ctx context.Context, targetType string, targetID uint, newPrice *application.PriceData) error {
+func (c *PriceCacheImpl) UpdateMax(ctx context.Context, targetType string, targetID uint, newPrice *domain.PriceData) error {
 	current, err := c.GetMax(ctx, targetType, targetID)
 	if errors.Is(err, ErrCacheMiss) {
 		// 没有缓存，直接写入

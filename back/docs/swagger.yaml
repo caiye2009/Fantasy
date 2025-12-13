@@ -72,6 +72,23 @@ definitions:
     required:
     - name
     type: object
+  application.CreateDepartmentRequest:
+    properties:
+      code:
+        maxLength: 50
+        minLength: 2
+        type: string
+      description:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      parent_id:
+        type: integer
+    required:
+    - name
+    type: object
   application.CreateMaterialRequest:
     properties:
       description:
@@ -165,6 +182,25 @@ definitions:
     - name
     - processes
     type: object
+  application.CreateRoleRequest:
+    properties:
+      code:
+        maxLength: 50
+        minLength: 2
+        type: string
+      description:
+        type: string
+      level:
+        minimum: 0
+        type: integer
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - code
+    - name
+    type: object
   application.CreateSupplierRequest:
     properties:
       address:
@@ -187,27 +223,19 @@ definitions:
     type: object
   application.CreateUserRequest:
     properties:
+      department:
+        maxLength: 100
+        type: string
       email:
         type: string
-      login_id:
-        maxLength: 20
-        minLength: 4
-        type: string
       role:
-        enum:
-        - admin
-        - hr
-        - sales
-        - follower
-        - assistant
-        - user
         type: string
       username:
         maxLength: 50
         minLength: 2
         type: string
     required:
-    - login_id
+    - department
     - role
     - username
     type: object
@@ -215,12 +243,8 @@ definitions:
     properties:
       login_id:
         type: string
-      message:
-        type: string
       password:
         type: string
-      user:
-        $ref: '#/definitions/application.UserResponse'
     type: object
   application.CustomerOptionResponse:
     properties:
@@ -242,6 +266,36 @@ definitions:
       start:
         description: 开始日期 YYYY-MM-DD，可选
         example: "2024-01-01"
+        type: string
+    type: object
+  application.DepartmentListResponse:
+    properties:
+      departments:
+        items:
+          $ref: '#/definitions/application.DepartmentResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  application.DepartmentResponse:
+    properties:
+      code:
+        type: string
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      parent_id:
+        type: integer
+      status:
+        type: string
+      updated_at:
         type: string
     type: object
   application.IndexInfoDTO:
@@ -395,17 +449,6 @@ definitions:
       updated_at:
         type: string
     type: object
-  application.PriceData:
-    properties:
-      price:
-        type: number
-      quoted_at:
-        type: string
-      supplier_id:
-        type: integer
-      supplier_name:
-        type: string
-    type: object
   application.ProcessResponse:
     properties:
       created_at:
@@ -513,6 +556,36 @@ definitions:
         allOf:
         - $ref: '#/definitions/application.WeightDimensionResponse'
         description: 重量统计
+    type: object
+  application.RoleListResponse:
+    properties:
+      roles:
+        items:
+          $ref: '#/definitions/application.RoleResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  application.RoleResponse:
+    properties:
+      code:
+        type: string
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      level:
+        type: integer
+      name:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
     type: object
   application.SearchRequest:
     properties:
@@ -626,6 +699,21 @@ definitions:
         maxLength: 20
         type: string
     type: object
+  application.UpdateDepartmentRequest:
+    properties:
+      code:
+        maxLength: 50
+        minLength: 2
+        type: string
+      description:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      parent_id:
+        type: integer
+    type: object
   application.UpdateMaterialRequest:
     properties:
       description:
@@ -702,6 +790,22 @@ definitions:
         - rejected
         type: string
     type: object
+  application.UpdateRoleRequest:
+    properties:
+      code:
+        maxLength: 50
+        minLength: 2
+        type: string
+      description:
+        type: string
+      level:
+        minimum: 0
+        type: integer
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    type: object
   application.UpdateSupplierRequest:
     properties:
       address:
@@ -722,16 +826,12 @@ definitions:
     type: object
   application.UpdateUserRequest:
     properties:
+      department:
+        maxLength: 100
+        type: string
       email:
         type: string
       role:
-        enum:
-        - admin
-        - hr
-        - sales
-        - follower
-        - assistant
-        - user
         type: string
       status:
         enum:
@@ -756,6 +856,8 @@ definitions:
   application.UserResponse:
     properties:
       created_at:
+        type: string
+      department:
         type: string
       email:
         type: string
@@ -844,6 +946,17 @@ definitions:
       ratio:
         type: number
     type: object
+  domain.PriceData:
+    properties:
+      price:
+        type: number
+      quoted_at:
+        type: string
+      supplier_id:
+        type: integer
+      supplier_name:
+        type: string
+    type: object
   domain.ProcessConfig:
     properties:
       process_id:
@@ -865,30 +978,21 @@ definitions:
     type: object
   domain.SupplierPrice:
     properties:
-      createdAt:
+      created_at:
         type: string
       id:
         type: integer
       price:
-        format: float64
         type: number
-      quotedAt:
+      quoted_at:
         type: string
-      supplierID:
+      supplier_id:
         type: integer
-      targetID:
+      target_id:
         type: integer
-      targetType:
-        $ref: '#/definitions/domain.TargetType'
+      target_type:
+        type: string
     type: object
-  domain.TargetType:
-    enum:
-    - material
-    - process
-    type: string
-    x-enum-varnames:
-    - TargetTypeMaterial
-    - TargetTypeProcess
   fields.Response:
     properties:
       code:
@@ -1101,6 +1205,228 @@ paths:
       summary: 更新客户信息
       tags:
       - 客户管理
+  /department:
+    get:
+      consumes:
+      - application/json
+      description: 获取部门列表（支持状态筛选和分页）
+      parameters:
+      - description: 部门状态（active/inactive）
+        in: query
+        name: status
+        type: string
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/application.DepartmentListResponse'
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取部门列表
+      tags:
+      - 部门管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新部门
+      parameters:
+      - description: 部门信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.CreateDepartmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/application.DepartmentResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 创建部门
+      tags:
+      - 部门管理
+  /department/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据部门ID获取部门详细信息
+      parameters:
+      - description: 部门ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/application.DepartmentResponse'
+        "404":
+          description: 部门不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取部门详情
+      tags:
+      - 部门管理
+    put:
+      consumes:
+      - application/json
+      description: 更新部门信息
+      parameters:
+      - description: 部门ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 部门信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.UpdateDepartmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            $ref: '#/definitions/application.DepartmentResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 部门不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新部门
+      tags:
+      - 部门管理
+  /department/{id}/activate:
+    put:
+      consumes:
+      - application/json
+      description: 激活已停用的部门
+      parameters:
+      - description: 部门ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 激活成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 部门不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 激活部门
+      tags:
+      - 部门管理
+  /department/{id}/deactivate:
+    put:
+      consumes:
+      - application/json
+      description: 停用部门（软删除）
+      parameters:
+      - description: 部门ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 停用成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 部门不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 停用部门
+      tags:
+      - 部门管理
   /material:
     post:
       consumes:
@@ -1185,7 +1511,7 @@ paths:
           description: 价格历史记录
           schema:
             items:
-              $ref: '#/definitions/application.PriceData'
+              $ref: '#/definitions/domain.PriceData'
             type: array
         "500":
           description: 服务器错误
@@ -2152,6 +2478,228 @@ paths:
       summary: 获取客户下拉列表
       tags:
       - 退货分析
+  /role:
+    get:
+      consumes:
+      - application/json
+      description: 获取职位列表（支持状态筛选和分页）
+      parameters:
+      - description: 职位状态（active/inactive）
+        in: query
+        name: status
+        type: string
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/application.RoleListResponse'
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取职位列表
+      tags:
+      - 职位管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新职位
+      parameters:
+      - description: 职位信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.CreateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/application.RoleResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 创建职位
+      tags:
+      - 职位管理
+  /role/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据职位ID获取职位详细信息
+      parameters:
+      - description: 职位ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/application.RoleResponse'
+        "404":
+          description: 职位不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取职位详情
+      tags:
+      - 职位管理
+    put:
+      consumes:
+      - application/json
+      description: 更新职位信息
+      parameters:
+      - description: 职位ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 职位信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.UpdateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            $ref: '#/definitions/application.RoleResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 职位不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新职位
+      tags:
+      - 职位管理
+  /role/{id}/activate:
+    put:
+      consumes:
+      - application/json
+      description: 激活已停用的职位
+      parameters:
+      - description: 职位ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 激活成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 职位不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 激活职位
+      tags:
+      - 职位管理
+  /role/{id}/deactivate:
+    put:
+      consumes:
+      - application/json
+      description: 停用职位（软删除）
+      parameters:
+      - description: 职位ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 停用成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 职位不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 停用职位
+      tags:
+      - 职位管理
   /search:
     post:
       consumes:
@@ -2587,6 +3135,48 @@ paths:
       security:
       - Bearer: []
       summary: 修改密码
+      tags:
+      - 用户管理
+  /user/departments:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统中所有唯一的部门列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 部门列表
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取部门列表
+      tags:
+      - 用户管理
+  /user/roles:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统中所有可用的角色列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 角色列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取角色列表
       tags:
       - 用户管理
 securityDefinitions:

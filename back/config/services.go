@@ -60,87 +60,97 @@ import (
 type Services struct {
 	// Auth
 	Auth *authApp.AuthService
-	
+
 	// Core Entities
-	Supplier *supplierApp.SupplierService
-	Client   *clientApp.ClientService
-	User     *userApp.UserService
-	Material *materialApp.MaterialService
-	Process  *processApp.ProcessService
-	
+	Supplier   *supplierApp.SupplierService
+	Client     *clientApp.ClientService
+	User       *userApp.UserService
+	Department *userApp.DepartmentService
+	Role       *userApp.RoleService
+	Material   *materialApp.MaterialService
+	Process    *processApp.ProcessService
+
 	// Pricing
 	MaterialPrice *pricingApp.MaterialPriceService
 	ProcessPrice  *pricingApp.ProcessPriceService
-	
+
 	// Product
 	Product               *productApp.ProductService
 	ProductCostCalculator *productApp.CostCalculator
-	
+
 	// Plan & Order
 	Plan  *planApp.PlanService
 	Order *orderApp.OrderService
-	
+
 	// Search
 	Search *searchApp.SearchService
-	
+
 	// Analytics
 	ReturnAnalysis *analyticsApp.ReturnAnalysisService
 }
 
 func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client, jwtWang *auth.JWTWang, esSync *es.ESSync) *Services {
 	// ========== Supplier ==========
-	supplierRepo := supplierInfra.NewSupplierRepoImpl(db)
+	supplierRepo := supplierInfra.NewSupplierRepo(db)
 	supplierService := supplierApp.NewSupplierService(supplierRepo, esSync)
-	
+
 	// ========== Client ==========
-	clientRepo := clientInfra.NewClientRepoImpl(db)
+	clientRepo := clientInfra.NewClientRepo(db)
 	clientService := clientApp.NewClientService(clientRepo, esSync)
-	
+
 	// ========== User ==========
-	userRepo := userInfra.NewUserRepoImpl(db)
+	userRepo := userInfra.NewUserRepo(db)
 	userService := userApp.NewUserService(userRepo)
-	
+
+	// ========== Department ==========
+	departmentRepo := userInfra.NewDepartmentRepo(db)
+	departmentService := userApp.NewDepartmentService(departmentRepo)
+
+	// ========== Role ==========
+	roleRepo := userInfra.NewRoleRepo(db)
+	roleService := userApp.NewRoleService(roleRepo)
+
 	// ========== Auth ==========
 	jwtAdapter := authApp.NewJWTWangAdapter(jwtWang)
 	authService := authApp.NewAuthService(userService, jwtAdapter)
-	
+
 	// ========== Material ==========
-	materialRepo := materialInfra.NewMaterialRepoImpl(db)
+	materialRepo := materialInfra.NewMaterialRepo(db)
 	materialService := materialApp.NewMaterialService(materialRepo, esSync)
-	
+
 	// ========== Process ==========
-	processRepo := processInfra.NewProcessRepoImpl(db)
+	processRepo := processInfra.NewProcessRepo(db)
 	processService := processApp.NewProcessService(processRepo, esSync)
-	
+
 	// ========== Pricing（使用适配器） ==========
-	supplierPriceRepo := pricingInfra.NewSupplierPriceRepoImpl(db)
+	supplierPriceRepo := pricingInfra.NewSupplierPriceRepo(db)
 	priceCache := pricingInfra.NewPriceCacheImpl(rdb)
-	
+
 	// 创建 Supplier 适配器
 	supplierAdapter := supplierApp.NewSupplierServiceAdapter(supplierService)
-	
+
 	materialPriceService := pricingApp.NewMaterialPriceService(
 		supplierPriceRepo,
 		priceCache,
 		materialService,
 		supplierAdapter, // 使用适配器
 	)
-	
+
 	processPriceService := pricingApp.NewProcessPriceService(
 		supplierPriceRepo,
 		priceCache,
 		processService,
 		supplierAdapter, // 使用适配器
 	)
-	
+
 	// ========== Product（使用适配器） ==========
-	productRepo := productInfra.NewProductRepoImpl(db)
+	productRepo := productInfra.NewProductRepo(db)
 	productService := productApp.NewProductService(productRepo, esSync)
-	
+
 	// 创建 Material 和 Process 适配器
 	materialAdapter := materialApp.NewMaterialServiceAdapter(materialService)
 	processAdapter := processApp.NewProcessServiceAdapter(processService)
-	
+
 	productCostCalculator := productApp.NewCostCalculator(
 		productRepo,
 		materialAdapter,  // 使用适配器
@@ -148,13 +158,13 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 		materialPriceService,
 		processPriceService,
 	)
-	
+
 	// ========== Plan ==========
-	planRepo := planInfra.NewPlanRepoImpl(db)
+	planRepo := planInfra.NewPlanRepo(db)
 	planService := planApp.NewPlanService(planRepo, esSync)
-	
+
 	// ========== Order ==========
-	orderRepo := orderInfra.NewOrderRepoImpl(db)
+	orderRepo := orderInfra.NewOrderRepo(db)
 	orderService := orderApp.NewOrderService(orderRepo, esSync)
 	
 	// ========== Search ==========
@@ -170,6 +180,8 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 		Supplier:              supplierService,
 		Client:                clientService,
 		User:                  userService,
+		Department:            departmentService,
+		Role:                  roleService,
 		Material:              materialService,
 		Process:               processService,
 		MaterialPrice:         materialPriceService,

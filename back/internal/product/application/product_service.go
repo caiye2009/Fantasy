@@ -5,6 +5,7 @@ import (
 	"strconv"
 	
 	"back/internal/product/domain"
+	"back/internal/product/infra"
 )
 
 // ESSync ES 同步接口
@@ -16,12 +17,12 @@ type ESSync interface {
 
 // ProductService 产品应用服务
 type ProductService struct {
-	repo   domain.ProductRepository
+	repo   *infra.ProductRepo
 	esSync ESSync
 }
 
 // NewProductService 创建产品服务
-func NewProductService(repo domain.ProductRepository, esSync ESSync) *ProductService {
+func NewProductService(repo *infra.ProductRepo, esSync ESSync) *ProductService {
 	return &ProductService{
 		repo:   repo,
 		esSync: esSync,
@@ -91,9 +92,7 @@ func (s *ProductService) Update(ctx context.Context, id uint, req *UpdateProduct
 	
 	// 状态更新
 	if req.Status != "" {
-		targetStatus := domain.ProductStatus(req.Status)
-		
-		switch targetStatus {
+		switch req.Status {
 		case domain.ProductStatusSubmitted:
 			if err := product.Submit(); err != nil {
 				return err

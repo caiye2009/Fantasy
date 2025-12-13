@@ -4,18 +4,19 @@ import "time"
 
 // CreateUserRequest 创建用户请求
 type CreateUserRequest struct {
-	LoginID  string `json:"login_id" binding:"required,min=4,max=20"`
-	Username string `json:"username" binding:"required,min=2,max=50"`
-	Email    string `json:"email" binding:"omitempty,email"`
-	Role     string `json:"role" binding:"required,oneof=admin hr sales follower assistant user"`
+	Username   string `json:"username" binding:"required,min=2,max=50"`
+	Department string `json:"department" binding:"required,max=100"`
+	Email      string `json:"email" binding:"omitempty,email"`
+	Role       string `json:"role" binding:"required"`
 }
 
 // UpdateUserRequest 更新用户请求
 type UpdateUserRequest struct {
-	Username string `json:"username" binding:"omitempty,min=2,max=50"`
-	Email    string `json:"email" binding:"omitempty,email"`
-	Role     string `json:"role" binding:"omitempty,oneof=admin hr sales follower assistant user"`
-	Status   string `json:"status" binding:"omitempty,oneof=active inactive suspended"`
+	Username   string `json:"username" binding:"omitempty,min=2,max=50"`
+	Department string `json:"department" binding:"omitempty,max=100"`
+	Email      string `json:"email" binding:"omitempty,email"`
+	Role       string `json:"role" binding:"omitempty"`
+	Status     string `json:"status" binding:"omitempty,oneof=active inactive suspended"`
 }
 
 // ChangePasswordRequest 修改密码请求
@@ -29,6 +30,7 @@ type UserResponse struct {
 	ID          uint      `json:"id"`
 	LoginID     string    `json:"login_id"`
 	Username    string    `json:"username"`
+	Department  string    `json:"department"`
 	Email       string    `json:"email"`
 	Role        string    `json:"role"`
 	Status      string    `json:"status"`
@@ -43,10 +45,8 @@ type UserListResponse struct {
 	Users []*UserResponse `json:"users"`
 }
 
-// CreateUserResponse 创建用户响应（包含初始密码）
+// CreateUserResponse 创建用户响应（只返回 login_id 和密码）
 type CreateUserResponse struct {
-	Message         string        `json:"message"`
-	LoginID         string        `json:"login_id"`
-	DefaultPassword string        `json:"password"`
-	User            *UserResponse `json:"user"`
+	LoginID  string `json:"login_id"`
+	Password string `json:"password"`
 }

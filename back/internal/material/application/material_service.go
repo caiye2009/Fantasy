@@ -3,8 +3,9 @@ package application
 import (
 	"context"
 	"strconv"
-	
+
 	"back/internal/material/domain"
+	"back/internal/material/infra"
 )
 
 // ESSync ES 同步接口
@@ -16,12 +17,12 @@ type ESSync interface {
 
 // MaterialService 材料应用服务
 type MaterialService struct {
-	repo   domain.MaterialRepository
+	repo   *infra.MaterialRepo
 	esSync ESSync
 }
 
 // NewMaterialService 创建材料服务
-func NewMaterialService(repo domain.MaterialRepository, esSync ESSync) *MaterialService {
+func NewMaterialService(repo *infra.MaterialRepo, esSync ESSync) *MaterialService {
 	return &MaterialService{
 		repo:   repo,
 		esSync: esSync,

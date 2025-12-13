@@ -5,6 +5,7 @@ import (
 	"strconv"
 	
 	"back/internal/supplier/domain"
+	"back/internal/supplier/infra"
 )
 
 // ESSync ES 同步接口
@@ -16,12 +17,12 @@ type ESSync interface {
 
 // SupplierService 供应商应用服务
 type SupplierService struct {
-	repo   domain.SupplierRepository
+	repo   *infra.SupplierRepo
 	esSync ESSync
 }
 
 // NewSupplierService 创建供应商服务
-func NewSupplierService(repo domain.SupplierRepository, esSync ESSync) *SupplierService {
+func NewSupplierService(repo *infra.SupplierRepo, esSync ESSync) *SupplierService {
 	return &SupplierService{
 		repo:   repo,
 		esSync: esSync,

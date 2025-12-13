@@ -1,43 +1,69 @@
 package domain
 
 import (
-	"time"	
+	"time"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
-// UserRole 用户角色
-type UserRole string
-
+// 用户角色常量
 const (
-	UserRoleAdmin     UserRole = "admin"     // 管理员
-	UserRoleHR        UserRole = "hr"        // 人力资源
-	UserRoleSales     UserRole = "sales"     // 销售
-	UserRoleFollower  UserRole = "follower"  // 跟单员
-	UserRoleAssistant UserRole = "assistant" // 助理
-	UserRoleUser      UserRole = "user"      // 普通用户
+	UserRoleAdmin     = "admin"     // 管理员
+	UserRoleHR        = "hr"        // 人力资源
+	UserRoleSales     = "sales"     // 销售
+	UserRoleFollower  = "follower"  // 跟单员
+	UserRoleAssistant = "assistant" // 助理
+	UserRoleUser      = "user"      // 普通用户
 )
 
-// UserStatus 用户状态
-type UserStatus string
+// GetAllRoles 获取所有角色（统一维护角色列表）
+func GetAllRoles() []string {
+	return []string{
+		UserRoleAdmin,
+		UserRoleHR,
+		UserRoleSales,
+		UserRoleFollower,
+		UserRoleAssistant,
+		UserRoleUser,
+	}
+}
 
+// IsValidRole 验证角色是否有效
+func IsValidRole(role string) bool {
+	for _, validRole := range GetAllRoles() {
+		if validRole == role {
+			return true
+		}
+	}
+	return false
+}
+
+// 用户状态常量
 const (
-	UserStatusActive    UserStatus = "active"    // 激活
-	UserStatusInactive  UserStatus = "inactive"  // 未激活
-	UserStatusSuspended UserStatus = "suspended" // 停用
+	UserStatusActive    = "active"    // 激活
+	UserStatusInactive  = "inactive"  // 未激活
+	UserStatusSuspended = "suspended" // 停用
 )
 
 // User 用户聚合根
 type User struct {
-	ID           uint
-	LoginID      string
-	Username     string
-	PasswordHash string
-	Email        string
-	Role         UserRole
-	Status       UserStatus
-	HasInitPass  bool // 是否使用初始密码
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID           uint           `gorm:"primaryKey" json:"id"`
+	LoginID      string         `gorm:"size:50;not null;uniqueIndex" json:"login_id"`
+	Username     string         `gorm:"size:100;not null" json:"username"`
+	Department   string         `gorm:"size:100" json:"department"`
+	PasswordHash string         `gorm:"size:255;not null" json:"-"`
+	Email        string         `gorm:"size:100" json:"email"`
+	Role         string         `gorm:"size:50;not null;index" json:"role"`
+	Status       string         `gorm:"size:20;default:active;index" json:"status"`
+	HasInitPass  bool           `gorm:"default:true" json:"has_init_pass"`
+	CreatedAt    time.Time      `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt    time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// TableName 表名
+func (User) TableName() string {
+	return "users"
 }
 
 // Validate 验证用户数据
@@ -125,8 +151,18 @@ func (u *User) UpdateUsername(newUsername string) error {
 	if len(newUsername) < 2 || len(newUsername) > 50 {
 		return ErrUsernameInvalid
 	}
-	
+
 	u.Username = newUsername
+	return nil
+}
+
+// UpdateDepartment 更新部门
+func (u *User) UpdateDepartment(newDepartment string) error {
+	if len(newDepartment) > 100 {
+		return ErrUsernameInvalid // 可以后续添加专门的 ErrDepartmentInvalid
+	}
+
+	u.Department = newDepartment
 	return nil
 }
 
@@ -142,7 +178,10 @@ func (u *User) UpdateEmail(newEmail string) error {
 }
 
 // UpdateRole 更新角色
-func (u *User) UpdateRole(newRole UserRole) error {
+func (u *User) UpdateRole(newRole string) error {
+	if !IsValidRole(newRole) {
+		return ErrInvalidRole
+	}
 	u.Role = newRole
 	return nil
 }

@@ -4,30 +4,32 @@ import (
 	"log"
 	"gorm.io/gorm"
 
-	supplierInfra "back/internal/supplier/infra"
-	clientInfra "back/internal/client/infra"
-	userInfra "back/internal/user/infra"
-	materialInfra "back/internal/material/infra"
-	processInfra "back/internal/process/infra"
-	pricingInfra "back/internal/pricing/infra"
-	productInfra "back/internal/product/infra"
-	planInfra "back/internal/plan/infra"
-	orderInfra "back/internal/order/infra"
+	userDomain "back/internal/user/domain"
+	supplierDomain "back/internal/supplier/domain"
+	clientDomain "back/internal/client/domain"
+	materialDomain "back/internal/material/domain"
+	processDomain "back/internal/process/domain"
+	pricingDomain "back/internal/pricing/domain"
+	productDomain "back/internal/product/domain"
+	planDomain "back/internal/plan/domain"
+	orderDomain "back/internal/order/domain"
 )
 
 func AutoMigrate(db *gorm.DB) error {
 	log.Println("=== Starting Database Migration ===")
 
 	err := db.AutoMigrate(
-		&userInfra.UserPO{},
-		&supplierInfra.SupplierPO{},
-		&clientInfra.ClientPO{},
-		&materialInfra.MaterialPO{},
-		&processInfra.ProcessPO{},
-		&pricingInfra.SupplierPricePO{},
-		&productInfra.ProductPO{},
-		&planInfra.PlanPO{},
-		&orderInfra.OrderPO{},
+		&userDomain.User{},
+		&userDomain.Department{},
+		&userDomain.Role{},
+		&supplierDomain.Supplier{},
+		&clientDomain.Client{},
+		&materialDomain.Material{},
+		&processDomain.Process{},
+		&pricingDomain.SupplierPrice{},
+		&productDomain.Product{},
+		&planDomain.Plan{},
+		&orderDomain.Order{},
 	)
 
 	if err != nil {

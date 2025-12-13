@@ -4,53 +4,54 @@ import (
 	"context"
 	
 	"back/internal/user/domain"
+	"back/internal/user/infra"
 )
 
 // UserService 用户应用服务
 type UserService struct {
-	repo domain.UserRepository
+	repo *infra.UserRepo
 }
 
 // NewUserService 创建用户服务
-func NewUserService(repo domain.UserRepository) *UserService {
+func NewUserService(repo *infra.UserRepo) *UserService {
 	return &UserService{repo: repo}
 }
 
 // Create 创建用户
 func (s *UserService) Create(ctx context.Context, req *CreateUserRequest) (*CreateUserResponse, error) {
-	// 1. 检查工号是否重复
-	exists, err := s.repo.ExistsByLoginID(ctx, req.LoginID)
+	// 1. 验证角色是否有效
+	if !domain.IsValidRole(req.Role) {
+		return nil, domain.ErrInvalidRole
+	}
+
+	// 2. 自动生成 login_id（自增，从 1000 开始）
+	loginID, err := s.repo.GetNextLoginID(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if exists {
-		return nil, domain.ErrLoginIDDuplicate
-	}
-	
-	// 2. DTO → Domain Model
-	user := ToUser(req)
-	
-	// 3. 设置默认密码
+
+	// 3. DTO → Domain Model
+	user := ToUser(req, loginID)
+
+	// 4. 设置默认密码（123）
 	if err := user.SetDefaultPassword(); err != nil {
 		return nil, err
 	}
-	
-	// 4. 领域验证
+
+	// 5. 领域验证
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
-	
-	// 5. 保存到数据库
+
+	// 6. 保存到数据库
 	if err := s.repo.Save(ctx, user); err != nil {
 		return nil, err
 	}
-	
-	// 6. 返回响应（包含初始密码）
+
+	// 7. 返回响应（只返回 login_id 和初始密码）
 	return &CreateUserResponse{
-		Message:         "用户创建成功",
-		LoginID:         user.LoginID,
-		DefaultPassword: "123",
-		User:            ToUserResponse(user),
+		LoginID:  user.LoginID,
+		Password: "123",
 	}, nil
 }
 
@@ -98,24 +99,32 @@ func (s *UserService) Update(ctx context.Context, id uint, req *UpdateUserReques
 			return err
 		}
 	}
-	
+
+	if req.Department != "" {
+		if err := user.UpdateDepartment(req.Department); err != nil {
+			return err
+		}
+	}
+
 	if req.Email != "" {
 		if err := user.UpdateEmail(req.Email); err != nil {
 			return err
 		}
 	}
-	
+
 	if req.Role != "" {
-		if err := user.UpdateRole(domain.UserRole(req.Role)); err != nil {
+		// 验证角色是否有效
+		if !domain.IsValidRole(req.Role) {
+			return domain.ErrInvalidRole
+		}
+		if err := user.UpdateRole(req.Role); err != nil {
 			return err
 		}
 	}
 	
 	// 状态更新
 	if req.Status != "" {
-		targetStatus := domain.UserStatus(req.Status)
-		
-		switch targetStatus {
+		switch req.Status {
 		case domain.UserStatusActive:
 			if err := user.Activate(); err != nil {
 				return err
@@ -191,4 +200,14 @@ func (s *UserService) ValidatePassword(ctx context.Context, loginID, password st
 	}
 	
 	return user, nil
+}
+
+// GetAllDepartments 获取所有部门列表
+func (s *UserService) GetAllDepartments(ctx context.Context) ([]string, error) {
+	return s.repo.GetAllDepartments(ctx)
+}
+
+// GetAllRoles 获取所有角色列表
+func (s *UserService) GetAllRoles() []string {
+	return domain.GetAllRoles()
 }

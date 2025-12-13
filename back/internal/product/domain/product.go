@@ -1,18 +1,20 @@
 package domain
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"math"
 	"time"
+
+	"gorm.io/gorm"
 )
 
-// ProductStatus 产品状态
-type ProductStatus string
-
+// 产品状态常量
 const (
-	ProductStatusDraft     ProductStatus = "draft"     // 草稿
-	ProductStatusSubmitted ProductStatus = "submitted" // 已提交
-	ProductStatusApproved  ProductStatus = "approved"  // 已审批
-	ProductStatusRejected  ProductStatus = "rejected"  // 已拒绝
+	ProductStatusDraft     = "draft"     // 草稿
+	ProductStatusSubmitted = "submitted" // 已提交
+	ProductStatusApproved  = "approved"  // 已审批
+	ProductStatusRejected  = "rejected"  // 已拒绝
 )
 
 // MaterialConfig 原料配置
@@ -27,15 +29,61 @@ type ProcessConfig struct {
 	Quantity  float64 `json:"quantity"` // 数量（可选）
 }
 
+// MaterialConfigJSON 原料配置 JSON（用于 GORM JSONB）
+type MaterialConfigJSON []MaterialConfig
+
+// Scan 实现 sql.Scanner 接口
+func (m *MaterialConfigJSON) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return nil
+	}
+	return json.Unmarshal(bytes, m)
+}
+
+// Value 实现 driver.Valuer 接口
+func (m MaterialConfigJSON) Value() (driver.Value, error) {
+	if len(m) == 0 {
+		return nil, nil
+	}
+	return json.Marshal(m)
+}
+
+// ProcessConfigJSON 工艺配置 JSON（用于 GORM JSONB）
+type ProcessConfigJSON []ProcessConfig
+
+// Scan 实现 sql.Scanner 接口
+func (p *ProcessConfigJSON) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return nil
+	}
+	return json.Unmarshal(bytes, p)
+}
+
+// Value 实现 driver.Valuer 接口
+func (p ProcessConfigJSON) Value() (driver.Value, error) {
+	if len(p) == 0 {
+		return nil, nil
+	}
+	return json.Marshal(p)
+}
+
 // Product 产品聚合根
 type Product struct {
-	ID        uint
-	Name      string
-	Status    ProductStatus
-	Materials []MaterialConfig
-	Processes []ProcessConfig
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        uint               `gorm:"primaryKey" json:"id"`
+	Name      string             `gorm:"size:100;not null;index" json:"name"`
+	Status    string             `gorm:"size:20;default:draft;index" json:"status"`
+	Materials MaterialConfigJSON `gorm:"type:jsonb" json:"materials"`
+	Processes ProcessConfigJSON  `gorm:"type:jsonb" json:"processes"`
+	CreatedAt time.Time          `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt time.Time          `gorm:"autoUpdateTime" json:"updated_at"`
+	DeletedAt gorm.DeletedAt     `gorm:"index" json:"-"`
+}
+
+// TableName 表名
+func (Product) TableName() string {
+	return "products"
 }
 
 // Validate 验证产品数据
@@ -76,12 +124,12 @@ func (p *Product) Submit() error {
 	if p.Status != ProductStatusDraft {
 		return ErrCannotSubmit
 	}
-	
+
 	// 提交前验证
 	if err := p.Validate(); err != nil {
 		return err
 	}
-	
+
 	p.Status = ProductStatusSubmitted
 	return nil
 }
@@ -91,7 +139,7 @@ func (p *Product) Approve() error {
 	if p.Status != ProductStatusSubmitted {
 		return ErrCannotApprove
 	}
-	
+
 	p.Status = ProductStatusApproved
 	return nil
 }
@@ -101,7 +149,7 @@ func (p *Product) Reject() error {
 	if p.Status != ProductStatusSubmitted {
 		return ErrCannotReject
 	}
-	
+
 	p.Status = ProductStatusRejected
 	return nil
 }
@@ -182,7 +230,7 @@ func (p *Product) ToDocument() map[string]interface{} {
 	return map[string]interface{}{
 		"id":         p.ID,
 		"name":       p.Name,
-		"status":     string(p.Status),
+		"status":     p.Status,
 		"materials":  p.Materials,
 		"processes":  p.Processes,
 		"created_at": p.CreatedAt,

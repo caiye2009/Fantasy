@@ -5,6 +5,7 @@ import (
 	"strconv"
 	
 	"back/internal/order/domain"
+	"back/internal/order/infra"
 )
 
 // ESSync ES 同步接口
@@ -16,12 +17,12 @@ type ESSync interface {
 
 // OrderService 订单应用服务
 type OrderService struct {
-	repo   domain.OrderRepository
+	repo   *infra.OrderRepo
 	esSync ESSync
 }
 
 // NewOrderService 创建订单服务
-func NewOrderService(repo domain.OrderRepository, esSync ESSync) *OrderService {
+func NewOrderService(repo *infra.OrderRepo, esSync ESSync) *OrderService {
 	return &OrderService{
 		repo:   repo,
 		esSync: esSync,
@@ -109,9 +110,7 @@ func (s *OrderService) Update(ctx context.Context, id uint, req *UpdateOrderRequ
 	
 	// 状态更新
 	if req.Status != "" {
-		targetStatus := domain.OrderStatus(req.Status)
-		
-		switch targetStatus {
+		switch req.Status {
 		case domain.OrderStatusConfirmed:
 			if err := order.Confirm(); err != nil {
 				return err
@@ -207,17 +206,15 @@ func (s *OrderService) GetByProductID(ctx context.Context, productID uint) ([]*O
 
 // GetByStatus 根据状态查询订单
 func (s *OrderService) GetByStatus(ctx context.Context, status string, limit, offset int) (*OrderListResponse, error) {
-	orderStatus := domain.OrderStatus(status)
-	
-	orders, err := s.repo.FindByStatus(ctx, orderStatus, limit, offset)
+	orders, err := s.repo.FindByStatus(ctx, status, limit, offset)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	total, err := s.repo.Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return ToOrderListResponse(orders, total), nil
 }

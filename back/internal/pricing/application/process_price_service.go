@@ -5,6 +5,7 @@ import (
 	"time"
 	
 	"back/internal/pricing/domain"
+	"back/internal/pricing/infra"
 )
 
 // ProcessServiceInterface Process 服务接口
@@ -14,16 +15,16 @@ type ProcessServiceInterface interface {
 
 // ProcessPriceService Process 价格服务
 type ProcessPriceService struct {
-	repo            domain.SupplierPriceRepository
-	cache           PriceCache
+	repo            *infra.SupplierPriceRepo
+	cache           domain.PriceCache
 	processService  ProcessServiceInterface
 	supplierService SupplierServiceInterface
 }
 
 // NewProcessPriceService 创建 Process 价格服务
 func NewProcessPriceService(
-	repo domain.SupplierPriceRepository,
-	cache PriceCache,
+	repo *infra.SupplierPriceRepo,
+	cache domain.PriceCache,
 	processService ProcessServiceInterface,
 	supplierService SupplierServiceInterface,
 ) *ProcessPriceService {
@@ -74,7 +75,7 @@ func (s *ProcessPriceService) Quote(ctx context.Context, req *QuoteRequest) erro
 	// 6. 更新缓存（最低价和最高价）
 	minPrice, _ := s.repo.FindMinPrice(ctx, domain.TargetTypeProcess, req.TargetID)
 	if minPrice != nil {
-		priceData := &PriceData{
+		priceData := &domain.PriceData{
 			Price:        minPrice.Price,
 			SupplierID:   minPrice.SupplierID,
 			SupplierName: supplier.Name,
@@ -85,7 +86,7 @@ func (s *ProcessPriceService) Quote(ctx context.Context, req *QuoteRequest) erro
 	
 	maxPrice, _ := s.repo.FindMaxPrice(ctx, domain.TargetTypeProcess, req.TargetID)
 	if maxPrice != nil {
-		priceData := &PriceData{
+		priceData := &domain.PriceData{
 			Price:        maxPrice.Price,
 			SupplierID:   maxPrice.SupplierID,
 			SupplierName: supplier.Name,
@@ -98,7 +99,7 @@ func (s *ProcessPriceService) Quote(ctx context.Context, req *QuoteRequest) erro
 }
 
 // GetMinPrice 获取最低价
-func (s *ProcessPriceService) GetMinPrice(ctx context.Context, processID uint) (*PriceData, error) {
+func (s *ProcessPriceService) GetMinPrice(ctx context.Context, processID uint) (*domain.PriceData, error) {
 	// 1. 尝试从缓存获取
 	cachedPrice, err := s.cache.GetMin(ctx, "process", processID)
 	if err == nil {
@@ -117,7 +118,7 @@ func (s *ProcessPriceService) GetMinPrice(ctx context.Context, processID uint) (
 		return nil, err
 	}
 	
-	priceData := &PriceData{
+	priceData := &domain.PriceData{
 		Price:        price.Price,
 		SupplierID:   price.SupplierID,
 		SupplierName: supplier.Name,
@@ -131,7 +132,7 @@ func (s *ProcessPriceService) GetMinPrice(ctx context.Context, processID uint) (
 }
 
 // GetMaxPrice 获取最高价
-func (s *ProcessPriceService) GetMaxPrice(ctx context.Context, processID uint) (*PriceData, error) {
+func (s *ProcessPriceService) GetMaxPrice(ctx context.Context, processID uint) (*domain.PriceData, error) {
 	// 1. 尝试从缓存获取
 	cachedPrice, err := s.cache.GetMax(ctx, "process", processID)
 	if err == nil {
@@ -150,7 +151,7 @@ func (s *ProcessPriceService) GetMaxPrice(ctx context.Context, processID uint) (
 		return nil, err
 	}
 	
-	priceData := &PriceData{
+	priceData := &domain.PriceData{
 		Price:        price.Price,
 		SupplierID:   price.SupplierID,
 		SupplierName: supplier.Name,
@@ -164,20 +165,20 @@ func (s *ProcessPriceService) GetMaxPrice(ctx context.Context, processID uint) (
 }
 
 // GetHistory 获取报价历史
-func (s *ProcessPriceService) GetHistory(ctx context.Context, processID uint, limit int) ([]*PriceData, error) {
+func (s *ProcessPriceService) GetHistory(ctx context.Context, processID uint, limit int) ([]*domain.PriceData, error) {
 	prices, err := s.repo.FindHistory(ctx, domain.TargetTypeProcess, processID, limit)
 	if err != nil {
 		return nil, err
 	}
 	
-	result := make([]*PriceData, len(prices))
+	result := make([]*domain.PriceData, len(prices))
 	for i, p := range prices {
 		supplier, err := s.supplierService.GetSupplierInfo(ctx, p.SupplierID)
 		if err != nil {
 			return nil, err
 		}
 		
-		result[i] = &PriceData{
+		result[i] = &domain.PriceData{
 			Price:        p.Price,
 			SupplierID:   p.SupplierID,
 			SupplierName: supplier.Name,

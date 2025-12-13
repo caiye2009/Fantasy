@@ -2,32 +2,37 @@ package domain
 
 import (
 	"time"
+	"gorm.io/gorm"
 )
 
-// OrderStatus 订单状态
-type OrderStatus string
-
+// 订单状态常量
 const (
-	OrderStatusPending    OrderStatus = "pending"     // 待处理
-	OrderStatusConfirmed  OrderStatus = "confirmed"   // 已确认
-	OrderStatusProduction OrderStatus = "production"  // 生产中
-	OrderStatusCompleted  OrderStatus = "completed"   // 已完成
-	OrderStatusCancelled  OrderStatus = "cancelled"   // 已取消
+	OrderStatusPending    = "pending"     // 待处理
+	OrderStatusConfirmed  = "confirmed"   // 已确认
+	OrderStatusProduction = "production"  // 生产中
+	OrderStatusCompleted  = "completed"   // 已完成
+	OrderStatusCancelled  = "cancelled"   // 已取消
 )
 
 // Order 订单聚合根
 type Order struct {
-	ID         uint
-	OrderNo    string
-	ClientID   uint
-	ProductID  uint
-	Quantity   float64
-	UnitPrice  float64
-	TotalPrice float64
-	Status     OrderStatus
-	CreatedBy  uint
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID         uint           `gorm:"primaryKey" json:"id"`
+	OrderNo    string         `gorm:"size:50;uniqueIndex;not null" json:"order_no"`
+	ClientID   uint           `gorm:"not null;index" json:"client_id"`
+	ProductID  uint           `gorm:"not null;index" json:"product_id"`
+	Quantity   float64        `gorm:"type:decimal(10,2);not null" json:"quantity"`
+	UnitPrice  float64        `gorm:"type:decimal(10,2);not null" json:"unit_price"`
+	TotalPrice float64        `gorm:"type:decimal(10,2);not null" json:"total_price"`
+	Status     string         `gorm:"size:20;default:pending;index" json:"status"`
+	CreatedBy  uint           `gorm:"not null;index" json:"created_by"`
+	CreatedAt  time.Time      `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt  time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// TableName 表名
+func (Order) TableName() string {
+	return "orders"
 }
 
 // Validate 验证订单数据
@@ -158,7 +163,7 @@ func (o *Order) ToDocument() map[string]interface{} {
 		"quantity":    o.Quantity,
 		"unit_price":  o.UnitPrice,
 		"total_price": o.TotalPrice,
-		"status":      string(o.Status),
+		"status":      o.Status,
 		"created_by":  o.CreatedBy,
 		"created_at":  o.CreatedAt,
 		"updated_at":  o.UpdatedAt,

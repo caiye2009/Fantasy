@@ -27,7 +27,7 @@ func ToOrderResponse(o *domain.Order) *OrderResponse {
 		Quantity:   o.Quantity,
 		UnitPrice:  o.UnitPrice,
 		TotalPrice: o.TotalPrice,
-		Status:     string(o.Status),
+		Status:     o.Status,
 		CreatedBy:  o.CreatedBy,
 		CreatedAt:  o.CreatedAt,
 		UpdatedAt:  o.UpdatedAt,

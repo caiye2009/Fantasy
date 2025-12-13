@@ -5,18 +5,20 @@ ENV PATH="$PNPM_HOME:$PATH"
 ENV NODE_OPTIONS=--max-old-space-size=8192
 ENV TZ=Asia/Shanghai
 ENV NODE_ENV=production
-
-RUN npm i -g corepack
+ENV CI=true
 
 WORKDIR /app
+
+# 安装 corepack，并强制使用最新 pnpm
+RUN npm i -g corepack \
+    && corepack enable \
+    && corepack prepare pnpm@latest --activate
 
 # 复制所有文件
 COPY . /app
 
-ENV CI=true
-
-# 安装依赖
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+# 使用缓存安装依赖，加速构建
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install
 
 # 构建 web-ele 项目（生产环境）
 RUN pnpm run build:ele

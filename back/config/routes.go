@@ -51,6 +51,8 @@ func InitRoutes(authWang *auth.AuthWang, services *Services) *gin.Engine {
 	protected.Use(authWang.AuthMiddleware())
 	{
 		userInterfaces.RegisterUserHandlers(protected, services.User)
+		userInterfaces.RegisterDepartmentHandlers(protected, services.Department)
+		userInterfaces.RegisterRoleHandlers(protected, services.Role)
 		supplierInterfaces.RegisterSupplierHandlers(protected, services.Supplier)
 		clientInterfaces.RegisterClientHandlers(protected, services.Client)
 		materialInterfaces.RegisterMaterialHandlers(protected, services.Material)
@@ -61,7 +63,7 @@ func InitRoutes(authWang *auth.AuthWang, services *Services) *gin.Engine {
 		planInterfaces.RegisterPlanHandlers(protected, services.Plan)
 		orderInterfaces.RegisterOrderHandlers(protected, services.Order)
 		searchInterfaces.RegisterSearchHandlers(protected, services.Search)
-		
+
 		// Analytics
 		returnAnalysisHandler := analyticsInterfaces.NewReturnAnalysisHandler(services.ReturnAnalysis)
 		returnAnalysisHandler.RegisterRoutes(protected)

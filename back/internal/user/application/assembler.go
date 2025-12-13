@@ -2,14 +2,15 @@ package application
 
 import "back/internal/user/domain"
 
-// ToUser DTO → Domain Model
-func ToUser(req *CreateUserRequest) *domain.User {
+// ToUser DTO → Domain Model (不包含 LoginID，由 Service 自动生成)
+func ToUser(req *CreateUserRequest, loginID string) *domain.User {
 	return &domain.User{
-		LoginID:  req.LoginID,
-		Username: req.Username,
-		Email:    req.Email,
-		Role:     domain.UserRole(req.Role),
-		Status:   domain.UserStatusActive,
+		LoginID:    loginID,
+		Username:   req.Username,
+		Department: req.Department,
+		Email:      req.Email,
+		Role:       req.Role,
+		Status:     domain.UserStatusActive,
 	}
 }
 
@@ -19,9 +20,10 @@ func ToUserResponse(u *domain.User) *UserResponse {
 		ID:          u.ID,
 		LoginID:     u.LoginID,
 		Username:    u.Username,
+		Department:  u.Department,
 		Email:       u.Email,
-		Role:        string(u.Role),
-		Status:      string(u.Status),
+		Role:        u.Role,
+		Status:      u.Status,
 		HasInitPass: u.HasInitPass,
 		CreatedAt:   u.CreatedAt,
 		UpdatedAt:   u.UpdatedAt,
