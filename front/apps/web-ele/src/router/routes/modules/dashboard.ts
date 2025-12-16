@@ -66,6 +66,15 @@ const routes: RouteRecordRaw[] = [
       title: $t('page.dashboard.users'),
     },
   },
+  {
+    name: 'Orders',
+    path: '/orders',
+    component: () => import('#/views/orders.vue'),
+    meta: {
+      icon: 'lucide:users',
+      title: $t('page.dashboard.orders'),
+    },
+  },
 ];
 
 export default routes;

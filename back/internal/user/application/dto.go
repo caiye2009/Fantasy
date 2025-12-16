@@ -6,7 +6,6 @@ import "time"
 type CreateUserRequest struct {
 	Username   string `json:"username" binding:"required,min=2,max=50"`
 	Department string `json:"department" binding:"required,max=100"`
-	Email      string `json:"email" binding:"omitempty,email"`
 	Role       string `json:"role" binding:"required"`
 }
 
@@ -45,8 +44,7 @@ type UserListResponse struct {
 	Users []*UserResponse `json:"users"`
 }
 
-// CreateUserResponse 创建用户响应（只返回 login_id 和密码）
+// CreateUserResponse 创建用户响应（只返回 login_id）
 type CreateUserResponse struct {
-	LoginID  string `json:"login_id"`
-	Password string `json:"password"`
+	LoginID string `json:"login_id"`
 }

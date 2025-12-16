@@ -73,13 +73,13 @@ import type {
 
 // 复用 useDataTable 的 searchLoading
 import { useDataTable } from '#/composables/useDataTable'
-const { searchLoading } = useDataTable(['process'], 20)
+const { searchLoading } = useDataTable('process', 20)
 
 // 配置
 const pageConfig: PageConfig = {
   pageType: 'process',
   title: '工序管理',
-  indices: ['process'],
+  entityType: 'process',
   pageSize: 20,
   columns: [
     { key: 'id', label: 'ID', width: 80, visible: true, sortable: true, order: 0 },
@@ -105,7 +105,20 @@ const pageConfig: PageConfig = {
     }
   ] as ColumnConfig[],
   filters: [
-    { key: 'name', label: '工序名称', type: 'text', placeholder: '请输入工序名称' },
+    {
+      key: 'type',
+      label: '工序类型',
+      type: 'select',
+      placeholder: '请选择工序类型',
+      options: [], // 后端会提供接口返回选项
+    },
+    {
+      key: 'category',
+      label: '工序类别',
+      type: 'select',
+      placeholder: '请选择工序类别',
+      options: [], // 后端会提供接口返回选项
+    },
   ] as FilterConfig[],
   bulkActions: [
     { key: 'delete', label: '批量删除', type: 'danger', confirm: true, confirmMessage: '确定要删除选中的工序吗？此操作不可恢复！' },

@@ -30,15 +30,17 @@ export interface SupplierListResponse {
 export async function getSupplierListApi(params?: {
   limit?: number;
   offset?: number;
-}) {
-  return requestClient.get<SupplierListResponse>('/supplier', { params });
+}): Promise<SupplierListResponse> {
+  const response = await requestClient.get<SupplierListResponse>('/supplier', { params });
+  return response.data;
 }
 
 /**
  * 获取供应商详情
  */
-export async function getSupplierDetailApi(id: number) {
-  return requestClient.get<Supplier>(`/supplier/${id}`);
+export async function getSupplierDetailApi(id: number): Promise<Supplier> {
+  const response = await requestClient.get<Supplier>(`/supplier/${id}`);
+  return response.data;
 }
 
 /**
@@ -51,8 +53,9 @@ export async function createSupplierApi(data: {
   address?: string;
   email?: string;
   type?: string;
-}) {
-  return requestClient.post<Supplier>('/supplier', data);
+}): Promise<Supplier> {
+  const response = await requestClient.post<Supplier>('/supplier', data);
+  return response.data;
 }
 
 /**
@@ -69,13 +72,15 @@ export async function updateSupplierApi(
     type?: string;
     status?: string;
   }
-) {
-  return requestClient.put(`/supplier/${id}`, data);
+): Promise<any> {
+  const response = await requestClient.put(`/supplier/${id}`, data);
+  return response.data;
 }
 
 /**
  * 删除供应商
  */
-export async function deleteSupplierApi(id: number) {
-  return requestClient.delete(`/supplier/${id}`);
+export async function deleteSupplierApi(id: number): Promise<any> {
+  const response = await requestClient.delete(`/supplier/${id}`);
+  return response.data;
 }

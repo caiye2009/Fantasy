@@ -1,0 +1,24 @@
+entityType: process
+indexName: processes
+
+queryFields:
+  - field: name
+    boost: 2.0
+  - field: description
+    boost: 1.0
+
+filterFields:
+  - field: id
+    type: keyword
+    operator: term
+  - field: name
+    type: text
+    operator: match
+  - field: createdAt
+    type: date
+    operator: range
+  - field: updatedAt
+    type: date
+    operator: range
+
+aggregationFields: []

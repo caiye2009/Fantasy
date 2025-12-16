@@ -213,7 +213,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "post": {
                 "security": [
                     {
                         "Bearer": []
@@ -307,353 +307,6 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "删除成功",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/department": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "获取部门列表（支持状态筛选和分页）",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "部门管理"
-                ],
-                "summary": "获取部门列表",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "部门状态（active/inactive）",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "页码",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "每页数量",
-                        "name": "page_size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "获取成功",
-                        "schema": {
-                            "$ref": "#/definitions/application.DepartmentListResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "创建新部门",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "部门管理"
-                ],
-                "summary": "创建部门",
-                "parameters": [
-                    {
-                        "description": "部门信息",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/application.CreateDepartmentRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "创建成功",
-                        "schema": {
-                            "$ref": "#/definitions/application.DepartmentResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/department/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "根据部门ID获取部门详细信息",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "部门管理"
-                ],
-                "summary": "获取部门详情",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "部门ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "获取成功",
-                        "schema": {
-                            "$ref": "#/definitions/application.DepartmentResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "部门不存在",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "更新部门信息",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "部门管理"
-                ],
-                "summary": "更新部门",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "部门ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "部门信息",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/application.UpdateDepartmentRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "更新成功",
-                        "schema": {
-                            "$ref": "#/definitions/application.DepartmentResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "部门不存在",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/department/{id}/activate": {
-            "put": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "激活已停用的部门",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "部门管理"
-                ],
-                "summary": "激活部门",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "部门ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "激活成功",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "部门不存在",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/department/{id}/deactivate": {
-            "put": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "停用部门（软删除）",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "部门管理"
-                ],
-                "summary": "停用部门",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "部门ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "停用成功",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "部门不存在",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -931,7 +584,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "post": {
                 "security": [
                     {
                         "Bearer": []
@@ -1197,7 +850,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "post": {
                 "security": [
                     {
                         "Bearer": []
@@ -1463,7 +1116,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "post": {
                 "security": [
                     {
                         "Bearer": []
@@ -1834,7 +1487,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "post": {
                 "security": [
                     {
                         "Bearer": []
@@ -2106,7 +1759,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "post": {
                 "security": [
                     {
                         "Bearer": []
@@ -2331,353 +1984,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/role": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "获取职位列表（支持状态筛选和分页）",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "职位管理"
-                ],
-                "summary": "获取职位列表",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "职位状态（active/inactive）",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "页码",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "每页数量",
-                        "name": "page_size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "获取成功",
-                        "schema": {
-                            "$ref": "#/definitions/application.RoleListResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "创建新职位",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "职位管理"
-                ],
-                "summary": "创建职位",
-                "parameters": [
-                    {
-                        "description": "职位信息",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/application.CreateRoleRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "创建成功",
-                        "schema": {
-                            "$ref": "#/definitions/application.RoleResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/role/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "根据职位ID获取职位详细信息",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "职位管理"
-                ],
-                "summary": "获取职位详情",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "职位ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "获取成功",
-                        "schema": {
-                            "$ref": "#/definitions/application.RoleResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "职位不存在",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "更新职位信息",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "职位管理"
-                ],
-                "summary": "更新职位",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "职位ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "职位信息",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/application.UpdateRoleRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "更新成功",
-                        "schema": {
-                            "$ref": "#/definitions/application.RoleResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "职位不存在",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/role/{id}/activate": {
-            "put": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "激活已停用的职位",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "职位管理"
-                ],
-                "summary": "激活职位",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "职位ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "激活成功",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "职位不存在",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/role/{id}/deactivate": {
-            "put": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "停用职位（软删除）",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "职位管理"
-                ],
-                "summary": "停用职位",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "职位ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "停用成功",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "职位不存在",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/search": {
             "post": {
                 "security": [
@@ -2685,7 +1991,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "执行跨多个索引的通用搜索",
+                "description": "基于配置的高级搜索，支持全文搜索、筛选、聚合",
                 "consumes": [
                     "application/json"
                 ],
@@ -2695,7 +2001,7 @@ const docTemplate = `{
                 "tags": [
                     "搜索"
                 ],
-                "summary": "通用搜索",
+                "summary": "搜索",
                 "parameters": [
                     {
                         "description": "搜索请求参数",
@@ -2735,14 +2041,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/search/indices": {
+        "/search/entity-types": {
             "get": {
                 "security": [
                     {
                         "Bearer": []
                     }
                 ],
-                "description": "获取系统中所有可搜索的索引列表",
+                "description": "获取所有支持搜索的实体类型列表",
                 "consumes": [
                     "application/json"
                 ],
@@ -2752,10 +2058,10 @@ const docTemplate = `{
                 "tags": [
                     "搜索"
                 ],
-                "summary": "获取所有可用索引",
+                "summary": "获取实体类型列表",
                 "responses": {
                     "200": {
-                        "description": "索引列表",
+                        "description": "实体类型列表",
                         "schema": {
                             "$ref": "#/definitions/application.IndexListResponse"
                         }
@@ -2916,7 +2222,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "post": {
                 "security": [
                     {
                         "Bearer": []
@@ -3213,7 +2519,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "获取系统中所有唯一的部门列表",
+                "description": "获取部门列表（支持状态筛选和分页）",
                 "consumes": [
                     "application/json"
                 ],
@@ -3221,15 +2527,264 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "用户管理"
+                    "部门管理"
                 ],
                 "summary": "获取部门列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "部门状态（active/inactive）",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "部门列表",
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.DepartmentListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
                         "schema": {
                             "type": "object",
-                            "additionalProperties": true
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "创建新部门",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "部门管理"
+                ],
+                "summary": "创建部门",
+                "parameters": [
+                    {
+                        "description": "部门信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.CreateDepartmentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.DepartmentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/departments/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "根据部门ID获取部门详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "部门管理"
+                ],
+                "summary": "获取部门详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "部门ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.DepartmentResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "部门不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "更新部门信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "部门管理"
+                ],
+                "summary": "更新部门",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "部门ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "部门信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.UpdateDepartmentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.DepartmentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "部门不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "软删除部门",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "部门管理"
+                ],
+                "summary": "删除部门",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "部门ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "部门不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "500": {
@@ -3251,7 +2806,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "获取系统中所有可用的角色列表",
+                "description": "获取职位列表（支持状态筛选和分页）",
                 "consumes": [
                     "application/json"
                 ],
@@ -3259,15 +2814,273 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "用户管理"
+                    "职位管理"
                 ],
-                "summary": "获取角色列表",
+                "summary": "获取职位列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "职位状态（active/inactive）",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "角色列表",
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.RoleListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
                         "schema": {
                             "type": "object",
-                            "additionalProperties": true
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "创建新职位",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "职位管理"
+                ],
+                "summary": "创建职位",
+                "parameters": [
+                    {
+                        "description": "职位信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.CreateRoleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.RoleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/roles/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "根据职位ID获取职位详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "职位管理"
+                ],
+                "summary": "获取职位详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "职位ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.RoleResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "职位不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "更新职位信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "职位管理"
+                ],
+                "summary": "更新职位",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "职位ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "职位信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.UpdateRoleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.RoleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "职位不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "软删除职位",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "职位管理"
+                ],
+                "summary": "删除职位",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "职位ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "职位不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -3318,7 +3131,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "post": {
                 "security": [
                     {
                         "Bearer": []
@@ -3433,6 +3246,55 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "application.AggRequest": {
+            "type": "object",
+            "properties": {
+                "after": {
+                    "description": "分页游标",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "search": {
+                    "description": "下拉框搜索词",
+                    "type": "string"
+                },
+                "size": {
+                    "description": "每页条数（可选，覆盖配置默认值）",
+                    "type": "integer"
+                }
+            }
+        },
+        "application.AggResult": {
+            "type": "object",
+            "properties": {
+                "after": {
+                    "description": "下一页游标",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "avg": {
+                    "type": "number"
+                },
+                "buckets": {
+                    "description": "terms/composite 聚合",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.Bucket"
+                    }
+                },
+                "hasMore": {
+                    "description": "是否有更多",
+                    "type": "boolean"
+                },
+                "max": {
+                    "type": "number"
+                },
+                "min": {
+                    "description": "stats 聚合",
+                    "type": "number"
+                }
+            }
+        },
         "application.AmountDimensionResponse": {
             "type": "object",
             "properties": {
@@ -3446,6 +3308,15 @@ const docTemplate = `{
                     "type": "number",
                     "example": 120000
                 }
+            }
+        },
+        "application.Bucket": {
+            "type": "object",
+            "properties": {
+                "docCount": {
+                    "type": "integer"
+                },
+                "key": {}
             }
         },
         "application.CalculateCostRequest": {
@@ -3759,9 +3630,6 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100
                 },
-                "email": {
-                    "type": "string"
-                },
                 "role": {
                     "type": "string"
                 },
@@ -3776,9 +3644,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "login_id": {
-                    "type": "string"
-                },
-                "password": {
                     "type": "string"
                 }
             }
@@ -3859,30 +3724,13 @@ const docTemplate = `{
                 }
             }
         },
-        "application.IndexInfoDTO": {
-            "type": "object",
-            "properties": {
-                "fields": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
         "application.IndexListResponse": {
             "type": "object",
             "properties": {
-                "indices": {
+                "entityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/application.IndexInfoDTO"
+                        "type": "string"
                     }
                 }
             }
@@ -4028,6 +3876,19 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "application.PaginationRequest": {
+            "type": "object",
+            "properties": {
+                "offset": {
+                    "type": "integer"
+                },
+                "size": {
+                    "description": "最大 100 条",
+                    "type": "integer",
+                    "maximum": 100
                 }
             }
         },
@@ -4304,38 +4165,37 @@ const docTemplate = `{
         },
         "application.SearchRequest": {
             "type": "object",
+            "required": [
+                "entityType"
+            ],
             "properties": {
-                "fields": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
+                "aggRequests": {
+                    "description": "聚合请求",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/application.AggRequest"
                     }
                 },
+                "entityType": {
+                    "description": "material, order, client, etc.",
+                    "type": "string"
+                },
                 "filters": {
+                    "description": "筛选条件",
                     "type": "object",
                     "additionalProperties": true
                 },
-                "from": {
-                    "description": "使用指针，支持 nil（默认 0）",
-                    "type": "integer"
-                },
-                "indices": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "pagination": {
+                    "$ref": "#/definitions/application.PaginationRequest"
                 },
                 "query": {
+                    "description": "全文搜索关键词",
                     "type": "string"
-                },
-                "size": {
-                    "description": "使用指针，支持 nil（默认 10）",
-                    "type": "integer"
                 },
                 "sort": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/application.SortFieldDTO"
+                        "$ref": "#/definitions/application.SortRequest"
                     }
                 }
             }
@@ -4343,60 +4203,39 @@ const docTemplate = `{
         "application.SearchResponse": {
             "type": "object",
             "properties": {
-                "max_score": {
-                    "type": "number"
+                "aggregations": {
+                    "description": "聚合结果",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/application.AggResult"
+                    }
                 },
-                "results": {
+                "items": {
+                    "description": "搜索结果",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/application.SearchResultDTO"
+                        "type": "object",
+                        "additionalProperties": true
                     }
                 },
                 "took": {
+                    "description": "耗时 (ms)",
                     "type": "integer"
                 },
                 "total": {
+                    "description": "总条数",
                     "type": "integer"
                 }
             }
         },
-        "application.SearchResultDTO": {
-            "type": "object",
-            "properties": {
-                "highlight": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "id": {
-                    "type": "string"
-                },
-                "index": {
-                    "type": "string"
-                },
-                "score": {
-                    "type": "number"
-                },
-                "source": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "application.SortFieldDTO": {
+        "application.SortRequest": {
             "type": "object",
             "properties": {
                 "field": {
                     "type": "string"
                 },
                 "order": {
+                    "description": "asc, desc",
                     "type": "string"
                 }
             }

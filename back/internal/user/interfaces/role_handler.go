@@ -32,7 +32,7 @@ func NewRoleHandler(service *application.RoleService) *RoleHandler {
 // @Failure      400 {object} map[string]string "请求参数错误"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /role [post]
+// @Router       /user/roles [post]
 func (h *RoleHandler) Create(c *gin.Context) {
 	var req application.CreateRoleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -66,7 +66,7 @@ func (h *RoleHandler) Create(c *gin.Context) {
 // @Failure      404 {object} map[string]string "职位不存在"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /role/{id} [put]
+// @Router       /user/roles/{id} [post]
 func (h *RoleHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -103,7 +103,7 @@ func (h *RoleHandler) Update(c *gin.Context) {
 // @Success      200 {object} application.RoleResponse "获取成功"
 // @Failure      404 {object} map[string]string "职位不存在"
 // @Security     Bearer
-// @Router       /role/{id} [get]
+// @Router       /user/roles/{id} [get]
 func (h *RoleHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -132,7 +132,7 @@ func (h *RoleHandler) Get(c *gin.Context) {
 // @Success      200 {object} application.RoleListResponse "获取成功"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /role [get]
+// @Router       /user/roles [get]
 func (h *RoleHandler) List(c *gin.Context) {
 	status := c.Query("status")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -152,19 +152,19 @@ func (h *RoleHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// Deactivate 停用职位
-// @Summary      停用职位
-// @Description  停用职位（软删除）
+// Delete 删除职位（软删除）
+// @Summary      删除职位
+// @Description  软删除职位
 // @Tags         职位管理
 // @Accept       json
 // @Produce      json
 // @Param        id path int true "职位ID"
-// @Success      200 {object} map[string]string "停用成功"
+// @Success      200 {object} map[string]string "删除成功"
 // @Failure      404 {object} map[string]string "职位不存在"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /role/{id}/deactivate [put]
-func (h *RoleHandler) Deactivate(c *gin.Context) {
+// @Router       /user/roles/{id} [delete]
+func (h *RoleHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	err := h.service.Deactivate(uint(id))
@@ -177,46 +177,17 @@ func (h *RoleHandler) Deactivate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "停用成功"})
+	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }
 
-// Activate 激活职位
-// @Summary      激活职位
-// @Description  激活已停用的职位
-// @Tags         职位管理
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "职位ID"
-// @Success      200 {object} map[string]string "激活成功"
-// @Failure      404 {object} map[string]string "职位不存在"
-// @Failure      500 {object} map[string]string "服务器错误"
-// @Security     Bearer
-// @Router       /role/{id}/activate [put]
-func (h *RoleHandler) Activate(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-
-	err := h.service.Activate(uint(id))
-	if err != nil {
-		if errors.Is(err, domain.ErrRoleNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "职位不存在"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "激活成功"})
-}
-
-// RegisterRoleHandlers 注册职位路由
+// RegisterRoleHandlers 注册职位路由（作为 user 的子资源）
 func RegisterRoleHandlers(rg *gin.RouterGroup, service *application.RoleService) {
 	handler := NewRoleHandler(service)
 
-	rg.POST("/role", handler.Create)
-	rg.GET("/role/:id", handler.Get)
-	rg.GET("/role", handler.List)
-	rg.PUT("/role/:id", handler.Update)
-	rg.PUT("/role/:id/deactivate", handler.Deactivate)
-	rg.PUT("/role/:id/activate", handler.Activate)
+	rg.POST("/user/roles", handler.Create)
+	rg.GET("/user/roles/:id", handler.Get)
+	rg.GET("/user/roles", handler.List)
+	rg.POST("/user/roles/:id", handler.Update)
+	rg.DELETE("/user/roles/:id", handler.Delete)
 }
 

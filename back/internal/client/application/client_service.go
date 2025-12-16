@@ -41,25 +41,40 @@ func (s *ClientService) Create(ctx context.Context, req *CreateClientRequest) (*
 	}
 	
 	// 2. DTO → Domain Model
-	client := ToClient(req)
-	
+	client := &domain.Client{
+		Name:    req.Name,
+		Contact: req.Contact,
+		Phone:   req.Phone,
+		Email:   req.Email,
+		Address: req.Address,
+	}
+
 	// 3. 领域验证
 	if err := client.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	// 4. 保存到数据库
 	if err := s.repo.Save(ctx, client); err != nil {
 		return nil, err
 	}
-	
+
 	// 5. 异步同步到 ES
 	if s.esSync != nil {
 		s.esSync.Index(client)
 	}
-	
+
 	// 6. Domain Model → DTO
-	return ToClientResponse(client), nil
+	return &ClientResponse{
+		ID:        client.ID,
+		Name:      client.Name,
+		Contact:   client.Contact,
+		Phone:     client.Phone,
+		Email:     client.Email,
+		Address:   client.Address,
+		CreatedAt: client.CreatedAt,
+		UpdatedAt: client.UpdatedAt,
+	}, nil
 }
 
 // Get 获取客户
@@ -68,8 +83,17 @@ func (s *ClientService) Get(ctx context.Context, id uint) (*ClientResponse, erro
 	if err != nil {
 		return nil, err
 	}
-	
-	return ToClientResponse(client), nil
+
+	return &ClientResponse{
+		ID:        client.ID,
+		Name:      client.Name,
+		Contact:   client.Contact,
+		Phone:     client.Phone,
+		Email:     client.Email,
+		Address:   client.Address,
+		CreatedAt: client.CreatedAt,
+		UpdatedAt: client.UpdatedAt,
+	}, nil
 }
 
 // Update 更新客户

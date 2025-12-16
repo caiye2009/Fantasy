@@ -1,4 +1,4 @@
-import { baseRequestClient } from '#/api/request'
+import { requestClient } from '#/api/request'
 import type { ESRequest, ESResponse } from '#/components/DataTable/types'
 
 /**
@@ -30,7 +30,7 @@ export const elasticsearchService = {
    * Elasticsearch 搜索接口
    */
   async search(params: ESRequest): Promise<ESResponse> {
-    const response = await baseRequestClient.post<ESResponse>('/search', params)
+    const response = await requestClient.post<ESResponse>('/search', params)
     return response.data
   },
 
@@ -41,7 +41,7 @@ export const elasticsearchService = {
     ids: string[],
     index: string
   ): Promise<BulkOperationResponse> {
-    const response = await baseRequestClient.post<BulkOperationResponse>('/bulk-delete', {
+    const response = await requestClient.post<BulkOperationResponse>('/bulk-delete', {
       ids,
       index,
     })
@@ -55,7 +55,7 @@ export const elasticsearchService = {
     updates: Array<{ id: string; data: Record<string, any> }>,
     index: string
   ): Promise<BulkOperationResponse> {
-    const response = await baseRequestClient.post<BulkOperationResponse>('/bulk-update', {
+    const response = await requestClient.post<BulkOperationResponse>('/bulk-update', {
       updates,
       index,
     })
@@ -70,7 +70,7 @@ export const elasticsearchService = {
     options: ExportOptions = {}
   ): Promise<Blob> {
     const { format = 'xlsx', filename } = options
-    const response = await baseRequestClient.post<Blob>(
+    const response = await requestClient.post<Blob>(
       '/export',
       { ...params, format, filename },
       {
@@ -84,7 +84,7 @@ export const elasticsearchService = {
    * 获取单条数据
    */
   async getById(id: string, index: string): Promise<any> {
-    const response = await baseRequestClient.get(`/${index}/${id}`)
+    const response = await requestClient.get(`/${index}/${id}`)
     return response.data
   },
 
@@ -96,7 +96,7 @@ export const elasticsearchService = {
     index: string,
     data: Record<string, any>
   ): Promise<{ success: boolean; data: any }> {
-    const response = await baseRequestClient.put(`/${index}/${id}`, data)
+    const response = await requestClient.put(`/${index}/${id}`, data)
     return response.data
   },
 
@@ -107,7 +107,7 @@ export const elasticsearchService = {
     index: string,
     data: Record<string, any>
   ): Promise<{ success: boolean; id: string; data: any }> {
-    const response = await baseRequestClient.post(`/${index}`, data)
+    const response = await requestClient.post(`/${index}`, data)
     return response.data
   },
 
@@ -118,7 +118,7 @@ export const elasticsearchService = {
     id: string,
     index: string
   ): Promise<{ success: boolean }> {
-    const response = await baseRequestClient.delete(`/${index}/${id}`)
+    const response = await requestClient.delete(`/${index}/${id}`)
     return response.data
   },
 
@@ -130,7 +130,7 @@ export const elasticsearchService = {
     aggregations: Record<string, any>
     query?: any
   }): Promise<any> {
-    const response = await baseRequestClient.post('/aggregate', params)
+    const response = await requestClient.post('/aggregate', params)
     return response.data
   },
 }

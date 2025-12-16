@@ -31,7 +31,13 @@ func (s *UserService) Create(ctx context.Context, req *CreateUserRequest) (*Crea
 	}
 
 	// 3. DTO → Domain Model
-	user := ToUser(req, loginID)
+	user := &domain.User{
+		LoginID:    loginID,
+		Username:   req.Username,
+		Department: req.Department,
+		Role:       req.Role,
+		Status:     domain.UserStatusActive,
+	}
 
 	// 4. 设置默认密码（123）
 	if err := user.SetDefaultPassword(); err != nil {
@@ -48,10 +54,9 @@ func (s *UserService) Create(ctx context.Context, req *CreateUserRequest) (*Crea
 		return nil, err
 	}
 
-	// 7. 返回响应（只返回 login_id 和初始密码）
+	// 7. 返回响应（只返回 login_id）
 	return &CreateUserResponse{
-		LoginID:  user.LoginID,
-		Password: "123",
+		LoginID: user.LoginID,
 	}, nil
 }
 
@@ -61,8 +66,19 @@ func (s *UserService) Get(ctx context.Context, id uint) (*UserResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	
-	return ToUserResponse(user), nil
+
+	return &UserResponse{
+		ID:          user.ID,
+		LoginID:     user.LoginID,
+		Username:    user.Username,
+		Department:  user.Department,
+		Email:       user.Email,
+		Role:        user.Role,
+		Status:      user.Status,
+		HasInitPass: user.HasInitPass,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
+	}, nil
 }
 
 // GetByLoginID 根据工号获取用户
@@ -76,13 +92,32 @@ func (s *UserService) List(ctx context.Context, limit, offset int) (*UserListRes
 	if err != nil {
 		return nil, err
 	}
-	
+
 	total, err := s.repo.Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	
-	return ToUserListResponse(users, total), nil
+
+	responses := make([]*UserResponse, len(users))
+	for i, u := range users {
+		responses[i] = &UserResponse{
+			ID:          u.ID,
+			LoginID:     u.LoginID,
+			Username:    u.Username,
+			Department:  u.Department,
+			Email:       u.Email,
+			Role:        u.Role,
+			Status:      u.Status,
+			HasInitPass: u.HasInitPass,
+			CreatedAt:   u.CreatedAt,
+			UpdatedAt:   u.UpdatedAt,
+		}
+	}
+
+	return &UserListResponse{
+		Total: total,
+		Users: responses,
+	}, nil
 }
 
 // Update 更新用户

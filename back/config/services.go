@@ -89,7 +89,7 @@ type Services struct {
 	ReturnAnalysis *analyticsApp.ReturnAnalysisService
 }
 
-func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client, jwtWang *auth.JWTWang, esSync *es.ESSync) *Services {
+func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client, jwtWang *auth.JWTWang, esSync *es.ESSync, searchRegistry *searchInfra.SearchConfigRegistry) *Services {
 	// ========== Supplier ==========
 	supplierRepo := supplierInfra.NewSupplierRepo(db)
 	supplierService := supplierApp.NewSupplierService(supplierRepo, esSync)
@@ -111,8 +111,7 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 	roleService := userApp.NewRoleService(roleRepo)
 
 	// ========== Auth ==========
-	jwtAdapter := authApp.NewJWTWangAdapter(jwtWang)
-	authService := authApp.NewAuthService(userService, jwtAdapter)
+	authService := authApp.NewAuthService(userService, jwtWang)
 
 	// ========== Material ==========
 	materialRepo := materialInfra.NewMaterialRepo(db)
@@ -122,39 +121,32 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 	processRepo := processInfra.NewProcessRepo(db)
 	processService := processApp.NewProcessService(processRepo, esSync)
 
-	// ========== Pricing（使用适配器） ==========
+	// ========== Pricing ==========
 	supplierPriceRepo := pricingInfra.NewSupplierPriceRepo(db)
 	priceCache := pricingInfra.NewPriceCacheImpl(rdb)
-
-	// 创建 Supplier 适配器
-	supplierAdapter := supplierApp.NewSupplierServiceAdapter(supplierService)
 
 	materialPriceService := pricingApp.NewMaterialPriceService(
 		supplierPriceRepo,
 		priceCache,
 		materialService,
-		supplierAdapter, // 使用适配器
+		supplierService,
 	)
 
 	processPriceService := pricingApp.NewProcessPriceService(
 		supplierPriceRepo,
 		priceCache,
 		processService,
-		supplierAdapter, // 使用适配器
+		supplierService,
 	)
 
-	// ========== Product（使用适配器） ==========
+	// ========== Product ==========
 	productRepo := productInfra.NewProductRepo(db)
 	productService := productApp.NewProductService(productRepo, esSync)
 
-	// 创建 Material 和 Process 适配器
-	materialAdapter := materialApp.NewMaterialServiceAdapter(materialService)
-	processAdapter := processApp.NewProcessServiceAdapter(processService)
-
 	productCostCalculator := productApp.NewCostCalculator(
 		productRepo,
-		materialAdapter,  // 使用适配器
-		processAdapter,   // 使用适配器
+		materialService,
+		processService,
 		materialPriceService,
 		processPriceService,
 	)
@@ -168,8 +160,8 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 	orderService := orderApp.NewOrderService(orderRepo, esSync)
 	
 	// ========== Search ==========
-	searchRepo := searchInfra.NewESSearchRepo(esClient)
-	searchService := searchApp.NewSearchService(searchRepo)
+	searchRepo := searchInfra.NewESSearchRepository(esClient)
+	searchService := searchApp.NewSearchService(searchRegistry, searchRepo)
 	
 	// ========== Analytics ==========
 	returnAnalysisRepo := analyticsInfra.NewReturnAnalysisRepository(db)

@@ -32,25 +32,38 @@ func NewMaterialService(repo *infra.MaterialRepo, esSync ESSync) *MaterialServic
 // Create 创建材料
 func (s *MaterialService) Create(ctx context.Context, req *CreateMaterialRequest) (*MaterialResponse, error) {
 	// 1. DTO → Domain Model
-	material := ToMaterial(req)
-	
+	material := &domain.Material{
+		Name:        req.Name,
+		Spec:        req.Spec,
+		Unit:        req.Unit,
+		Description: req.Description,
+	}
+
 	// 2. 领域验证
 	if err := material.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	// 3. 保存到数据库
 	if err := s.repo.Save(ctx, material); err != nil {
 		return nil, err
 	}
-	
+
 	// 4. 异步同步到 ES
 	if s.esSync != nil {
 		s.esSync.Index(material)
 	}
-	
+
 	// 5. Domain Model → DTO
-	return ToMaterialResponse(material), nil
+	return &MaterialResponse{
+		ID:          material.ID,
+		Name:        material.Name,
+		Spec:        material.Spec,
+		Unit:        material.Unit,
+		Description: material.Description,
+		CreatedAt:   material.CreatedAt,
+		UpdatedAt:   material.UpdatedAt,
+	}, nil
 }
 
 // Get 获取材料
@@ -59,8 +72,16 @@ func (s *MaterialService) Get(ctx context.Context, id uint) (*MaterialResponse, 
 	if err != nil {
 		return nil, err
 	}
-	
-	return ToMaterialResponse(material), nil
+
+	return &MaterialResponse{
+		ID:          material.ID,
+		Name:        material.Name,
+		Spec:        material.Spec,
+		Unit:        material.Unit,
+		Description: material.Description,
+		CreatedAt:   material.CreatedAt,
+		UpdatedAt:   material.UpdatedAt,
+	}, nil
 }
 
 // Update 更新材料

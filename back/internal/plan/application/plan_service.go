@@ -39,27 +39,47 @@ func (s *PlanService) Create(ctx context.Context, req *CreatePlanRequest) (*Plan
 	if exists {
 		return nil, domain.ErrPlanNoDuplicate
 	}
-	
+
 	// 2. DTO → Domain Model
-	plan := ToPlan(req)
-	
+	plan := &domain.Plan{
+		PlanNo:      req.PlanNo,
+		OrderID:     req.OrderID,
+		ProductID:   req.ProductID,
+		Quantity:    req.Quantity,
+		Status:      domain.PlanStatusPlanned,
+		ScheduledAt: req.ScheduledAt,
+		CreatedBy:   req.CreatedBy,
+	}
+
 	// 3. 领域验证
 	if err := plan.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	// 4. 保存到数据库
 	if err := s.repo.Save(ctx, plan); err != nil {
 		return nil, err
 	}
-	
+
 	// 5. 异步同步到 ES
 	if s.esSync != nil {
 		s.esSync.Index(plan)
 	}
-	
+
 	// 6. Domain Model → DTO
-	return ToPlanResponse(plan), nil
+	return &PlanResponse{
+		ID:          plan.ID,
+		PlanNo:      plan.PlanNo,
+		OrderID:     plan.OrderID,
+		ProductID:   plan.ProductID,
+		Quantity:    plan.Quantity,
+		Status:      plan.Status,
+		ScheduledAt: plan.ScheduledAt,
+		CompletedAt: plan.CompletedAt,
+		CreatedBy:   plan.CreatedBy,
+		CreatedAt:   plan.CreatedAt,
+		UpdatedAt:   plan.UpdatedAt,
+	}, nil
 }
 
 // Get 获取计划
@@ -68,8 +88,20 @@ func (s *PlanService) Get(ctx context.Context, id uint) (*PlanResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	
-	return ToPlanResponse(plan), nil
+
+	return &PlanResponse{
+		ID:          plan.ID,
+		PlanNo:      plan.PlanNo,
+		OrderID:     plan.OrderID,
+		ProductID:   plan.ProductID,
+		Quantity:    plan.Quantity,
+		Status:      plan.Status,
+		ScheduledAt: plan.ScheduledAt,
+		CompletedAt: plan.CompletedAt,
+		CreatedBy:   plan.CreatedBy,
+		CreatedAt:   plan.CreatedAt,
+		UpdatedAt:   plan.UpdatedAt,
+	}, nil
 }
 
 // List 计划列表
@@ -78,13 +110,33 @@ func (s *PlanService) List(ctx context.Context, limit, offset int) (*PlanListRes
 	if err != nil {
 		return nil, err
 	}
-	
+
 	total, err := s.repo.Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	
-	return ToPlanListResponse(plans, total), nil
+
+	responses := make([]*PlanResponse, len(plans))
+	for i, p := range plans {
+		responses[i] = &PlanResponse{
+			ID:          p.ID,
+			PlanNo:      p.PlanNo,
+			OrderID:     p.OrderID,
+			ProductID:   p.ProductID,
+			Quantity:    p.Quantity,
+			Status:      p.Status,
+			ScheduledAt: p.ScheduledAt,
+			CompletedAt: p.CompletedAt,
+			CreatedBy:   p.CreatedBy,
+			CreatedAt:   p.CreatedAt,
+			UpdatedAt:   p.UpdatedAt,
+		}
+	}
+
+	return &PlanListResponse{
+		Total: total,
+		Plans: responses,
+	}, nil
 }
 
 // Update 更新计划
@@ -174,12 +226,24 @@ func (s *PlanService) GetByOrderID(ctx context.Context, orderID uint) ([]*PlanRe
 	if err != nil {
 		return nil, err
 	}
-	
+
 	responses := make([]*PlanResponse, len(plans))
 	for i, p := range plans {
-		responses[i] = ToPlanResponse(p)
+		responses[i] = &PlanResponse{
+			ID:          p.ID,
+			PlanNo:      p.PlanNo,
+			OrderID:     p.OrderID,
+			ProductID:   p.ProductID,
+			Quantity:    p.Quantity,
+			Status:      p.Status,
+			ScheduledAt: p.ScheduledAt,
+			CompletedAt: p.CompletedAt,
+			CreatedBy:   p.CreatedBy,
+			CreatedAt:   p.CreatedAt,
+			UpdatedAt:   p.UpdatedAt,
+		}
 	}
-	
+
 	return responses, nil
 }
 
@@ -189,12 +253,24 @@ func (s *PlanService) GetByProductID(ctx context.Context, productID uint) ([]*Pl
 	if err != nil {
 		return nil, err
 	}
-	
+
 	responses := make([]*PlanResponse, len(plans))
 	for i, p := range plans {
-		responses[i] = ToPlanResponse(p)
+		responses[i] = &PlanResponse{
+			ID:          p.ID,
+			PlanNo:      p.PlanNo,
+			OrderID:     p.OrderID,
+			ProductID:   p.ProductID,
+			Quantity:    p.Quantity,
+			Status:      p.Status,
+			ScheduledAt: p.ScheduledAt,
+			CompletedAt: p.CompletedAt,
+			CreatedBy:   p.CreatedBy,
+			CreatedAt:   p.CreatedAt,
+			UpdatedAt:   p.UpdatedAt,
+		}
 	}
-	
+
 	return responses, nil
 }
 
@@ -210,5 +286,25 @@ func (s *PlanService) GetByStatus(ctx context.Context, status string, limit, off
 		return nil, err
 	}
 
-	return ToPlanListResponse(plans, total), nil
+	responses := make([]*PlanResponse, len(plans))
+	for i, p := range plans {
+		responses[i] = &PlanResponse{
+			ID:          p.ID,
+			PlanNo:      p.PlanNo,
+			OrderID:     p.OrderID,
+			ProductID:   p.ProductID,
+			Quantity:    p.Quantity,
+			Status:      p.Status,
+			ScheduledAt: p.ScheduledAt,
+			CompletedAt: p.CompletedAt,
+			CreatedBy:   p.CreatedBy,
+			CreatedAt:   p.CreatedAt,
+			UpdatedAt:   p.UpdatedAt,
+		}
+	}
+
+	return &PlanListResponse{
+		Total: total,
+		Plans: responses,
+	}, nil
 }

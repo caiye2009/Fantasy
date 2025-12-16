@@ -36,10 +36,11 @@
               v-model="filterForm[filter.key]"
               :placeholder="filter.placeholder"
               clearable
+              filterable
               style="width: 200px"
             >
               <el-option
-                v-for="option in filter.options"
+                v-for="option in filterOptions[filter.key] || []"
                 :key="option.value"
                 :label="option.label"
                 :value="option.value"
@@ -196,12 +197,13 @@ const {
   reload,
   slideWindowDown,
   slideWindowUp,
-} = useDataTable(props.config.indices, props.config.pageSize)
+} = useDataTable(props.config.entityType, props.config.pageSize)
 
 // 本地状态
 const tableWrapperRef = ref<HTMLElement>()
 const searchQuery = ref('')
 const filterForm = ref<Record<string, any>>({})
+const filterOptions = ref<Record<string, Array<{ label: string; value: any }>>>({})
 
 // 可见列
 const visibleColumns = computed(() => columns.value.filter((col) => col.visible !== false))
@@ -261,8 +263,34 @@ const handleRefresh = () => reload()
 const handleView = (row: any) => emit('view', row)
 const handleEdit = (row: any) => emit('edit', row)
 
+// 加载 filter 选项
+const loadFilterOptions = async () => {
+  if (!props.config.filters) return
+
+  for (const filter of props.config.filters) {
+    // 如果有 fetchOptions 函数，调用它获取选项
+    if (filter.fetchOptions) {
+      try {
+        filterOptions.value[filter.key] = await filter.fetchOptions()
+      } catch (error) {
+        console.error(`Failed to load options for filter ${filter.key}:`, error)
+        filterOptions.value[filter.key] = []
+      }
+    }
+    // 如果有静态 options，直接使用
+    else if (filter.options) {
+      filterOptions.value[filter.key] = filter.options
+    }
+    // 默认为空数组
+    else {
+      filterOptions.value[filter.key] = []
+    }
+  }
+}
+
 // 初始化
-onMounted(() => {
+onMounted(async () => {
+  await loadFilterOptions()
   initialize()
   const tableBody = tableWrapperRef.value?.querySelector('.el-table__body-wrapper')
   if (tableBody) tableBody.addEventListener('scroll', handleTableScroll)
@@ -320,7 +348,28 @@ onUnmounted(() => {
 .selected-info { color: #409eff; font-size: 14px; margin-right: 12px; strong { font-size: 16px; margin: 0 4px; } }
 .bulk-actions { display: flex; gap: 8px; }
 
-.table-wrapper { flex: 1; overflow: hidden; padding: 0 20px 20px; position: relative; }
+.table-wrapper {
+  flex: 1;
+  overflow: hidden;
+  padding: 0 20px 20px;
+  position: relative;
+
+  // 隐藏 el-table 内部的滚动条，但保持滚动功能
+  :deep(.el-table__body-wrapper) {
+    // 隐藏滚动条但保持滚动功能
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+
+    &::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
+  }
+
+  // 确保外部不产生滚动条
+  :deep(.el-table) {
+    overflow: hidden;
+  }
+}
 
 .rounded-table { border-radius: 8px; overflow: hidden; }
 

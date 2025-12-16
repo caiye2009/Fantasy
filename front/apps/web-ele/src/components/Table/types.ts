@@ -20,6 +20,8 @@ export interface FilterConfig {
   type: 'text' | 'select' | 'date' | 'daterange' | 'number'
   options?: Array<{ label: string; value: any }>
   placeholder?: string
+  // 动态获取选项的函数（用于从 ES 聚合或后端 API 获取）
+  fetchOptions?: () => Promise<Array<{ label: string; value: any }>>
 }
 
 export interface BulkAction {
@@ -34,34 +36,31 @@ export interface BulkAction {
 export interface PageConfig {
   pageType: string
   title: string
-  indices: string[]
+  entityType: string // 单个实体类型，如 'material', 'order', 'client'
   columns: ColumnConfig[]
   filters: FilterConfig[]
   bulkActions: BulkAction[]
   pageSize: number
+  actions?: any[] // 可选的自定义操作
 }
 
 export interface ESRequest {
-  fields?: string[]
-  filters?: Record<string, any>
-  from: number
-  indices: string[]
+  entityType: string // material, order, client, etc. (required)
   query?: string
-  size: number
+  filters?: Record<string, any>
+  aggRequests?: Record<string, any>
+  pagination: {
+    offset: number
+    size: number
+  }
   sort?: SortConfig[]
 }
 
 export interface ESResponse {
+  items: any[] // 搜索结果
   total: number
   took: number
-  max_score: number
-  results: Array<{
-    index: string
-    type: string
-    id: string
-    score: number
-    source: any
-  }>
+  aggregations?: Record<string, any> // 聚合结果
 }
 
 export interface CacheWindow {

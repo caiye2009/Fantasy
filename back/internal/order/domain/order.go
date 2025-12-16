@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 	"gorm.io/gorm"
 )
@@ -17,16 +18,16 @@ const (
 // Order 订单聚合根
 type Order struct {
 	ID         uint           `gorm:"primaryKey" json:"id"`
-	OrderNo    string         `gorm:"size:50;uniqueIndex;not null" json:"order_no"`
-	ClientID   uint           `gorm:"not null;index" json:"client_id"`
-	ProductID  uint           `gorm:"not null;index" json:"product_id"`
+	OrderNo    string         `gorm:"size:50;uniqueIndex;not null" json:"orderNo"`
+	ClientID   uint           `gorm:"not null;index" json:"clientId"`
+	ProductID  uint           `gorm:"not null;index" json:"productId"`
 	Quantity   float64        `gorm:"type:decimal(10,2);not null" json:"quantity"`
-	UnitPrice  float64        `gorm:"type:decimal(10,2);not null" json:"unit_price"`
-	TotalPrice float64        `gorm:"type:decimal(10,2);not null" json:"total_price"`
+	UnitPrice  float64        `gorm:"type:decimal(10,2);not null" json:"unitPrice"`
+	TotalPrice float64        `gorm:"type:decimal(10,2);not null" json:"totalPrice"`
 	Status     string         `gorm:"size:20;default:pending;index" json:"status"`
-	CreatedBy  uint           `gorm:"not null;index" json:"created_by"`
-	CreatedAt  time.Time      `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt  time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	CreatedBy  uint           `gorm:"not null;index" json:"createdBy"`
+	CreatedAt  time.Time      `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt  time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
@@ -153,20 +154,20 @@ func (o *Order) IsCompleted() bool {
 	return o.Status == OrderStatusCompleted
 }
 
-// ToDocument 转换为 ES 文档
+// ToDocument 转换为 ES 文档（小驼峰字段名）
 func (o *Order) ToDocument() map[string]interface{} {
 	return map[string]interface{}{
-		"id":          o.ID,
-		"order_no":    o.OrderNo,
-		"client_id":   o.ClientID,
-		"product_id":  o.ProductID,
-		"quantity":    o.Quantity,
-		"unit_price":  o.UnitPrice,
-		"total_price": o.TotalPrice,
-		"status":      o.Status,
-		"created_by":  o.CreatedBy,
-		"created_at":  o.CreatedAt,
-		"updated_at":  o.UpdatedAt,
+		"id":         o.ID,
+		"orderNo":    o.OrderNo,
+		"clientId":   o.ClientID,
+		"productId":  o.ProductID,
+		"quantity":   o.Quantity,
+		"unitPrice":  o.UnitPrice,
+		"totalPrice": o.TotalPrice,
+		"status":     o.Status,
+		"createdBy":  o.CreatedBy,
+		"createdAt":  o.CreatedAt,
+		"updatedAt":  o.UpdatedAt,
 	}
 }
 
@@ -177,5 +178,5 @@ func (o *Order) GetIndexName() string {
 
 // GetDocumentID ES 文档 ID
 func (o *Order) GetDocumentID() string {
-	return string(rune(o.ID))
+	return fmt.Sprintf("%d", o.ID)
 } 

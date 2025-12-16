@@ -39,7 +39,7 @@ func Init() error {
 	esSync := es.NewESSync(esClient, loggerAdapter)
 	log.Println("✓ ES Sync initialized")
 	
-	authWang := InitAuth(db, rdb, cfg)
+	jwtWang, authWang := InitAuth(db, rdb, cfg)
 
 	log.Println("=== Database Migration ===")
 	if err := AutoMigrate(db); err != nil {
@@ -48,8 +48,15 @@ func Init() error {
 
 	InitAdminUser(db)
 
+	log.Println("=== Initializing Search Config Registry ===")
+	searchRegistry, err := InitSearchRegistry()
+	if err != nil {
+		log.Fatalf("Failed to initialize search registry: %v", err)
+	}
+	log.Printf("✓ Search registry initialized with entities: %v", searchRegistry.ListEntityTypes())
+
 	log.Println("=== Initializing Services ===")
-	services := InitServices(db, rdb, esClient, authWang.GetJWTWang(), esSync)
+	services := InitServices(db, rdb, esClient, jwtWang, esSync, searchRegistry)
 	log.Println("✓ Services initialized")
 
 	log.Println("=== Initializing Router ===")

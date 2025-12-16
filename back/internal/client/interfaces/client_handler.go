@@ -106,7 +106,7 @@ func (h *ClientHandler) Get(c *gin.Context) {
 // @Failure      400 {object} map[string]string "请求参数错误"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /client/{id} [put]
+// @Router       /client/{id} [post]
 func (h *ClientHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	
@@ -165,6 +165,6 @@ func RegisterClientHandlers(rg *gin.RouterGroup, service *application.ClientServ
 	rg.POST("/client", handler.Create)
 	rg.GET("/client/:id", handler.Get)
 	//rg.GET("/client", handler.List)
-	rg.PUT("/client/:id", handler.Update)
+	rg.POST("/client/:id", handler.Update)
 	rg.DELETE("/client/:id", handler.Delete)
 }

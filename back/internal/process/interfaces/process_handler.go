@@ -91,7 +91,7 @@ func (h *ProcessHandler) Get(c *gin.Context) {
 // @Failure      400 {object} map[string]string "请求参数错误"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /process/{id} [put]
+// @Router       /process/{id} [post]
 func (h *ProcessHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	
@@ -146,6 +146,6 @@ func RegisterProcessHandlers(rg *gin.RouterGroup, service *application.ProcessSe
 	rg.POST("/process", handler.Create)
 	rg.GET("/process/:id", handler.Get)
 	// List 接口已移除，使用 POST /search 替代
-	rg.PUT("/process/:id", handler.Update)
+	rg.POST("/process/:id", handler.Update)
 	rg.DELETE("/process/:id", handler.Delete)
 }

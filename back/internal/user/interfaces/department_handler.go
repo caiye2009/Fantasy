@@ -32,7 +32,7 @@ func NewDepartmentHandler(service *application.DepartmentService) *DepartmentHan
 // @Failure      400 {object} map[string]string "请求参数错误"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /department [post]
+// @Router       /user/departments [post]
 func (h *DepartmentHandler) Create(c *gin.Context) {
 	var req application.CreateDepartmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -66,7 +66,7 @@ func (h *DepartmentHandler) Create(c *gin.Context) {
 // @Failure      404 {object} map[string]string "部门不存在"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /department/{id} [put]
+// @Router       /user/departments/{id} [post]
 func (h *DepartmentHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -103,7 +103,7 @@ func (h *DepartmentHandler) Update(c *gin.Context) {
 // @Success      200 {object} application.DepartmentResponse "获取成功"
 // @Failure      404 {object} map[string]string "部门不存在"
 // @Security     Bearer
-// @Router       /department/{id} [get]
+// @Router       /user/departments/{id} [get]
 func (h *DepartmentHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -132,7 +132,7 @@ func (h *DepartmentHandler) Get(c *gin.Context) {
 // @Success      200 {object} application.DepartmentListResponse "获取成功"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /department [get]
+// @Router       /user/departments [get]
 func (h *DepartmentHandler) List(c *gin.Context) {
 	status := c.Query("status")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -152,19 +152,19 @@ func (h *DepartmentHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// Deactivate 停用部门
-// @Summary      停用部门
-// @Description  停用部门（软删除）
+// Delete 删除部门（软删除）
+// @Summary      删除部门
+// @Description  软删除部门
 // @Tags         部门管理
 // @Accept       json
 // @Produce      json
 // @Param        id path int true "部门ID"
-// @Success      200 {object} map[string]string "停用成功"
+// @Success      200 {object} map[string]string "删除成功"
 // @Failure      404 {object} map[string]string "部门不存在"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /department/{id}/deactivate [put]
-func (h *DepartmentHandler) Deactivate(c *gin.Context) {
+// @Router       /user/departments/{id} [delete]
+func (h *DepartmentHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	err := h.service.Deactivate(uint(id))
@@ -177,46 +177,17 @@ func (h *DepartmentHandler) Deactivate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "停用成功"})
+	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }
 
-// Activate 激活部门
-// @Summary      激活部门
-// @Description  激活已停用的部门
-// @Tags         部门管理
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "部门ID"
-// @Success      200 {object} map[string]string "激活成功"
-// @Failure      404 {object} map[string]string "部门不存在"
-// @Failure      500 {object} map[string]string "服务器错误"
-// @Security     Bearer
-// @Router       /department/{id}/activate [put]
-func (h *DepartmentHandler) Activate(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-
-	err := h.service.Activate(uint(id))
-	if err != nil {
-		if errors.Is(err, domain.ErrDepartmentNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "部门不存在"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "激活成功"})
-}
-
-// RegisterDepartmentHandlers 注册部门路由
+// RegisterDepartmentHandlers 注册部门路由（作为 user 的子资源）
 func RegisterDepartmentHandlers(rg *gin.RouterGroup, service *application.DepartmentService) {
 	handler := NewDepartmentHandler(service)
 
-	rg.POST("/department", handler.Create)
-	rg.GET("/department/:id", handler.Get)
-	rg.GET("/department", handler.List)
-	rg.PUT("/department/:id", handler.Update)
-	rg.PUT("/department/:id/deactivate", handler.Deactivate)
-	rg.PUT("/department/:id/activate", handler.Activate)
+	rg.POST("/user/departments", handler.Create)
+	rg.GET("/user/departments/:id", handler.Get)
+	rg.GET("/user/departments", handler.List)
+	rg.POST("/user/departments/:id", handler.Update)
+	rg.DELETE("/user/departments/:id", handler.Delete)
 }
 

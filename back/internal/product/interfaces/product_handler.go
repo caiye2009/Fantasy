@@ -92,7 +92,7 @@ func (h *ProductHandler) Get(c *gin.Context) {
 // @Failure      400 {object} map[string]string "请求参数错误"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /product/{id} [put]
+// @Router       /product/{id} [post]
 func (h *ProductHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	
@@ -187,7 +187,7 @@ func RegisterProductHandlers(rg *gin.RouterGroup, service *application.ProductSe
 	rg.POST("/product", handler.Create)
 	rg.GET("/product/:id", handler.Get)
 	// List 接口已移除，使用 POST /search 替代
-	rg.PUT("/product/:id", handler.Update)
+	rg.POST("/product/:id", handler.Update)
 	rg.DELETE("/product/:id", handler.Delete)
 	rg.POST("/product/calculate-cost", handler.CalculateCost)
 }

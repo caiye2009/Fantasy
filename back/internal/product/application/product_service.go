@@ -32,25 +32,38 @@ func NewProductService(repo *infra.ProductRepo, esSync ESSync) *ProductService {
 // Create 创建产品
 func (s *ProductService) Create(ctx context.Context, req *CreateProductRequest) (*ProductResponse, error) {
 	// 1. DTO → Domain Model
-	product := ToProduct(req)
-	
+	product := &domain.Product{
+		Name:      req.Name,
+		Status:    domain.ProductStatusDraft,
+		Materials: req.Materials,
+		Processes: req.Processes,
+	}
+
 	// 2. 领域验证
 	if err := product.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	// 3. 保存到数据库
 	if err := s.repo.Save(ctx, product); err != nil {
 		return nil, err
 	}
-	
+
 	// 4. 异步同步到 ES
 	if s.esSync != nil {
 		s.esSync.Index(product)
 	}
-	
+
 	// 5. Domain Model → DTO
-	return ToProductResponse(product), nil
+	return &ProductResponse{
+		ID:        product.ID,
+		Name:      product.Name,
+		Status:    product.Status,
+		Materials: product.Materials,
+		Processes: product.Processes,
+		CreatedAt: product.CreatedAt,
+		UpdatedAt: product.UpdatedAt,
+	}, nil
 }
 
 // Get 获取产品
@@ -59,8 +72,16 @@ func (s *ProductService) Get(ctx context.Context, id uint) (*ProductResponse, er
 	if err != nil {
 		return nil, err
 	}
-	
-	return ToProductResponse(product), nil
+
+	return &ProductResponse{
+		ID:        product.ID,
+		Name:      product.Name,
+		Status:    product.Status,
+		Materials: product.Materials,
+		Processes: product.Processes,
+		CreatedAt: product.CreatedAt,
+		UpdatedAt: product.UpdatedAt,
+	}, nil
 }
 
 // Update 更新产品

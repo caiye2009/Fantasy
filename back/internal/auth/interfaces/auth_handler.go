@@ -1,11 +1,11 @@
 package interfaces
 
 import (
-	"errors"	
-	"github.com/gin-gonic/gin"
-	
+	"errors"
+	"net/http"
+
 	"back/internal/auth/application"
-	"back/pkg/fields"
+	"github.com/gin-gonic/gin"
 )
 
 // AuthHandler 认证 Handler
@@ -31,25 +31,25 @@ func NewAuthHandler(service *application.AuthService) *AuthHandler {
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req application.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		fields.Error(c, "请求参数错误")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数错误"})
 		return
 	}
-	
+
 	resp, err := h.service.Login(c.Request.Context(), &req)
 	if err != nil {
 		if errors.Is(err, application.ErrInvalidCredentials) {
-			fields.Error(c, err.Error())
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 		if errors.Is(err, application.ErrAccountSuspended) {
-			fields.Error(c, err.Error())
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 			return
 		}
-		fields.Error(c, "登录失败")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "登录失败"})
 		return
 	}
-	
-	fields.Success(c, resp)
+
+	c.JSON(http.StatusOK, resp)
 }
 
 // Logout 用户登出
@@ -62,7 +62,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 // @Security     Bearer
 // @Router       /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
-	fields.Success(c, gin.H{"message": "登出成功"})
+	c.JSON(http.StatusOK, gin.H{"message": "登出成功"})
 }
 
 // RefreshToken 刷新 Token
@@ -77,23 +77,23 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // @Router       /auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req application.RefreshTokenRequest
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
-		fields.Error(c, "请求参数错误")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数错误"})
 		return
 	}
-	
+
 	resp, err := h.service.RefreshToken(c.Request.Context(), req.RefreshToken)
 	if err != nil {
 		if errors.Is(err, application.ErrInvalidToken) {
-			fields.Error(c, "Token 无效或已过期")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token 无效或已过期"})
 			return
 		}
-		fields.Error(c, "刷新 Token 失败")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "刷新 Token 失败"})
 		return
 	}
-	
-	fields.Success(c, resp)
+
+	c.JSON(http.StatusOK, resp)
 }
 
 // RegisterAuthHandlers 注册路由

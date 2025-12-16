@@ -1,0 +1,75 @@
+entityType: material
+indexName: materials
+
+# Query字段：全文搜索，算分排序
+queryFields:
+  - field: name
+    boost: 2.0
+  - field: description
+    boost: 1.0
+  - field: spec
+    boost: 1.5
+
+# Filter字段：结构化过滤，不算分
+filterFields:
+  - field: id
+    type: keyword
+    operator: term
+  - field: name
+    type: text
+    operator: match
+  - field: spec
+    type: text
+    operator: match
+  - field: unit
+    type: keyword
+    operator: terms
+  - field: category
+    type: keyword
+    operator: terms
+  - field: supplierId
+    type: keyword
+    operator: terms
+  - field: price
+    type: numeric
+    operator: range
+  - field: status
+    type: keyword
+    operator: terms
+  - field: createdAt
+    type: date
+    operator: range
+  - field: updatedAt
+    type: date
+    operator: range
+
+# Aggregation字段：动态统计，生成筛选项
+aggregationFields:
+  - field: category
+    type: keyword
+    aggType: terms
+    size: 20
+    supportSearch: false
+    excludeSelf: true
+  - field: supplierId
+    type: keyword
+    aggType: composite
+    size: 10
+    supportSearch: true
+    excludeSelf: true
+  - field: status
+    type: keyword
+    aggType: terms
+    size: 20
+    supportSearch: false
+    excludeSelf: true
+  - field: price
+    type: numeric
+    aggType: stats
+    excludeSelf: false
+  - field: unit
+    type: keyword
+    aggType: terms
+    size: 20
+    supportSearch: false
+    excludeSelf: true

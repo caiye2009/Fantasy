@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"regexp"
 	"time"
 
@@ -16,8 +17,8 @@ type Client struct {
 	Phone     string         `gorm:"size:20;index" json:"phone"`
 	Email     string         `gorm:"size:100;index" json:"email"`
 	Address   string         `gorm:"size:200" json:"address"`
-	CreatedAt time.Time      `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	CreatedAt time.Time      `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
@@ -128,17 +129,18 @@ func (c *Client) UpdateAddress(newAddress string) error {
 	return nil
 }
 
-// ToDocument 转换为 ES 文档
+// ToDocument 转换为 ES 文档（小驼峰字段名）
 func (c *Client) ToDocument() map[string]interface{} {
 	return map[string]interface{}{
-		"id":         c.ID,
-		"name":       c.Name,
-		"contact":    c.Contact,
-		"phone":      c.Phone,
-		"email":      c.Email,
-		"address":    c.Address,
-		"created_at": c.CreatedAt,
-		"updated_at": c.UpdatedAt,
+		"id":        c.ID,
+		"code":      c.Code,
+		"name":      c.Name,
+		"contact":   c.Contact,
+		"phone":     c.Phone,
+		"email":     c.Email,
+		"address":   c.Address,
+		"createdAt": c.CreatedAt,
+		"updatedAt": c.UpdatedAt,
 	}
 }
 
@@ -149,7 +151,7 @@ func (c *Client) GetIndexName() string {
 
 // GetDocumentID ES 文档 ID
 func (c *Client) GetDocumentID() string {
-	return string(rune(c.ID))
+	return fmt.Sprintf("%d", c.ID)
 }
 
 // isValidEmail 验证邮箱格式

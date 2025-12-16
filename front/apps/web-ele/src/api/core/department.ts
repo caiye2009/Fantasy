@@ -24,15 +24,17 @@ export async function getDepartmentListApi(params?: {
   status?: string;
   page?: number;
   page_size?: number;
-}) {
-  return requestClient.get<DepartmentListResponse>('/department', { params });
+}): Promise<DepartmentListResponse> {
+  const response = await requestClient.get<DepartmentListResponse>('/department', { params });
+  return response.data;
 }
 
 /**
  * 获取部门详情
  */
-export async function getDepartmentDetailApi(id: number) {
-  return requestClient.get<Department>(`/department/${id}`);
+export async function getDepartmentDetailApi(id: number): Promise<Department> {
+  const response = await requestClient.get<Department>(`/department/${id}`);
+  return response.data;
 }
 
 /**
@@ -43,8 +45,9 @@ export async function createDepartmentApi(data: {
   code?: string;
   description?: string;
   parent_id?: number;
-}) {
-  return requestClient.post<Department>('/department', data);
+}): Promise<Department> {
+  const response = await requestClient.post<Department>('/department', data);
+  return response.data;
 }
 
 /**
@@ -58,22 +61,25 @@ export async function updateDepartmentApi(
     description?: string;
     parent_id?: number;
   },
-) {
-  return requestClient.put<Department>(`/department/${id}`, data);
+): Promise<Department> {
+  const response = await requestClient.put<Department>(`/department/${id}`, data);
+  return response.data;
 }
 
 /**
  * 停用部门
  */
-export async function deactivateDepartmentApi(id: number) {
-  return requestClient.put<{ message: string }>(
+export async function deactivateDepartmentApi(id: number): Promise<{ message: string }> {
+  const response = await requestClient.put<{ message: string }>(
     `/department/${id}/deactivate`,
   );
+  return response.data;
 }
 
 /**
  * 激活部门
  */
-export async function activateDepartmentApi(id: number) {
-  return requestClient.put<{ message: string }>(`/department/${id}/activate`);
+export async function activateDepartmentApi(id: number): Promise<{ message: string }> {
+  const response = await requestClient.put<{ message: string }>(`/department/${id}/activate`);
+  return response.data;
 }

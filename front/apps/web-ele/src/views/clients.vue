@@ -87,13 +87,13 @@ import type {
 } from '#/components/Table/types';
 
 import { useDataTable } from '#/composables/useDataTable';
-const { searchLoading } = useDataTable(['clients'], 20);
+const { searchLoading } = useDataTable('client', 20);
 
 // 页面配置
 const pageConfig: PageConfig = {
   pageType: 'client',
   title: '客户管理',
-  indices: ['clients'],
+  entityType: 'client',
   pageSize: 20,
   columns: [
     { key: 'id', label: 'ID', width: 80, sortable: true, visible: true, order: 0 },
@@ -123,9 +123,27 @@ const pageConfig: PageConfig = {
     },
   ] as ColumnConfig[],
   filters: [
-    { key: 'name', label: '客户名称', type: 'text', placeholder: '请输入名称' },
-    { key: 'code', label: '客户编码', type: 'text', placeholder: '请输入编码' },
-    { key: 'contact', label: '联系人', type: 'text', placeholder: '联系人' },
+    {
+      key: 'level',
+      label: '客户等级',
+      type: 'select',
+      placeholder: '请选择客户等级',
+      options: [], // 后端会提供接口返回选项
+    },
+    {
+      key: 'type',
+      label: '客户类型',
+      type: 'select',
+      placeholder: '请选择客户类型',
+      options: [], // 后端会提供接口返回选项
+    },
+    {
+      key: 'status',
+      label: '客户状态',
+      type: 'select',
+      placeholder: '请选择客户状态',
+      options: [], // 后端会提供接口返回选项
+    },
   ] as FilterConfig[],
   bulkActions: [
     {

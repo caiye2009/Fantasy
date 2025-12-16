@@ -5,18 +5,10 @@ import (
 
 	"back/internal/product/domain"
 	"back/internal/product/infra"
+	materialApp "back/internal/material/application"
+	processApp "back/internal/process/application"
 	pricingDomain "back/internal/pricing/domain"
 )
-
-// MaterialServiceInterface Material 服务接口
-type MaterialServiceInterface interface {
-	Get(ctx context.Context, id uint) (*MaterialInfo, error)
-}
-
-// ProcessServiceInterface Process 服务接口
-type ProcessServiceInterface interface {
-	Get(ctx context.Context, id uint) (*ProcessInfo, error)
-}
 
 // MaterialPriceServiceInterface Material 价格服务接口
 type MaterialPriceServiceInterface interface {
@@ -30,23 +22,11 @@ type ProcessPriceServiceInterface interface {
 	GetMaxPrice(ctx context.Context, processID uint) (*pricingDomain.PriceData, error)
 }
 
-// MaterialInfo Material 信息
-type MaterialInfo struct {
-	ID   uint
-	Name string
-}
-
-// ProcessInfo Process 信息
-type ProcessInfo struct {
-	ID   uint
-	Name string
-}
-
 // CostCalculator 成本计算器
 type CostCalculator struct {
 	productRepo      *infra.ProductRepo
-	materialService  MaterialServiceInterface
-	processService   ProcessServiceInterface
+	materialService  *materialApp.MaterialService
+	processService   *processApp.ProcessService
 	materialPriceSvc MaterialPriceServiceInterface
 	processPriceSvc  ProcessPriceServiceInterface
 }
@@ -54,8 +34,8 @@ type CostCalculator struct {
 // NewCostCalculator 创建成本计算器
 func NewCostCalculator(
 	productRepo *infra.ProductRepo,
-	materialService MaterialServiceInterface,
-	processService ProcessServiceInterface,
+	materialService *materialApp.MaterialService,
+	processService *processApp.ProcessService,
 	materialPriceSvc MaterialPriceServiceInterface,
 	processPriceSvc ProcessPriceServiceInterface,
 ) *CostCalculator {

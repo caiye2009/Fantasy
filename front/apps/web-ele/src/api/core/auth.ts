@@ -1,4 +1,4 @@
-import { baseRequestClient, requestClient } from '#/api/request';
+import { requestClient } from '#/api/request';
 
 export namespace AuthApi {
   /** 登录接口参数 */
@@ -30,23 +30,27 @@ export namespace AuthApi {
 /**
  * 登录
  */
-export async function loginApi(data: AuthApi.LoginParams) {
-  return requestClient.post<AuthApi.LoginResult>('/auth/login', data);
+export async function loginApi(data: AuthApi.LoginParams): Promise<AuthApi.LoginResult> {
+  const response = await requestClient.post<AuthApi.LoginResult>('/auth/login', data);
+  // 从 axios 响应中提取数据
+  return response.data;
 }
 
 /**
  * 刷新accessToken
  */
-export async function refreshTokenApi(refreshToken: string) {
-  return baseRequestClient.post<AuthApi.RefreshTokenResult>(
+export async function refreshTokenApi(refreshToken: string): Promise<AuthApi.RefreshTokenResult> {
+  const response = await requestClient.post<AuthApi.RefreshTokenResult>(
     '/auth/refresh',
     { refreshToken },
   );
+  // 从 axios 响应中提取数据
+  return response.data;
 }
 
 /**
  * 退出登录
  */
 export async function logoutApi() {
-  return baseRequestClient.post('/auth/logout');
+  return requestClient.post('/auth/logout');
 }

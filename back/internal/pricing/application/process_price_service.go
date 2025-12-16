@@ -3,30 +3,27 @@ package application
 import (
 	"context"
 	"time"
-	
+
 	"back/internal/pricing/domain"
 	"back/internal/pricing/infra"
+	processApp "back/internal/process/application"
+	supplierApp "back/internal/supplier/application"
 )
-
-// ProcessServiceInterface Process 服务接口
-type ProcessServiceInterface interface {
-	Exists(ctx context.Context, id uint) (bool, error)
-}
 
 // ProcessPriceService Process 价格服务
 type ProcessPriceService struct {
 	repo            *infra.SupplierPriceRepo
 	cache           domain.PriceCache
-	processService  ProcessServiceInterface
-	supplierService SupplierServiceInterface
+	processService  *processApp.ProcessService
+	supplierService *supplierApp.SupplierService
 }
 
 // NewProcessPriceService 创建 Process 价格服务
 func NewProcessPriceService(
 	repo *infra.SupplierPriceRepo,
 	cache domain.PriceCache,
-	processService ProcessServiceInterface,
-	supplierService SupplierServiceInterface,
+	processService *processApp.ProcessService,
+	supplierService *supplierApp.SupplierService,
 ) *ProcessPriceService {
 	return &ProcessPriceService{
 		repo:            repo,

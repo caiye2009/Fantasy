@@ -117,7 +117,7 @@ func (h *PlanHandler) List(c *gin.Context) {
 // @Failure      400 {object} map[string]string "请求参数错误"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /plan/{id} [put]
+// @Router       /plan/{id} [post]
 func (h *PlanHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	
@@ -182,6 +182,6 @@ func RegisterPlanHandlers(rg *gin.RouterGroup, service *application.PlanService)
 	rg.POST("/plan", handler.Create)
 	rg.GET("/plan/:id", handler.Get)
 	rg.GET("/plan", handler.List)
-	rg.PUT("/plan/:id", handler.Update)
+	rg.POST("/plan/:id", handler.Update)
 	rg.DELETE("/plan/:id", handler.Delete)
 }

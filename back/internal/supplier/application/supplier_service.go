@@ -39,27 +39,42 @@ func (s *SupplierService) Create(ctx context.Context, req *CreateSupplierRequest
 	if exists {
 		return nil, domain.ErrSupplierNameExists
 	}
-	
+
 	// 2. DTO → Domain Model
-	supplier := ToSupplier(req)
-	
+	supplier := &domain.Supplier{
+		Name:    req.Name,
+		Contact: req.Contact,
+		Phone:   req.Phone,
+		Email:   req.Email,
+		Address: req.Address,
+	}
+
 	// 3. 领域验证
 	if err := supplier.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	// 4. 保存到数据库
 	if err := s.repo.Save(ctx, supplier); err != nil {
 		return nil, err
 	}
-	
+
 	// 5. 异步同步到 ES
 	if s.esSync != nil {
 		s.esSync.Index(supplier)
 	}
-	
+
 	// 6. Domain Model → DTO
-	return ToSupplierResponse(supplier), nil
+	return &SupplierResponse{
+		ID:        supplier.ID,
+		Name:      supplier.Name,
+		Contact:   supplier.Contact,
+		Phone:     supplier.Phone,
+		Email:     supplier.Email,
+		Address:   supplier.Address,
+		CreatedAt: supplier.CreatedAt,
+		UpdatedAt: supplier.UpdatedAt,
+	}, nil
 }
 
 // Get 获取供应商
@@ -68,8 +83,17 @@ func (s *SupplierService) Get(ctx context.Context, id uint) (*SupplierResponse, 
 	if err != nil {
 		return nil, err
 	}
-	
-	return ToSupplierResponse(supplier), nil
+
+	return &SupplierResponse{
+		ID:        supplier.ID,
+		Name:      supplier.Name,
+		Contact:   supplier.Contact,
+		Phone:     supplier.Phone,
+		Email:     supplier.Email,
+		Address:   supplier.Address,
+		CreatedAt: supplier.CreatedAt,
+		UpdatedAt: supplier.UpdatedAt,
+	}, nil
 }
 
 // List 供应商列表
@@ -78,13 +102,30 @@ func (s *SupplierService) List(ctx context.Context, limit, offset int) (*Supplie
 	if err != nil {
 		return nil, err
 	}
-	
+
 	total, err := s.repo.Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	
-	return ToSupplierListResponse(suppliers, total), nil
+
+	responses := make([]*SupplierResponse, len(suppliers))
+	for i, supplier := range suppliers {
+		responses[i] = &SupplierResponse{
+			ID:        supplier.ID,
+			Name:      supplier.Name,
+			Contact:   supplier.Contact,
+			Phone:     supplier.Phone,
+			Email:     supplier.Email,
+			Address:   supplier.Address,
+			CreatedAt: supplier.CreatedAt,
+			UpdatedAt: supplier.UpdatedAt,
+		}
+	}
+
+	return &SupplierListResponse{
+		Total:     total,
+		Suppliers: responses,
+	}, nil
 }
 
 // Update 更新供应商

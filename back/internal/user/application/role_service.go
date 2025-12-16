@@ -1,6 +1,8 @@
 package application
 
 import (
+	"time"
+
 	"back/internal/user/domain"
 	"back/internal/user/infra"
 )
@@ -18,7 +20,13 @@ func NewRoleService(repo *infra.RoleRepo) *RoleService {
 // Create 创建职位
 func (s *RoleService) Create(req *CreateRoleRequest) (*RoleResponse, error) {
 	// 1. DTO → Domain Model
-	role := ToRoleDomain(req)
+	role := &domain.Role{
+		Name:        req.Name,
+		Code:        req.Code,
+		Description: req.Description,
+		Status:      domain.RoleStatusActive,
+		Level:       req.Level,
+	}
 
 	// 2. 领域验证
 	if err := role.Validate(); err != nil {
@@ -40,7 +48,21 @@ func (s *RoleService) Create(req *CreateRoleRequest) (*RoleResponse, error) {
 	}
 
 	// 5. 返回响应
-	return ToRoleResponse(role), nil
+	var deletedAt *time.Time
+	if role.DeletedAt.Valid {
+		deletedAt = &role.DeletedAt.Time
+	}
+	return &RoleResponse{
+		ID:          role.ID,
+		Name:        role.Name,
+		Code:        role.Code,
+		Description: role.Description,
+		Status:      role.Status,
+		Level:       role.Level,
+		CreatedAt:   role.CreatedAt,
+		UpdatedAt:   role.UpdatedAt,
+		DeletedAt:   deletedAt,
+	}, nil
 }
 
 // Update 更新职位
@@ -84,7 +106,21 @@ func (s *RoleService) Update(id uint, req *UpdateRoleRequest) (*RoleResponse, er
 	}
 
 	// 5. 返回响应
-	return ToRoleResponse(role), nil
+	var deletedAt *time.Time
+	if role.DeletedAt.Valid {
+		deletedAt = &role.DeletedAt.Time
+	}
+	return &RoleResponse{
+		ID:          role.ID,
+		Name:        role.Name,
+		Code:        role.Code,
+		Description: role.Description,
+		Status:      role.Status,
+		Level:       role.Level,
+		CreatedAt:   role.CreatedAt,
+		UpdatedAt:   role.UpdatedAt,
+		DeletedAt:   deletedAt,
+	}, nil
 }
 
 // Get 获取职位
@@ -93,7 +129,22 @@ func (s *RoleService) Get(id uint) (*RoleResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ToRoleResponse(role), nil
+
+	var deletedAt *time.Time
+	if role.DeletedAt.Valid {
+		deletedAt = &role.DeletedAt.Time
+	}
+	return &RoleResponse{
+		ID:          role.ID,
+		Name:        role.Name,
+		Code:        role.Code,
+		Description: role.Description,
+		Status:      role.Status,
+		Level:       role.Level,
+		CreatedAt:   role.CreatedAt,
+		UpdatedAt:   role.UpdatedAt,
+		DeletedAt:   deletedAt,
+	}, nil
 }
 
 // List 职位列表
@@ -103,7 +154,29 @@ func (s *RoleService) List(status *string, page, pageSize int) (*RoleListRespons
 		return nil, err
 	}
 
-	return ToRoleListResponse(roles, total), nil
+	responses := make([]*RoleResponse, len(roles))
+	for i, role := range roles {
+		var deletedAt *time.Time
+		if role.DeletedAt.Valid {
+			deletedAt = &role.DeletedAt.Time
+		}
+		responses[i] = &RoleResponse{
+			ID:          role.ID,
+			Name:        role.Name,
+			Code:        role.Code,
+			Description: role.Description,
+			Status:      role.Status,
+			Level:       role.Level,
+			CreatedAt:   role.CreatedAt,
+			UpdatedAt:   role.UpdatedAt,
+			DeletedAt:   deletedAt,
+		}
+	}
+
+	return &RoleListResponse{
+		Total: total,
+		Roles: responses,
+	}, nil
 }
 
 // Deactivate 停用职位（软删除）

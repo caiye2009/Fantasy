@@ -1,0 +1,42 @@
+entityType: product
+indexName: products
+
+queryFields:
+  - field: name
+    boost: 2.0
+  - field: status
+    boost: 1.0
+
+filterFields:
+  - field: id
+    type: keyword
+    operator: term
+  - field: name
+    type: text
+    operator: match
+  - field: status
+    type: keyword
+    operator: terms
+  - field: clientId
+    type: keyword
+    operator: terms
+  - field: createdAt
+    type: date
+    operator: range
+  - field: updatedAt
+    type: date
+    operator: range
+
+aggregationFields:
+  - field: status
+    type: keyword
+    aggType: terms
+    size: 20
+    supportSearch: false
+    excludeSelf: true
+  - field: clientId
+    type: keyword
+    aggType: composite
+    size: 10
+    supportSearch: true
+    excludeSelf: true

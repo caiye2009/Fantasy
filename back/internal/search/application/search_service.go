@@ -2,67 +2,165 @@ package application
 
 import (
 	"context"
-	
+	"fmt"
+
 	"back/internal/search/domain"
+	"back/internal/search/infra"
 )
 
-// SearchRepository 搜索仓储接口
-type SearchRepository interface {
-	Search(ctx context.Context, query *domain.SearchQuery) (*domain.SearchResponse, error)
-	IndexDocument(ctx context.Context, index, id string, doc interface{}) error
-	UpdateDocument(ctx context.Context, index, id string, doc interface{}) error
-	DeleteDocument(ctx context.Context, index, id string) error
-}
-
-// SearchService 搜索应用服务
+// SearchService 搜索应用服务（全新实现）
 type SearchService struct {
-	repo SearchRepository
+	registry *infra.SearchConfigRegistry
+	repo     domain.SearchRepository
 }
 
 // NewSearchService 创建搜索服务
-func NewSearchService(repo SearchRepository) *SearchService {
-	return &SearchService{repo: repo}
+func NewSearchService(registry *infra.SearchConfigRegistry, repo domain.SearchRepository) *SearchService {
+	return &SearchService{
+		registry: registry,
+		repo:     repo,
+	}
 }
 
 // Search 执行搜索
 func (s *SearchService) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
-	// 1. DTO → Domain Model
-	query := ToSearchQuery(req)
-	
-	// 2. 领域验证
-	if err := query.Validate(); err != nil {
+	// 1. 加载配置
+	config, ok := s.registry.GetConfig(req.EntityType)
+	if !ok {
+		return nil, fmt.Errorf("unsupported entity type: %s", req.EntityType)
+	}
+
+	// 2. 验证请求参数
+	if err := s.validateRequest(config, req); err != nil {
 		return nil, err
 	}
-	
-	// 3. 标准化参数
-	query.NormalizeSize()
-	
+
+	// 3. 构建搜索条件（DTO → Domain）
+	criteria := s.buildCriteria(config, req)
+
 	// 4. 执行搜索
-	resp, err := s.repo.Search(ctx, query)
+	result, err := s.repo.Search(ctx, criteria, config)
 	if err != nil {
 		return nil, err
 	}
-	
-	// 5. Domain Model → DTO
-	return ToSearchResponse(resp), nil
+
+	// 5. 格式化响应（Domain → DTO）
+	return s.formatResponse(result), nil
 }
 
-// GetIndices 获取所有索引
-func (s *SearchService) GetIndices() *IndexListResponse {
-	return ToIndexListResponse()
+// validateRequest 验证请求参数
+func (s *SearchService) validateRequest(config *domain.SearchConfig, req *SearchRequest) error {
+	// 验证 filter 字段是否在白名单
+	for field := range req.Filters {
+		if !config.IsFilterableField(field) {
+			return fmt.Errorf("field '%s' is not filterable", field)
+		}
+	}
+
+	// 验证 aggregation 字段是否在白名单
+	for field := range req.AggRequests {
+		if !config.IsAggregableField(field) {
+			return fmt.Errorf("field '%s' is not aggregable", field)
+		}
+	}
+
+	// 验证分页参数
+	if req.Pagination.Size < 0 {
+		return fmt.Errorf("pagination size must be >= 0")
+	}
+	if req.Pagination.Size > 100 {
+		return fmt.Errorf("pagination size must be <= 100")
+	}
+	if req.Pagination.Offset < 0 {
+		return fmt.Errorf("pagination offset must be >= 0")
+	}
+
+	return nil
 }
 
-// IndexDocument 索引文档
-func (s *SearchService) IndexDocument(ctx context.Context, index, id string, doc interface{}) error {
-	return s.repo.IndexDocument(ctx, index, id, doc)
+// buildCriteria 构建搜索条件
+func (s *SearchService) buildCriteria(config *domain.SearchConfig, req *SearchRequest) *domain.SearchCriteria {
+	// 转换 Sort
+	sortFields := make([]domain.SortField, len(req.Sort))
+	for i, s := range req.Sort {
+		sortFields[i] = domain.SortField{
+			Field: s.Field,
+			Order: s.Order,
+		}
+	}
+
+	// 转换 AggRequests
+	aggRequests := make(map[string]domain.AggRequest)
+	for field, aggReq := range req.AggRequests {
+		aggRequests[field] = domain.AggRequest{
+			Search: aggReq.Search,
+			After:  aggReq.After,
+			Size:   aggReq.Size,
+		}
+	}
+
+	// 初始化 Filters
+	filters := req.Filters
+	if filters == nil {
+		filters = make(map[string]interface{})
+	}
+
+	// 默认分页
+	pagination := req.Pagination
+	if pagination.Size == 0 {
+		pagination.Size = 20 // 默认 20 条
+	}
+
+	return &domain.SearchCriteria{
+		EntityType:  req.EntityType,
+		IndexName:   config.IndexName,
+		Query:       req.Query,
+		Filters:     filters,
+		AggRequests: aggRequests,
+		Pagination: domain.Pagination{
+			Offset: pagination.Offset,
+			Size:   pagination.Size,
+		},
+		Sort: sortFields,
+	}
 }
 
-// UpdateDocument 更新文档
-func (s *SearchService) UpdateDocument(ctx context.Context, index, id string, doc interface{}) error {
-	return s.repo.UpdateDocument(ctx, index, id, doc)
+// formatResponse 格式化响应
+func (s *SearchService) formatResponse(result *domain.SearchResult) *SearchResponse {
+	// 转换 Aggregations
+	aggregations := make(map[string]AggResult)
+	for field, aggResult := range result.Aggregations {
+		// 转换 Buckets
+		buckets := make([]Bucket, len(aggResult.Buckets))
+		for i, b := range aggResult.Buckets {
+			buckets[i] = Bucket{
+				Key:      b.Key,
+				DocCount: b.DocCount,
+			}
+		}
+
+		aggregations[field] = AggResult{
+			Buckets: buckets,
+			After:   aggResult.After,
+			HasMore: aggResult.HasMore,
+			Min:     aggResult.Min,
+			Max:     aggResult.Max,
+			Avg:     aggResult.Avg,
+		}
+	}
+
+	return &SearchResponse{
+		Items:        result.Items,
+		Total:        result.Total,
+		Took:         result.Took,
+		Aggregations: aggregations,
+	}
 }
 
-// DeleteDocument 删除文档
-func (s *SearchService) DeleteDocument(ctx context.Context, index, id string) error {
-	return s.repo.DeleteDocument(ctx, index, id)
+// GetEntityTypes 获取所有支持搜索的实体类型
+func (s *SearchService) GetEntityTypes() *IndexListResponse {
+	entityTypes := s.registry.ListEntityTypes()
+	return &IndexListResponse{
+		EntityTypes: entityTypes,
+	}
 }

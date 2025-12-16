@@ -24,15 +24,17 @@ export async function getRoleListApi(params?: {
   status?: string;
   page?: number;
   page_size?: number;
-}) {
-  return requestClient.get<RoleListResponse>('/role', { params });
+}): Promise<RoleListResponse> {
+  const response = await requestClient.get<RoleListResponse>('/role', { params });
+  return response.data;
 }
 
 /**
  * 获取职位详情
  */
-export async function getRoleDetailApi(id: number) {
-  return requestClient.get<Role>(`/role/${id}`);
+export async function getRoleDetailApi(id: number): Promise<Role> {
+  const response = await requestClient.get<Role>(`/role/${id}`);
+  return response.data;
 }
 
 /**
@@ -43,8 +45,9 @@ export async function createRoleApi(data: {
   code: string;
   description?: string;
   level?: number;
-}) {
-  return requestClient.post<Role>('/role', data);
+}): Promise<Role> {
+  const response = await requestClient.post<Role>('/role', data);
+  return response.data;
 }
 
 /**
@@ -58,20 +61,23 @@ export async function updateRoleApi(
     description?: string;
     level?: number;
   },
-) {
-  return requestClient.put<Role>(`/role/${id}`, data);
+): Promise<Role> {
+  const response = await requestClient.put<Role>(`/role/${id}`, data);
+  return response.data;
 }
 
 /**
  * 停用职位
  */
-export async function deactivateRoleApi(id: number) {
-  return requestClient.put<{ message: string }>(`/role/${id}/deactivate`);
+export async function deactivateRoleApi(id: number): Promise<{ message: string }> {
+  const response = await requestClient.put<{ message: string }>(`/role/${id}/deactivate`);
+  return response.data;
 }
 
 /**
  * 激活职位
  */
-export async function activateRoleApi(id: number) {
-  return requestClient.put<{ message: string }>(`/role/${id}/activate`);
+export async function activateRoleApi(id: number): Promise<{ message: string }> {
+  const response = await requestClient.put<{ message: string }>(`/role/${id}/activate`);
+  return response.data;
 }

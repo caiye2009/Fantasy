@@ -7,7 +7,6 @@ import { useAppConfig } from '@vben/hooks';
 import { preferences } from '@vben/preferences';
 import {
   authenticateResponseInterceptor,
-  defaultResponseInterceptor,
   errorMessageResponseInterceptor,
   RequestClient,
 } from '@vben/request';
@@ -78,15 +77,6 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
     },
   });
 
-  // 处理返回的响应数据格式
-  client.addResponseInterceptor(
-    defaultResponseInterceptor({
-      codeField: 'code',
-      dataField: 'data',
-      successCode: 0,
-    }),
-  );
-
   // token过期的处理
   client.addResponseInterceptor(
     authenticateResponseInterceptor({
@@ -113,22 +103,4 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
   return client;
 }
 
-function formatToken(token: null | string) {
-  return token ? `Bearer ${token}` : null;
-}
-
-export const requestClient = createRequestClient(apiURL, {
-  responseReturn: 'data',
-});
-
-export const baseRequestClient = new RequestClient({ baseURL: apiURL });
-
-// 为 baseRequestClient 也添加请求头拦截器
-baseRequestClient.addRequestInterceptor({
-  fulfilled: async (config) => {
-    const accessStore = useAccessStore();
-    config.headers.Authorization = formatToken(accessStore.accessToken);
-    config.headers['Accept-Language'] = preferences.app.locale;
-    return config;
-  },
-});
+export const requestClient = createRequestClient(apiURL);

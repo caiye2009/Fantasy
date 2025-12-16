@@ -117,7 +117,7 @@ func (h *UserHandler) List(c *gin.Context) {
 // @Failure      400 {object} map[string]string "请求参数错误"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /user/{id} [put]
+// @Router       /user/{id} [post]
 func (h *UserHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	
@@ -225,40 +225,6 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "密码修改成功"})
 }
 
-// GetDepartments 获取部门列表
-// @Summary      获取部门列表
-// @Description  获取系统中所有唯一的部门列表
-// @Tags         用户管理
-// @Accept       json
-// @Produce      json
-// @Success      200 {object} map[string]interface{} "部门列表"
-// @Failure      500 {object} map[string]string "服务器错误"
-// @Security     Bearer
-// @Router       /user/departments [get]
-func (h *UserHandler) GetDepartments(c *gin.Context) {
-	departments, err := h.service.GetAllDepartments(c.Request.Context())
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"departments": departments})
-}
-
-// GetRoles 获取角色列表
-// @Summary      获取角色列表
-// @Description  获取系统中所有可用的角色列表
-// @Tags         用户管理
-// @Accept       json
-// @Produce      json
-// @Success      200 {object} map[string]interface{} "角色列表"
-// @Security     Bearer
-// @Router       /user/roles [get]
-func (h *UserHandler) GetRoles(c *gin.Context) {
-	roles := h.service.GetAllRoles()
-	c.JSON(http.StatusOK, gin.H{"roles": roles})
-}
-
 // RegisterUserHandlers 注册路由
 func RegisterUserHandlers(rg *gin.RouterGroup, service *application.UserService) {
 	handler := NewUserHandler(service)
@@ -266,9 +232,7 @@ func RegisterUserHandlers(rg *gin.RouterGroup, service *application.UserService)
 	rg.POST("/user", handler.Create)
 	rg.GET("/user/:id", handler.Get)
 	rg.GET("/user", handler.List)
-	rg.PUT("/user/:id", handler.Update)
+	rg.POST("/user/:id", handler.Update)
 	rg.DELETE("/user/:id", handler.Delete)
 	rg.POST("/user/change-password", handler.ChangePassword)
-	rg.GET("/user/departments", handler.GetDepartments)
-	rg.GET("/user/roles", handler.GetRoles)
 }

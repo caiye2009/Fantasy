@@ -117,7 +117,7 @@ func (h *OrderHandler) List(c *gin.Context) {
 // @Failure      400 {object} map[string]string "请求参数错误"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /order/{id} [put]
+// @Router       /order/{id} [post]
 func (h *OrderHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	
@@ -183,6 +183,6 @@ func RegisterOrderHandlers(rg *gin.RouterGroup, service *application.OrderServic
 	rg.POST("/order", handler.Create)
 	rg.GET("/order/:id", handler.Get)
 	rg.GET("/order", handler.List)
-	rg.PUT("/order/:id", handler.Update)
+	rg.POST("/order/:id", handler.Update)
 	rg.DELETE("/order/:id", handler.Delete)
 }

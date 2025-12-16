@@ -1,0 +1,45 @@
+entityType: plan
+indexName: plans
+
+queryFields:
+  - field: planNo
+    boost: 3.0
+  - field: status
+    boost: 1.0
+
+filterFields:
+  - field: id
+    type: keyword
+    operator: term
+  - field: planNo
+    type: keyword
+    operator: term
+  - field: status
+    type: keyword
+    operator: terms
+  - field: orderId
+    type: keyword
+    operator: terms
+  - field: productId
+    type: keyword
+    operator: terms
+  - field: createdAt
+    type: date
+    operator: range
+  - field: updatedAt
+    type: date
+    operator: range
+  - field: scheduledAt
+    type: date
+    operator: range
+  - field: completedAt
+    type: date
+    operator: range
+
+aggregationFields:
+  - field: status
+    type: keyword
+    aggType: terms
+    size: 20
+    supportSearch: false
+    excludeSelf: true

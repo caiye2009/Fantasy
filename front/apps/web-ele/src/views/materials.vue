@@ -210,13 +210,13 @@ import type {
 } from '#/components/Table/types'
 
 import { useDataTable } from '#/composables/useDataTable'
-const { searchLoading } = useDataTable(['materials'], 20)
+const { searchLoading } = useDataTable('material', 20)
 
 // 页面配置
 const pageConfig: PageConfig = {
   pageType: 'material',
   title: '原料管理',
-  indices: ['materials'],
+  entityType: 'material',
   pageSize: 20,
   columns: [
     {
@@ -281,16 +281,18 @@ const pageConfig: PageConfig = {
   ] as ColumnConfig[],
   filters: [
     {
-      key: 'name',
-      label: '原料名称',
-      type: 'text',
-      placeholder: '请输入原料名称',
+      key: 'unit',
+      label: '单位',
+      type: 'select',
+      placeholder: '请选择单位',
+      options: [], // 后端会提供接口返回选项
     },
     {
       key: 'spec',
       label: '规格',
-      type: 'text',
-      placeholder: '请输入规格',
+      type: 'select',
+      placeholder: '请选择规格',
+      options: [], // 后端会提供接口返回选项
     },
   ] as FilterConfig[],
   bulkActions: [

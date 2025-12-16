@@ -71,13 +71,13 @@ import type {
 
 // 复用 useDataTable 的 searchLoading
 import { useDataTable } from '#/composables/useDataTable'
-const { searchLoading } = useDataTable(['products'], 20)
+const { searchLoading } = useDataTable('product', 20)
 
 // 配置
 const pageConfig: PageConfig = {
   pageType: 'product',
   title: '产品管理',
-  indices: ['products'],
+  entityType: 'product',
   pageSize: 20,
   columns: [
     { key: 'id', label: 'ID', width: 80, visible: true, sortable: true, order: 0 },

@@ -16,6 +16,7 @@
     "demo": "退货分析",
     "users": "用户管理",
     "departments": "部门管理",
-    "roles": "职位管理"
+    "roles": "职位管理",
+    "orders": "订单管理"
   }
 }

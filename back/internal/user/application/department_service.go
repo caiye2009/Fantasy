@@ -1,6 +1,8 @@
 package application
 
 import (
+	"time"
+
 	"back/internal/user/domain"
 	"back/internal/user/infra"
 )
@@ -18,7 +20,13 @@ func NewDepartmentService(repo *infra.DepartmentRepo) *DepartmentService {
 // Create 创建部门
 func (s *DepartmentService) Create(req *CreateDepartmentRequest) (*DepartmentResponse, error) {
 	// 1. DTO → Domain Model
-	department := ToDepartmentDomain(req)
+	department := &domain.Department{
+		Name:        req.Name,
+		Code:        req.Code,
+		Description: req.Description,
+		Status:      domain.DepartmentStatusActive,
+		ParentID:    req.ParentID,
+	}
 
 	// 2. 领域验证
 	if err := department.Validate(); err != nil {
@@ -42,7 +50,21 @@ func (s *DepartmentService) Create(req *CreateDepartmentRequest) (*DepartmentRes
 	}
 
 	// 5. 返回响应
-	return ToDepartmentResponse(department), nil
+	var deletedAt *time.Time
+	if department.DeletedAt.Valid {
+		deletedAt = &department.DeletedAt.Time
+	}
+	return &DepartmentResponse{
+		ID:          department.ID,
+		Name:        department.Name,
+		Code:        department.Code,
+		Description: department.Description,
+		Status:      department.Status,
+		ParentID:    department.ParentID,
+		CreatedAt:   department.CreatedAt,
+		UpdatedAt:   department.UpdatedAt,
+		DeletedAt:   deletedAt,
+	}, nil
 }
 
 // Update 更新部门
@@ -86,7 +108,21 @@ func (s *DepartmentService) Update(id uint, req *UpdateDepartmentRequest) (*Depa
 	}
 
 	// 5. 返回响应
-	return ToDepartmentResponse(department), nil
+	var deletedAt *time.Time
+	if department.DeletedAt.Valid {
+		deletedAt = &department.DeletedAt.Time
+	}
+	return &DepartmentResponse{
+		ID:          department.ID,
+		Name:        department.Name,
+		Code:        department.Code,
+		Description: department.Description,
+		Status:      department.Status,
+		ParentID:    department.ParentID,
+		CreatedAt:   department.CreatedAt,
+		UpdatedAt:   department.UpdatedAt,
+		DeletedAt:   deletedAt,
+	}, nil
 }
 
 // Get 获取部门
@@ -95,7 +131,22 @@ func (s *DepartmentService) Get(id uint) (*DepartmentResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ToDepartmentResponse(department), nil
+
+	var deletedAt *time.Time
+	if department.DeletedAt.Valid {
+		deletedAt = &department.DeletedAt.Time
+	}
+	return &DepartmentResponse{
+		ID:          department.ID,
+		Name:        department.Name,
+		Code:        department.Code,
+		Description: department.Description,
+		Status:      department.Status,
+		ParentID:    department.ParentID,
+		CreatedAt:   department.CreatedAt,
+		UpdatedAt:   department.UpdatedAt,
+		DeletedAt:   deletedAt,
+	}, nil
 }
 
 // List 部门列表
@@ -105,7 +156,29 @@ func (s *DepartmentService) List(status *string, page, pageSize int) (*Departmen
 		return nil, err
 	}
 
-	return ToDepartmentListResponse(departments, total), nil
+	responses := make([]*DepartmentResponse, len(departments))
+	for i, dept := range departments {
+		var deletedAt *time.Time
+		if dept.DeletedAt.Valid {
+			deletedAt = &dept.DeletedAt.Time
+		}
+		responses[i] = &DepartmentResponse{
+			ID:          dept.ID,
+			Name:        dept.Name,
+			Code:        dept.Code,
+			Description: dept.Description,
+			Status:      dept.Status,
+			ParentID:    dept.ParentID,
+			CreatedAt:   dept.CreatedAt,
+			UpdatedAt:   dept.UpdatedAt,
+			DeletedAt:   deletedAt,
+		}
+	}
+
+	return &DepartmentListResponse{
+		Total:       total,
+		Departments: responses,
+	}, nil
 }
 
 // Deactivate 停用部门（软删除）

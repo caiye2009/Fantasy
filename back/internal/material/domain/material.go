@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -12,9 +13,13 @@ type Material struct {
 	Name        string         `gorm:"size:100;not null;index" json:"name"`
 	Spec        string         `gorm:"size:200" json:"spec"`
 	Unit        string         `gorm:"size:20" json:"unit"`
+	Category    string         `gorm:"size:50;index" json:"category"`
+	SupplierID  uint           `gorm:"index" json:"supplierId"`
+	Price       float64        `gorm:"type:decimal(10,2)" json:"price"`
+	Status      string         `gorm:"size:20;default:active" json:"status"`
 	Description string         `gorm:"type:text" json:"description"`
-	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
@@ -65,17 +70,20 @@ func (m *Material) UpdateName(newName string) error {
 	return nil
 }
 
-// ToDocument 转换为 ES 文档
+// ToDocument 转换为 ES 文档（小驼峰字段名）
 func (m *Material) ToDocument() map[string]interface{} {
 	return map[string]interface{}{
 		"id":          m.ID,
 		"name":        m.Name,
 		"spec":        m.Spec,
 		"unit":        m.Unit,
+		"category":    m.Category,
+		"supplierId":  m.SupplierID,
+		"price":       m.Price,
+		"status":      m.Status,
 		"description": m.Description,
-		"created_at":  m.CreatedAt,
-		"updated_at":  m.UpdatedAt,
-		"deleted_at":  m.DeletedAt,
+		"createdAt":   m.CreatedAt,
+		"updatedAt":   m.UpdatedAt,
 	}
 }
 
@@ -86,5 +94,5 @@ func (m *Material) GetIndexName() string {
 
 // GetDocumentID ES 文档 ID
 func (m *Material) GetDocumentID() string {
-	return string(rune(m.ID))
+	return fmt.Sprintf("%d", m.ID)
 }

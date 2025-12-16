@@ -2,7 +2,8 @@ package application
 
 import (
 	"context"
-	
+
+	"back/pkg/auth"
 	userDomain "back/internal/user/domain"
 )
 
@@ -12,24 +13,17 @@ type UserServiceInterface interface {
 	ValidatePassword(ctx context.Context, loginID, password string) (*userDomain.User, error)
 }
 
-// JWTGenerator JWT 生成器接口
-type JWTGenerator interface {
-	GenerateAccessToken(loginID, role string) (string, error)
-	GenerateRefreshToken(loginID string) (string, error)
-	ValidateRefreshToken(token string) (loginID string, err error)
-}
-
 // AuthService 认证应用服务
 type AuthService struct {
 	userService UserServiceInterface
-	jwtGen      JWTGenerator
+	jwtWang     *auth.JWTWang
 }
 
 // NewAuthService 创建认证服务
-func NewAuthService(userService UserServiceInterface, jwtGen JWTGenerator) *AuthService {
+func NewAuthService(userService UserServiceInterface, jwtWang *auth.JWTWang) *AuthService {
 	return &AuthService{
 		userService: userService,
-		jwtGen:      jwtGen,
+		jwtWang:     jwtWang,
 	}
 }
 
@@ -46,14 +40,14 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*LoginRespo
 		return nil, ErrAccountSuspended
 	}
 	
-	// 3. 生成 Access Token（包含 loginID 和 role）
-	accessToken, err := s.jwtGen.GenerateAccessToken(user.LoginID, string(user.Role))
+	// 3. 生成 Access Token（包含 loginID、userName 和 role）
+	accessToken, err := s.jwtWang.GenerateAccessToken(user.LoginID, user.Username, string(user.Role))
 	if err != nil {
 		return nil, ErrTokenGenerateFailed
 	}
-	
+
 	// 4. 生成 Refresh Token（只包含 loginID）
-	refreshToken, err := s.jwtGen.GenerateRefreshToken(user.LoginID)
+	refreshToken, err := s.jwtWang.GenerateRefreshToken(user.LoginID)
 	if err != nil {
 		return nil, ErrTokenGenerateFailed
 	}
@@ -71,28 +65,28 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*LoginRespo
 // RefreshToken 刷新 Token
 func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*RefreshTokenResponse, error) {
 	// 1. 验证 Refresh Token
-	loginID, err := s.jwtGen.ValidateRefreshToken(refreshToken)
+	loginID, err := s.jwtWang.ValidateRefreshToken(refreshToken)
 	if err != nil {
 		return nil, ErrInvalidToken
 	}
-	
-	// 2. 获取用户信息（需要 role 生成新 token）
+
+	// 2. 获取用户信息（需要 userName 和 role 生成新 token）
 	user, err := s.userService.GetByLoginID(ctx, loginID)
 	if err != nil {
 		return nil, ErrUserNotFound
 	}
-	
+
 	// 3. 检查用户状态
 	if !user.IsActive() {
 		return nil, ErrAccountSuspended
 	}
-	
+
 	// 4. 生成新的 Access Token
-	newAccessToken, err := s.jwtGen.GenerateAccessToken(user.LoginID, string(user.Role))
+	newAccessToken, err := s.jwtWang.GenerateAccessToken(user.LoginID, user.Username, string(user.Role))
 	if err != nil {
 		return nil, ErrTokenGenerateFailed
 	}
-	
+
 	return &RefreshTokenResponse{
 		AccessToken: newAccessToken,
 	}, nil

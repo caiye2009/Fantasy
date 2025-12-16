@@ -32,25 +32,34 @@ func NewProcessService(repo *infra.ProcessRepo, esSync ESSync) *ProcessService {
 // Create 创建工序
 func (s *ProcessService) Create(ctx context.Context, req *CreateProcessRequest) (*ProcessResponse, error) {
 	// 1. DTO → Domain Model
-	process := ToProcess(req)
-	
+	process := &domain.Process{
+		Name:        req.Name,
+		Description: req.Description,
+	}
+
 	// 2. 领域验证
 	if err := process.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	// 3. 保存到数据库
 	if err := s.repo.Save(ctx, process); err != nil {
 		return nil, err
 	}
-	
+
 	// 4. 异步同步到 ES
 	if s.esSync != nil {
 		s.esSync.Index(process)
 	}
-	
+
 	// 5. Domain Model → DTO
-	return ToProcessResponse(process), nil
+	return &ProcessResponse{
+		ID:          process.ID,
+		Name:        process.Name,
+		Description: process.Description,
+		CreatedAt:   process.CreatedAt,
+		UpdatedAt:   process.UpdatedAt,
+	}, nil
 }
 
 // Get 获取工序
@@ -59,8 +68,14 @@ func (s *ProcessService) Get(ctx context.Context, id uint) (*ProcessResponse, er
 	if err != nil {
 		return nil, err
 	}
-	
-	return ToProcessResponse(process), nil
+
+	return &ProcessResponse{
+		ID:          process.ID,
+		Name:        process.Name,
+		Description: process.Description,
+		CreatedAt:   process.CreatedAt,
+		UpdatedAt:   process.UpdatedAt,
+	}, nil
 }
 
 // List 功能已移至 search 模块，通过 ES 实现

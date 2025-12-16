@@ -39,27 +39,48 @@ func (s *OrderService) Create(ctx context.Context, req *CreateOrderRequest) (*Or
 	if exists {
 		return nil, domain.ErrOrderNoDuplicate
 	}
-	
+
 	// 2. DTO → Domain Model
-	order := ToOrder(req)
-	
+	order := &domain.Order{
+		OrderNo:   req.OrderNo,
+		ClientID:  req.ClientID,
+		ProductID: req.ProductID,
+		Quantity:  req.Quantity,
+		UnitPrice: req.UnitPrice,
+		Status:    domain.OrderStatusPending,
+		CreatedBy: req.CreatedBy,
+	}
+	order.CalculateTotalPrice()
+
 	// 3. 领域验证
 	if err := order.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	// 4. 保存到数据库
 	if err := s.repo.Save(ctx, order); err != nil {
 		return nil, err
 	}
-	
+
 	// 5. 异步同步到 ES
 	if s.esSync != nil {
 		s.esSync.Index(order)
 	}
-	
+
 	// 6. Domain Model → DTO
-	return ToOrderResponse(order), nil
+	return &OrderResponse{
+		ID:         order.ID,
+		OrderNo:    order.OrderNo,
+		ClientID:   order.ClientID,
+		ProductID:  order.ProductID,
+		Quantity:   order.Quantity,
+		UnitPrice:  order.UnitPrice,
+		TotalPrice: order.TotalPrice,
+		Status:     order.Status,
+		CreatedBy:  order.CreatedBy,
+		CreatedAt:  order.CreatedAt,
+		UpdatedAt:  order.UpdatedAt,
+	}, nil
 }
 
 // Get 获取订单
@@ -68,8 +89,20 @@ func (s *OrderService) Get(ctx context.Context, id uint) (*OrderResponse, error)
 	if err != nil {
 		return nil, err
 	}
-	
-	return ToOrderResponse(order), nil
+
+	return &OrderResponse{
+		ID:         order.ID,
+		OrderNo:    order.OrderNo,
+		ClientID:   order.ClientID,
+		ProductID:  order.ProductID,
+		Quantity:   order.Quantity,
+		UnitPrice:  order.UnitPrice,
+		TotalPrice: order.TotalPrice,
+		Status:     order.Status,
+		CreatedBy:  order.CreatedBy,
+		CreatedAt:  order.CreatedAt,
+		UpdatedAt:  order.UpdatedAt,
+	}, nil
 }
 
 // List 订单列表
@@ -78,13 +111,33 @@ func (s *OrderService) List(ctx context.Context, limit, offset int) (*OrderListR
 	if err != nil {
 		return nil, err
 	}
-	
+
 	total, err := s.repo.Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	
-	return ToOrderListResponse(orders, total), nil
+
+	responses := make([]*OrderResponse, len(orders))
+	for i, o := range orders {
+		responses[i] = &OrderResponse{
+			ID:         o.ID,
+			OrderNo:    o.OrderNo,
+			ClientID:   o.ClientID,
+			ProductID:  o.ProductID,
+			Quantity:   o.Quantity,
+			UnitPrice:  o.UnitPrice,
+			TotalPrice: o.TotalPrice,
+			Status:     o.Status,
+			CreatedBy:  o.CreatedBy,
+			CreatedAt:  o.CreatedAt,
+			UpdatedAt:  o.UpdatedAt,
+		}
+	}
+
+	return &OrderListResponse{
+		Total:  total,
+		Orders: responses,
+	}, nil
 }
 
 // Update 更新订单
@@ -180,12 +233,24 @@ func (s *OrderService) GetByClientID(ctx context.Context, clientID uint) ([]*Ord
 	if err != nil {
 		return nil, err
 	}
-	
+
 	responses := make([]*OrderResponse, len(orders))
 	for i, o := range orders {
-		responses[i] = ToOrderResponse(o)
+		responses[i] = &OrderResponse{
+			ID:         o.ID,
+			OrderNo:    o.OrderNo,
+			ClientID:   o.ClientID,
+			ProductID:  o.ProductID,
+			Quantity:   o.Quantity,
+			UnitPrice:  o.UnitPrice,
+			TotalPrice: o.TotalPrice,
+			Status:     o.Status,
+			CreatedBy:  o.CreatedBy,
+			CreatedAt:  o.CreatedAt,
+			UpdatedAt:  o.UpdatedAt,
+		}
 	}
-	
+
 	return responses, nil
 }
 
@@ -195,12 +260,24 @@ func (s *OrderService) GetByProductID(ctx context.Context, productID uint) ([]*O
 	if err != nil {
 		return nil, err
 	}
-	
+
 	responses := make([]*OrderResponse, len(orders))
 	for i, o := range orders {
-		responses[i] = ToOrderResponse(o)
+		responses[i] = &OrderResponse{
+			ID:         o.ID,
+			OrderNo:    o.OrderNo,
+			ClientID:   o.ClientID,
+			ProductID:  o.ProductID,
+			Quantity:   o.Quantity,
+			UnitPrice:  o.UnitPrice,
+			TotalPrice: o.TotalPrice,
+			Status:     o.Status,
+			CreatedBy:  o.CreatedBy,
+			CreatedAt:  o.CreatedAt,
+			UpdatedAt:  o.UpdatedAt,
+		}
 	}
-	
+
 	return responses, nil
 }
 
@@ -216,5 +293,25 @@ func (s *OrderService) GetByStatus(ctx context.Context, status string, limit, of
 		return nil, err
 	}
 
-	return ToOrderListResponse(orders, total), nil
+	responses := make([]*OrderResponse, len(orders))
+	for i, o := range orders {
+		responses[i] = &OrderResponse{
+			ID:         o.ID,
+			OrderNo:    o.OrderNo,
+			ClientID:   o.ClientID,
+			ProductID:  o.ProductID,
+			Quantity:   o.Quantity,
+			UnitPrice:  o.UnitPrice,
+			TotalPrice: o.TotalPrice,
+			Status:     o.Status,
+			CreatedBy:  o.CreatedBy,
+			CreatedAt:  o.CreatedAt,
+			UpdatedAt:  o.UpdatedAt,
+		}
+	}
+
+	return &OrderListResponse{
+		Total:  total,
+		Orders: responses,
+	}, nil
 }

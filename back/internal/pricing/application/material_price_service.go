@@ -3,30 +3,27 @@ package application
 import (
 	"context"
 	"time"
-	
+
 	"back/internal/pricing/domain"
 	"back/internal/pricing/infra"
+	materialApp "back/internal/material/application"
+	supplierApp "back/internal/supplier/application"
 )
-
-// MaterialServiceInterface Material 服务接口
-type MaterialServiceInterface interface {
-	Exists(ctx context.Context, id uint) (bool, error)
-}
 
 // MaterialPriceService Material 价格服务
 type MaterialPriceService struct {
 	repo            *infra.SupplierPriceRepo
 	cache           domain.PriceCache
-	materialService MaterialServiceInterface
-	supplierService SupplierServiceInterface
+	materialService *materialApp.MaterialService
+	supplierService *supplierApp.SupplierService
 }
 
 // NewMaterialPriceService 创建 Material 价格服务
 func NewMaterialPriceService(
 	repo *infra.SupplierPriceRepo,
 	cache domain.PriceCache,
-	materialService MaterialServiceInterface,
-	supplierService SupplierServiceInterface,
+	materialService *materialApp.MaterialService,
+	supplierService *supplierApp.SupplierService,
 ) *MaterialPriceService {
 	return &MaterialPriceService{
 		repo:            repo,

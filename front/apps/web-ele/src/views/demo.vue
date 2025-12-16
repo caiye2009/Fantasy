@@ -81,8 +81,8 @@ function convertMonthToDate(month: string, isEnd: boolean = false): string {
 async function fetchCustomerList() {
   try {
     const response = await requestClient.get('/return-analysis/customers');
-    customerList.value = response;
-    console.log('客户列表获取成功:', response);
+    customerList.value = response.data;
+    console.log('客户列表获取成功:', response.data);
   } catch (error) {
     console.error('获取客户列表失败:', error);
     alert('获取客户列表失败');
@@ -123,8 +123,8 @@ async function fetchAnalysisData() {
     console.log('发送请求数据:', JSON.stringify(requestData, null, 2));
 
     const response = await requestClient.post('/return-analysis/analysis', requestData);
-    analysisData.value = response;
-    console.log('分析数据获取成功:', response);
+    analysisData.value = response.data;
+    console.log('分析数据获取成功:', response.data);
   } catch (error: any) {
     console.error('获取分析数据失败:', error);
     alert(error?.msg || error?.message || '获取分析数据失败');

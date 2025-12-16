@@ -4,7 +4,7 @@ import { ElMessage } from 'element-plus'
 import { elasticsearchService } from '#/api/core/es'
 import type { ESResponse } from '#/components/DataTable/types'
 
-export function useDataTable(indices: string[], pageSize: number = 20) {
+export function useDataTable(entityType: string, pageSize: number = 20) {
   const router = useRouter()
   const route = useRoute()
 
@@ -83,13 +83,14 @@ export function useDataTable(indices: string[], pageSize: number = 20) {
 
   /** 构建请求体（POST body） */
   const buildSearchRequest = (page: number) => ({
-    indices,
+    entityType,
     query: query.value || undefined,
     filters: Object.keys(filters.value).length > 0 ? filters.value : undefined,
     sort: sort.value.length > 0 ? sort.value : undefined,
-    from: (page - 1) * pageSize,
-    size: pageSize,
-    fields: ['*'],
+    pagination: {
+      offset: (page - 1) * pageSize,
+      size: pageSize,
+    },
   })
 
   /** 加载页（如果已缓存直接返回，否则请求） */
@@ -105,13 +106,13 @@ export function useDataTable(indices: string[], pageSize: number = 20) {
 
     try {
       const requestBody = buildSearchRequest(page)
-      const response: ESResponse = await elasticsearchService.search(requestBody, { method: 'POST' })
+      const response: ESResponse = await elasticsearchService.search(requestBody)
 
       totalCount.value = response.total || 0
 
-      const data = response.results?.map((r) => ({
-        _id: r.id,
-        ...r.source,
+      const data = response.items?.map((item) => ({
+        _id: item.id || item._id,
+        ...item,
       })) || []
 
       cache.value.set(page, data)

@@ -117,7 +117,7 @@ func (h *SupplierHandler) List(c *gin.Context) {
 // @Failure      400 {object} map[string]string "请求参数错误"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /supplier/{id} [put]
+// @Router       /supplier/{id} [post]
 func (h *SupplierHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -176,6 +176,6 @@ func RegisterSupplierHandlers(rg *gin.RouterGroup, service *application.Supplier
 	rg.POST("/supplier", handler.Create)
 	rg.GET("/supplier/:id", handler.Get)
 	rg.GET("/supplier", handler.List)
-	rg.PUT("/supplier/:id", handler.Update)
+	rg.POST("/supplier/:id", handler.Update)
 	rg.DELETE("/supplier/:id", handler.Delete)
 }

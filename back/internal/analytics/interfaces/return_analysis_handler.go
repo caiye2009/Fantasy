@@ -2,8 +2,9 @@
 package interfaces
 
 import (
+	"net/http"
+
 	"back/internal/analytics/application"
-	"back/pkg/fields"
 	"github.com/gin-gonic/gin"
 )
 
@@ -41,11 +42,11 @@ func (h *ReturnAnalysisHandler) RegisterRoutes(router *gin.RouterGroup) {
 func (h *ReturnAnalysisHandler) GetCustomerList(c *gin.Context) {
 	resp, err := h.service.GetCustomerList(c.Request.Context())
 	if err != nil {
-		fields.Error(c, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	fields.Success(c, resp)
+	c.JSON(http.StatusOK, resp)
 }
 
 // GetReturnAnalysis 获取退货分析
@@ -63,15 +64,15 @@ func (h *ReturnAnalysisHandler) GetCustomerList(c *gin.Context) {
 func (h *ReturnAnalysisHandler) GetReturnAnalysis(c *gin.Context) {
 	var req application.ReturnAnalysisRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		fields.Error(c, "参数错误: "+err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误: " + err.Error()})
 		return
 	}
 
 	resp, err := h.service.GetReturnAnalysis(c.Request.Context(), &req)
 	if err != nil {
-		fields.Error(c, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	fields.Success(c, resp)
+	c.JSON(http.StatusOK, resp)
 }

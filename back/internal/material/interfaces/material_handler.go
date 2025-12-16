@@ -88,7 +88,7 @@ func (h *MaterialHandler) Get(c *gin.Context) {
 // @Failure      400 {object} map[string]string "请求参数错误"
 // @Failure      500 {object} map[string]string "服务器错误"
 // @Security     Bearer
-// @Router       /material/{id} [put]
+// @Router       /material/{id} [post]
 func (h *MaterialHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	
@@ -143,6 +143,6 @@ func RegisterMaterialHandlers(rg *gin.RouterGroup, service *application.Material
 	rg.POST("/material", handler.Create)
 	rg.GET("/material/:id", handler.Get)
 	// List 接口已移除，使用 POST /search 替代
-	rg.PUT("/material/:id", handler.Update)
+	rg.POST("/material/:id", handler.Update)
 	rg.DELETE("/material/:id", handler.Delete)
 }

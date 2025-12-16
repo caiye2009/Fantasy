@@ -1,16 +1,15 @@
 package interfaces
 
 import (
-	"errors"
 	"net/http"
-	
+	"strings"
+
 	"github.com/gin-gonic/gin"
-	
+
 	"back/internal/search/application"
-	"back/internal/search/domain"
 )
 
-// SearchHandler 搜索 Handler
+// SearchHandler 搜索 Handler（全新实现）
 type SearchHandler struct {
 	service *application.SearchService
 }
@@ -20,9 +19,9 @@ func NewSearchHandler(service *application.SearchService) *SearchHandler {
 	return &SearchHandler{service: service}
 }
 
-// Search 通用搜索
-// @Summary      通用搜索
-// @Description  执行跨多个索引的通用搜索
+// Search 搜索
+// @Summary      搜索
+// @Description  基于配置的高级搜索，支持全文搜索、筛选、聚合
 // @Tags         搜索
 // @Accept       json
 // @Produce      json
@@ -38,40 +37,53 @@ func (h *SearchHandler) Search(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
-	results, err := h.service.Search(c.Request.Context(), &req)
+
+	// 执行搜索
+	result, err := h.service.Search(c.Request.Context(), &req)
 	if err != nil {
-		if errors.Is(err, domain.ErrInvalidSize) ||
-			errors.Is(err, domain.ErrSizeTooLarge) ||
-			errors.Is(err, domain.ErrInvalidFrom) {
+		// 区分客户端错误和服务器错误
+		if isClientError(err) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索失败"})
 		return
 	}
-	
-	c.JSON(http.StatusOK, results)
+
+	c.JSON(http.StatusOK, result)
 }
 
-// GetIndices 获取所有可用索引
-// @Summary      获取所有可用索引
-// @Description  获取系统中所有可搜索的索引列表
+// GetEntityTypes 获取所有支持搜索的实体类型
+// @Summary      获取实体类型列表
+// @Description  获取所有支持搜索的实体类型列表
 // @Tags         搜索
 // @Accept       json
 // @Produce      json
-// @Success      200 {object} application.IndexListResponse "索引列表"
+// @Success      200 {object} application.IndexListResponse "实体类型列表"
 // @Security     Bearer
-// @Router       /search/indices [get]
-func (h *SearchHandler) GetIndices(c *gin.Context) {
-	resp := h.service.GetIndices()
+// @Router       /search/entity-types [get]
+func (h *SearchHandler) GetEntityTypes(c *gin.Context) {
+	resp := h.service.GetEntityTypes()
 	c.JSON(http.StatusOK, resp)
 }
 
-// RegisterSearchHandlers 注册路由
-func RegisterSearchHandlers(rg *gin.RouterGroup, service *application.SearchService) {
+// isClientError 判断是否为客户端错误
+func isClientError(err error) bool {
+	errMsg := err.Error()
+	return strings.Contains(errMsg, "unsupported entity type") ||
+		strings.Contains(errMsg, "is not filterable") ||
+		strings.Contains(errMsg, "is not aggregable") ||
+		strings.Contains(errMsg, "must be") ||
+		strings.Contains(errMsg, "required")
+}
+
+// RegisterSearchHandlers 注册搜索路由
+func RegisterSearchHandlers(router *gin.RouterGroup, service *application.SearchService) {
 	handler := NewSearchHandler(service)
 
-	rg.POST("/search", handler.Search)                // 统一搜索接口
-	rg.GET("/search/indices", handler.GetIndices)     // 获取索引列表
+	searchGroup := router.Group("/search")
+	{
+		searchGroup.POST("", handler.Search)
+		searchGroup.GET("/entity-types", handler.GetEntityTypes)
+	}
 }

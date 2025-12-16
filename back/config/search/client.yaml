@@ -1,0 +1,39 @@
+entityType: client
+indexName: clients
+
+queryFields:
+  - field: name
+    boost: 3.0
+  - field: contact
+    boost: 2.0
+  - field: phone
+    boost: 1.5
+  - field: email
+    boost: 1.5
+  - field: address
+    boost: 1.0
+
+filterFields:
+  - field: id
+    type: keyword
+    operator: term
+  - field: code
+    type: keyword
+    operator: term
+  - field: name
+    type: text
+    operator: match
+  - field: phone
+    type: keyword
+    operator: term
+  - field: email
+    type: keyword
+    operator: term
+  - field: createdAt
+    type: date
+    operator: range
+  - field: updatedAt
+    type: date
+    operator: range
+
+aggregationFields: []
