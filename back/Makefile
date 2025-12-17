@@ -21,3 +21,7 @@ clean:
 
 run_build: build
 	./$(BINARY_NAME)
+
+# ES Reindex Tools
+reindex-clients:
+	$(GO_RUN) ./cmd/tools/reindex_clients.go

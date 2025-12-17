@@ -2,10 +2,10 @@ package application
 
 // SearchRequest 搜索请求（全新结构）
 type SearchRequest struct {
-	EntityType  string                 `json:"entityType" binding:"required"` // material, order, client, etc.
-	Query       string                 `json:"query"`                         // 全文搜索关键词
-	Filters     map[string]interface{} `json:"filters"`                       // 筛选条件
-	AggRequests map[string]AggRequest  `json:"aggRequests"`                   // 聚合请求
+	Index       string                 `json:"index" binding:"required"` // clients, suppliers, orders, etc.
+	Query       string                 `json:"query"`                    // 全文搜索关键词
+	Filters     map[string]interface{} `json:"filters"`                  // 筛选条件
+	AggRequests map[string]AggRequest  `json:"aggRequests"`              // 聚合请求
 	Pagination  PaginationRequest      `json:"pagination"`
 	Sort        []SortRequest          `json:"sort"`
 }
@@ -57,5 +57,5 @@ type Bucket struct {
 
 // IndexListResponse 索引列表响应
 type IndexListResponse struct {
-	EntityTypes []string `json:"entityTypes"`
+	Indices []string `json:"indices"`
 }

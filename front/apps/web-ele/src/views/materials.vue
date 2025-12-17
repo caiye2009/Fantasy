@@ -216,7 +216,7 @@ const { searchLoading } = useDataTable('material', 20)
 const pageConfig: PageConfig = {
   pageType: 'material',
   title: '原料管理',
-  entityType: 'material',
+  index: 'materials',
   pageSize: 20,
   columns: [
     {

@@ -69,10 +69,15 @@ func (r *ESSearchRepository) buildESQuery(
 	if len(criteria.Sort) > 0 {
 		sortArray := make([]map[string]interface{}, 0, len(criteria.Sort))
 		for _, s := range criteria.Sort {
+			sortConfig := map[string]interface{}{
+				"order": s.Order,
+			}
+			// 处理缺失值
+			if s.Missing != "" {
+				sortConfig["missing"] = s.Missing
+			}
 			sortArray = append(sortArray, map[string]interface{}{
-				s.Field: map[string]interface{}{
-					"order": s.Order,
-				},
+				s.Field: sortConfig,
 			})
 		}
 		esQuery["sort"] = sortArray

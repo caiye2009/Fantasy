@@ -2041,14 +2041,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/search/entity-types": {
+        "/search/indices": {
             "get": {
                 "security": [
                     {
                         "Bearer": []
                     }
                 ],
-                "description": "获取所有支持搜索的实体类型列表",
+                "description": "获取所有支持搜索的索引列表",
                 "consumes": [
                     "application/json"
                 ],
@@ -2058,10 +2058,10 @@ const docTemplate = `{
                 "tags": [
                     "搜索"
                 ],
-                "summary": "获取实体类型列表",
+                "summary": "获取索引列表",
                 "responses": {
                     "200": {
-                        "description": "实体类型列表",
+                        "description": "索引列表",
                         "schema": {
                             "$ref": "#/definitions/application.IndexListResponse"
                         }
@@ -3358,25 +3358,67 @@ const docTemplate = `{
                 "address": {
                     "type": "string"
                 },
-                "contact": {
+                "addressEn": {
                     "type": "string"
                 },
-                "created_at": {
+                "checkRequest": {
+                    "type": "string"
+                },
+                "contactor": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "customName": {
+                    "type": "string"
+                },
+                "customNameEn": {
+                    "type": "string"
+                },
+                "customNo": {
+                    "type": "string"
+                },
+                "customStatus": {
+                    "type": "string"
+                },
+                "customerCode": {
+                    "type": "string"
+                },
+                "docMan": {
                     "type": "string"
                 },
                 "email": {
                     "type": "string"
                 },
+                "faxNum": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
-                "name": {
+                "inputDate": {
                     "type": "string"
                 },
-                "phone": {
+                "mobile": {
                     "type": "string"
                 },
-                "updated_at": {
+                "pyCustomName": {
+                    "type": "string"
+                },
+                "sales": {
+                    "type": "string"
+                },
+                "stateChNm": {
+                    "type": "string"
+                },
+                "unitPhone": {
+                    "type": "string"
+                },
+                "updatedAt": {
                     "type": "string"
                 }
             }
@@ -3384,28 +3426,83 @@ const docTemplate = `{
         "application.CreateClientRequest": {
             "type": "object",
             "required": [
-                "name"
+                "customName",
+                "customNo"
             ],
             "properties": {
                 "address": {
                     "type": "string",
+                    "maxLength": 500
+                },
+                "addressEn": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "checkRequest": {
+                    "type": "string"
+                },
+                "contactor": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "country": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "customName": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "minLength": 2
+                },
+                "customNameEn": {
+                    "type": "string",
                     "maxLength": 200
                 },
-                "contact": {
+                "customNo": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "customStatus": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "customerCode": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "docMan": {
                     "type": "string",
                     "maxLength": 50
                 },
                 "email": {
                     "type": "string"
                 },
-                "name": {
+                "faxNum": {
                     "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2
+                    "maxLength": 50
                 },
-                "phone": {
+                "inputDate": {
+                    "type": "string"
+                },
+                "mobile": {
                     "type": "string",
-                    "maxLength": 20
+                    "maxLength": 50
+                },
+                "pyCustomName": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "sales": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "stateChNm": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "unitPhone": {
+                    "type": "string",
+                    "maxLength": 50
                 }
             }
         },
@@ -3727,7 +3824,7 @@ const docTemplate = `{
         "application.IndexListResponse": {
             "type": "object",
             "properties": {
-                "entityTypes": {
+                "indices": {
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -4166,7 +4263,7 @@ const docTemplate = `{
         "application.SearchRequest": {
             "type": "object",
             "required": [
-                "entityType"
+                "index"
             ],
             "properties": {
                 "aggRequests": {
@@ -4176,14 +4273,14 @@ const docTemplate = `{
                         "$ref": "#/definitions/application.AggRequest"
                     }
                 },
-                "entityType": {
-                    "description": "material, order, client, etc.",
-                    "type": "string"
-                },
                 "filters": {
                     "description": "筛选条件",
                     "type": "object",
                     "additionalProperties": true
+                },
+                "index": {
+                    "description": "clients, suppliers, orders, etc.",
+                    "type": "string"
                 },
                 "pagination": {
                     "$ref": "#/definitions/application.PaginationRequest"
@@ -4288,23 +4385,77 @@ const docTemplate = `{
             "properties": {
                 "address": {
                     "type": "string",
+                    "maxLength": 500
+                },
+                "addressEn": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "checkRequest": {
+                    "type": "string"
+                },
+                "contactor": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "country": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "customName": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "minLength": 2
+                },
+                "customNameEn": {
+                    "type": "string",
                     "maxLength": 200
                 },
-                "contact": {
+                "customNo": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "customStatus": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "customerCode": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "docMan": {
                     "type": "string",
                     "maxLength": 50
                 },
                 "email": {
                     "type": "string"
                 },
-                "name": {
+                "faxNum": {
                     "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2
+                    "maxLength": 50
                 },
-                "phone": {
+                "inputDate": {
+                    "type": "string"
+                },
+                "mobile": {
                     "type": "string",
-                    "maxLength": 20
+                    "maxLength": 50
+                },
+                "pyCustomName": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "sales": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "stateChNm": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "unitPhone": {
+                    "type": "string",
+                    "maxLength": 50
                 }
             }
         },

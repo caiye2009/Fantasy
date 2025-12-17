@@ -53,7 +53,7 @@ func Init() error {
 	if err != nil {
 		log.Fatalf("Failed to initialize search registry: %v", err)
 	}
-	log.Printf("✓ Search registry initialized with entities: %v", searchRegistry.ListEntityTypes())
+	log.Printf("✓ Search registry initialized with indices: %v", searchRegistry.ListIndices())
 
 	log.Println("=== Initializing Services ===")
 	services := InitServices(db, rdb, esClient, jwtWang, esSync, searchRegistry)

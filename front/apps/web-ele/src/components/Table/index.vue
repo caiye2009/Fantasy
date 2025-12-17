@@ -197,7 +197,7 @@ const {
   reload,
   slideWindowDown,
   slideWindowUp,
-} = useDataTable(props.config.entityType, props.config.pageSize)
+} = useDataTable(props.config.index, props.config.pageSize)
 
 // 本地状态
 const tableWrapperRef = ref<HTMLElement>()

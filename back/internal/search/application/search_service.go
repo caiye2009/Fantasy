@@ -10,12 +10,12 @@ import (
 
 // SearchService 搜索应用服务（全新实现）
 type SearchService struct {
-	registry *infra.SearchConfigRegistry
+	registry *infra.DomainAwareRegistry
 	repo     domain.SearchRepository
 }
 
 // NewSearchService 创建搜索服务
-func NewSearchService(registry *infra.SearchConfigRegistry, repo domain.SearchRepository) *SearchService {
+func NewSearchService(registry *infra.DomainAwareRegistry, repo domain.SearchRepository) *SearchService {
 	return &SearchService{
 		registry: registry,
 		repo:     repo,
@@ -24,10 +24,10 @@ func NewSearchService(registry *infra.SearchConfigRegistry, repo domain.SearchRe
 
 // Search 执行搜索
 func (s *SearchService) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
-	// 1. 加载配置
-	config, ok := s.registry.GetConfig(req.EntityType)
+	// 1. 加载配置（通过索引名查找配置）
+	config, ok := s.registry.GetConfigByIndex(req.Index)
 	if !ok {
-		return nil, fmt.Errorf("unsupported entity type: %s", req.EntityType)
+		return nil, fmt.Errorf("unsupported index: %s", req.Index)
 	}
 
 	// 2. 验证请求参数
@@ -80,14 +80,8 @@ func (s *SearchService) validateRequest(config *domain.SearchConfig, req *Search
 
 // buildCriteria 构建搜索条件
 func (s *SearchService) buildCriteria(config *domain.SearchConfig, req *SearchRequest) *domain.SearchCriteria {
-	// 转换 Sort
-	sortFields := make([]domain.SortField, len(req.Sort))
-	for i, s := range req.Sort {
-		sortFields[i] = domain.SortField{
-			Field: s.Field,
-			Order: s.Order,
-		}
-	}
+	// 自动组装排序（defaultSort + userSort + 兜底）
+	sortFields := s.buildSortFields(config, req.Sort)
 
 	// 转换 AggRequests
 	aggRequests := make(map[string]domain.AggRequest)
@@ -112,8 +106,7 @@ func (s *SearchService) buildCriteria(config *domain.SearchConfig, req *SearchRe
 	}
 
 	return &domain.SearchCriteria{
-		EntityType:  req.EntityType,
-		IndexName:   config.IndexName,
+		IndexName:   req.Index,
 		Query:       req.Query,
 		Filters:     filters,
 		AggRequests: aggRequests,
@@ -123,6 +116,38 @@ func (s *SearchService) buildCriteria(config *domain.SearchConfig, req *SearchRe
 		},
 		Sort: sortFields,
 	}
+}
+
+// buildSortFields 构建排序字段（自动组装）
+// 优先级：defaultSort → userSort → 兜底(id asc)
+func (s *SearchService) buildSortFields(config *domain.SearchConfig, userSort []SortRequest) []domain.SortField {
+	sortFields := make([]domain.SortField, 0)
+
+	// 1. 添加 defaultSort（例如 priorityScore desc）
+	for _, sortConfig := range config.DefaultSort {
+		sortFields = append(sortFields, domain.SortField{
+			Field:   sortConfig.Field,
+			Order:   sortConfig.Order,
+			Type:    sortConfig.Type,
+			Missing: sortConfig.Missing,
+		})
+	}
+
+	// 2. 添加用户选择的排序
+	for _, s := range userSort {
+		sortFields = append(sortFields, domain.SortField{
+			Field: s.Field,
+			Order: s.Order,
+		})
+	}
+
+	// 3. 添加兜底排序（保证排序稳定性）
+	sortFields = append(sortFields, domain.SortField{
+		Field: "id",
+		Order: "asc",
+	})
+
+	return sortFields
 }
 
 // formatResponse 格式化响应
@@ -157,10 +182,10 @@ func (s *SearchService) formatResponse(result *domain.SearchResult) *SearchRespo
 	}
 }
 
-// GetEntityTypes 获取所有支持搜索的实体类型
-func (s *SearchService) GetEntityTypes() *IndexListResponse {
-	entityTypes := s.registry.ListEntityTypes()
+// GetIndices 获取所有支持搜索的索引
+func (s *SearchService) GetIndices() *IndexListResponse {
+	indices := s.registry.ListIndices()
 	return &IndexListResponse{
-		EntityTypes: entityTypes,
+		Indices: indices,
 	}
 }

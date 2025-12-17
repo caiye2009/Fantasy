@@ -2,8 +2,7 @@ package domain
 
 // SearchCriteria 搜索条件（领域对象）
 type SearchCriteria struct {
-	EntityType  string
-	IndexName   string
+	IndexName   string                 // ES 索引名（clients, suppliers, etc.）
 	Query       string                 // 全文搜索关键词
 	Filters     map[string]interface{} // 筛选条件
 	AggRequests map[string]AggRequest  // 聚合请求
@@ -26,6 +25,8 @@ type Pagination struct {
 
 // SortField 排序字段
 type SortField struct {
-	Field string
-	Order string // asc, desc
+	Field   string
+	Order   string // asc, desc
+	Type    string // computed（计算字段）, 空表示普通字段
+	Missing string // _last, _first（缺失值处理）
 }

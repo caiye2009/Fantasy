@@ -1,39 +1,71 @@
+# Client 搜索配置
+# 字段定义以 internal/client/domain/client.go 为准
+# type 会自动从 Domain 推断，无需手动配置
+
 entityType: client
 indexName: clients
 
+# 全文搜索字段（按优先级排序）
 queryFields:
-  - field: name
+  - field: customName       # 客户名称（最重要）
+    boost: 5.0
+  - field: customNameEn     # 英文名称
+    boost: 4.0
+  - field: customNo         # 客户代码
+    boost: 4.0
+  - field: contactor        # 联系人
     boost: 3.0
-  - field: contact
+  - field: unitPhone        # 电话
     boost: 2.0
-  - field: phone
-    boost: 1.5
-  - field: email
-    boost: 1.5
-  - field: address
+  - field: mobile           # 手机
+    boost: 2.0
+  - field: email            # 邮箱
+    boost: 2.0
+  - field: address          # 中文地址
+    boost: 1.0
+  - field: addressEn        # 英文地址
     boost: 1.0
 
+# 过滤字段（type 自动从 Domain 推断）
 filterFields:
   - field: id
-    type: keyword
     operator: term
-  - field: code
-    type: keyword
+  - field: customNo
     operator: term
-  - field: name
-    type: text
+  - field: customerCode
+    operator: term
+  - field: customName
     operator: match
-  - field: phone
-    type: keyword
+  - field: sales            # 业务员
     operator: term
-  - field: email
-    type: keyword
+  - field: country          # 国家代码
+    operator: term
+  - field: customStatus     # 状态
     operator: term
   - field: createdAt
-    type: date
     operator: range
   - field: updatedAt
-    type: date
     operator: range
 
-aggregationFields: []
+# 聚合字段（用于下拉筛选器）
+aggregationFields:
+  - field: sales
+    aggType: terms
+    size: 50
+    supportSearch: true
+  - field: country
+    aggType: terms
+    size: 100
+    supportSearch: true
+  - field: customStatus
+    aggType: terms
+    size: 10
+    supportSearch: false
+
+# 默认排序（后端自动添加，前端不感知）
+# 执行顺序：defaultSort → 用户选择的排序 → id asc（兜底）
+defaultSort:
+  - field: priorityScore
+    order: desc
+    type: computed        # 标记为计算字段（不在 Domain 结构体中）
+    missing: _last        # 没有 priorityScore 的文档排到最后

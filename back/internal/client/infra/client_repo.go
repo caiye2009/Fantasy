@@ -70,9 +70,9 @@ func (r *ClientRepo) ExistsByID(ctx context.Context, id uint) (bool, error) {
 	return r.Exists(ctx, map[string]interface{}{"id": id})
 }
 
-// FindByName 根据名称查询
-func (r *ClientRepo) FindByName(ctx context.Context, name string) (*domain.Client, error) {
-	client, err := r.First(ctx, map[string]interface{}{"name": name})
+// FindByCustomNo 根据客户代码查询
+func (r *ClientRepo) FindByCustomNo(ctx context.Context, customNo string) (*domain.Client, error) {
+	client, err := r.First(ctx, map[string]interface{}{"custom_no": customNo})
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrClientNotFound
 	}
@@ -82,33 +82,9 @@ func (r *ClientRepo) FindByName(ctx context.Context, name string) (*domain.Clien
 	return client, nil
 }
 
-// ExistsByName 检查名称是否存在
-func (r *ClientRepo) ExistsByName(ctx context.Context, name string) (bool, error) {
-	return r.Exists(ctx, map[string]interface{}{"name": name})
-}
-
-// FindByPhone 根据电话查询
-func (r *ClientRepo) FindByPhone(ctx context.Context, phone string) (*domain.Client, error) {
-	client, err := r.First(ctx, map[string]interface{}{"phone": phone})
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, domain.ErrClientNotFound
-	}
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
-}
-
-// FindByEmail 根据邮箱查询
-func (r *ClientRepo) FindByEmail(ctx context.Context, email string) (*domain.Client, error) {
-	client, err := r.First(ctx, map[string]interface{}{"email": email})
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, domain.ErrClientNotFound
-	}
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
+// ExistsByCustomNo 检查客户代码是否存在
+func (r *ClientRepo) ExistsByCustomNo(ctx context.Context, customNo string) (bool, error) {
+	return r.Exists(ctx, map[string]interface{}{"custom_no": customNo})
 }
 
 // Count 统计数量

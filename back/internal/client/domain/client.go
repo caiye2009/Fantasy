@@ -10,16 +10,29 @@ import (
 
 // Client 客户聚合根
 type Client struct {
-	ID        uint           `gorm:"primaryKey" json:"id"`
-	Code      string         `gorm:"size:50;index" json:"code"`
-	Name      string         `gorm:"size:100;not null;index" json:"name"`
-	Contact   string         `gorm:"size:50" json:"contact"`
-	Phone     string         `gorm:"size:20;index" json:"phone"`
-	Email     string         `gorm:"size:100;index" json:"email"`
-	Address   string         `gorm:"size:200" json:"address"`
-	CreatedAt time.Time      `gorm:"autoCreateTime" json:"createdAt"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	ID             uint           `gorm:"primaryKey" json:"id"`
+	CustomNo       string         `gorm:"size:50;uniqueIndex" json:"customNo"`        // 客户代码
+	CustomerCode   string         `gorm:"size:50;index" json:"customerCode"`          // 内部编码
+	InputDate      *time.Time     `gorm:"type:date" json:"inputDate"`                 // 添加时间
+	Sales          string         `gorm:"size:50" json:"sales"`                       // 业务员
+	CustomName     string         `gorm:"size:200;not null;index" json:"customName"`  // 客户名称
+	StateChNm      string         `gorm:"size:100" json:"stateChNm"`                  // 国家
+	Country        string         `gorm:"size:50" json:"country"`                     // 国家代码
+	Address        string         `gorm:"size:500" json:"address"`                    // 中文地址
+	AddressEn      string         `gorm:"size:500" json:"addressEn"`                  // 英文地址
+	CustomNameEn   string         `gorm:"size:200" json:"customNameEn"`               // 英文名称
+	Contactor      string         `gorm:"size:100" json:"contactor"`                  // 联系人
+	UnitPhone      string         `gorm:"size:50" json:"unitPhone"`                   // 电话
+	Mobile         string         `gorm:"size:50" json:"mobile"`                      // 手机
+	FaxNum         string         `gorm:"size:50" json:"faxNum"`                      // 传真
+	Email          string         `gorm:"size:100" json:"email"`                      // 邮箱
+	PyCustomName   string         `gorm:"size:200" json:"pyCustomName"`               // 所属客户
+	CheckRequest   string         `gorm:"type:text" json:"checkRequest"`              // 检验要求
+	CustomStatus   string         `gorm:"size:50" json:"customStatus"`                // 状态
+	DocMan         string         `gorm:"size:50" json:"docMan"`                      // 输入人
+	CreatedAt      time.Time      `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt      time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
+	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 // TableName 表名
@@ -29,27 +42,30 @@ func (Client) TableName() string {
 
 // Validate 验证客户数据
 func (c *Client) Validate() error {
-	if c.Name == "" {
+	if c.CustomName == "" {
 		return ErrClientNameEmpty
 	}
-	
-	if len(c.Name) < 2 || len(c.Name) > 100 {
+
+	if len(c.CustomName) < 2 || len(c.CustomName) > 200 {
 		return ErrClientNameInvalid
 	}
-	
-	if c.Contact != "" && len(c.Contact) > 50 {
+
+	if c.CustomNo != "" && len(c.CustomNo) > 50 {
+		return fmt.Errorf("custom no too long")
+	}
+
+	if c.Contactor != "" && len(c.Contactor) > 100 {
 		return ErrContactTooLong
 	}
-	
-	if c.Phone != "" {
-		if len(c.Phone) > 20 {
-			return ErrPhoneTooLong
-		}
-		if !isValidPhone(c.Phone) {
-			return ErrPhoneInvalid
-		}
+
+	if c.UnitPhone != "" && len(c.UnitPhone) > 50 {
+		return ErrPhoneTooLong
 	}
-	
+
+	if c.Mobile != "" && len(c.Mobile) > 50 {
+		return ErrPhoneTooLong
+	}
+
 	if c.Email != "" {
 		if len(c.Email) > 100 {
 			return ErrEmailTooLong
@@ -58,90 +74,48 @@ func (c *Client) Validate() error {
 			return ErrEmailInvalid
 		}
 	}
-	
-	if c.Address != "" && len(c.Address) > 200 {
+
+	if c.Address != "" && len(c.Address) > 500 {
 		return ErrAddressTooLong
 	}
-	
-	return nil
-}
 
-// UpdateName 更新客户名称
-func (c *Client) UpdateName(newName string) error {
-	if newName == "" {
-		return ErrClientNameEmpty
-	}
-	if len(newName) < 2 || len(newName) > 100 {
-		return ErrClientNameInvalid
-	}
-	
-	c.Name = newName
-	return nil
-}
-
-// UpdateContact 更新联系人
-func (c *Client) UpdateContact(newContact string) error {
-	if newContact != "" && len(newContact) > 50 {
-		return ErrContactTooLong
-	}
-	
-	c.Contact = newContact
-	return nil
-}
-
-// UpdatePhone 更新电话
-func (c *Client) UpdatePhone(newPhone string) error {
-	if newPhone != "" {
-		if len(newPhone) > 20 {
-			return ErrPhoneTooLong
-		}
-		if !isValidPhone(newPhone) {
-			return ErrPhoneInvalid
-		}
-	}
-	
-	c.Phone = newPhone
-	return nil
-}
-
-// UpdateEmail 更新邮箱
-func (c *Client) UpdateEmail(newEmail string) error {
-	if newEmail != "" {
-		if len(newEmail) > 100 {
-			return ErrEmailTooLong
-		}
-		if !isValidEmail(newEmail) {
-			return ErrEmailInvalid
-		}
-	}
-	
-	c.Email = newEmail
-	return nil
-}
-
-// UpdateAddress 更新地址
-func (c *Client) UpdateAddress(newAddress string) error {
-	if newAddress != "" && len(newAddress) > 200 {
+	if c.AddressEn != "" && len(c.AddressEn) > 500 {
 		return ErrAddressTooLong
 	}
-	
-	c.Address = newAddress
+
 	return nil
 }
+
 
 // ToDocument 转换为 ES 文档（小驼峰字段名）
 func (c *Client) ToDocument() map[string]interface{} {
-	return map[string]interface{}{
-		"id":        c.ID,
-		"code":      c.Code,
-		"name":      c.Name,
-		"contact":   c.Contact,
-		"phone":     c.Phone,
-		"email":     c.Email,
-		"address":   c.Address,
-		"createdAt": c.CreatedAt,
-		"updatedAt": c.UpdatedAt,
+	doc := map[string]interface{}{
+		"id":           c.ID,
+		"customNo":     c.CustomNo,
+		"customerCode": c.CustomerCode,
+		"sales":        c.Sales,
+		"customName":   c.CustomName,
+		"stateChNm":    c.StateChNm,
+		"country":      c.Country,
+		"address":      c.Address,
+		"addressEn":    c.AddressEn,
+		"customNameEn": c.CustomNameEn,
+		"contactor":    c.Contactor,
+		"unitPhone":    c.UnitPhone,
+		"mobile":       c.Mobile,
+		"faxNum":       c.FaxNum,
+		"email":        c.Email,
+		"pyCustomName": c.PyCustomName,
+		"checkRequest": c.CheckRequest,
+		"customStatus": c.CustomStatus,
+		"docMan":       c.DocMan,
+		"createdAt":    c.CreatedAt,
+		"updatedAt":    c.UpdatedAt,
 	}
+	if c.InputDate != nil {
+		doc["inputDate"] = c.InputDate
+	}
+	return doc
 }
 
 // GetIndexName ES 索引名称
@@ -161,10 +135,39 @@ func isValidEmail(email string) bool {
 	return matched
 }
 
-// isValidPhone 验证电话格式
-func isValidPhone(phone string) bool {
-	// 支持手机号、固话、带区号的固话
-	pattern := `^1[3-9]\d{9}$|^0\d{2,3}-?\d{7,8}$|^\d{7,8}$`
-	matched, _ := regexp.MatchString(pattern, phone)
-	return matched
+// CalculatePriorityScore 计算优先级分数（可选功能，默认返回 0）
+// 如果需要业务优先级排序，可在此函数中实现评分逻辑
+func (c *Client) CalculatePriorityScore() int {
+	score := 0
+
+	// 1. 状态评分（最高 200 分）
+	switch c.CustomStatus {
+	case "active": // 活跃客户
+		score += 200
+	case "potential": // 潜在客户
+		score += 100
+	case "dormant": // 休眠客户
+		score += 50
+	}
+
+	// 2. 时间新鲜度（最近添加的客户加分，最高 50 分）
+	if c.InputDate != nil {
+		daysSinceInput := int(time.Since(*c.InputDate).Hours() / 24)
+		if daysSinceInput < 30 { // 30 天内添加
+			score += 50 - (daysSinceInput / 2)
+		}
+	}
+
+	// 3. 数据完整度（有联系方式的客户加分）
+	if c.Contactor != "" {
+		score += 10
+	}
+	if c.UnitPhone != "" || c.Mobile != "" {
+		score += 10
+	}
+	if c.Email != "" {
+		score += 10
+	}
+
+	return score
 }

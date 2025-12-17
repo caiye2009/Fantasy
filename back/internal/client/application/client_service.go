@@ -31,50 +31,46 @@ func NewClientService(repo *infra.ClientRepo, esSync ESSync) *ClientService {
 
 // Create 创建客户
 func (s *ClientService) Create(ctx context.Context, req *CreateClientRequest) (*ClientResponse, error) {
-	// 1. 检查名称是否重复（可选，根据业务需求）
-	exists, err := s.repo.ExistsByName(ctx, req.Name)
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		return nil, domain.ErrClientNameExists
-	}
-	
-	// 2. DTO → Domain Model
+	// 1. DTO → Domain Model
 	client := &domain.Client{
-		Name:    req.Name,
-		Contact: req.Contact,
-		Phone:   req.Phone,
-		Email:   req.Email,
-		Address: req.Address,
+		CustomNo:     req.CustomNo,
+		CustomerCode: req.CustomerCode,
+		InputDate:    req.InputDate,
+		Sales:        req.Sales,
+		CustomName:   req.CustomName,
+		StateChNm:    req.StateChNm,
+		Country:      req.Country,
+		Address:      req.Address,
+		AddressEn:    req.AddressEn,
+		CustomNameEn: req.CustomNameEn,
+		Contactor:    req.Contactor,
+		UnitPhone:    req.UnitPhone,
+		Mobile:       req.Mobile,
+		FaxNum:       req.FaxNum,
+		Email:        req.Email,
+		PyCustomName: req.PyCustomName,
+		CheckRequest: req.CheckRequest,
+		CustomStatus: req.CustomStatus,
+		DocMan:       req.DocMan,
 	}
 
-	// 3. 领域验证
+	// 2. 领域验证
 	if err := client.Validate(); err != nil {
 		return nil, err
 	}
 
-	// 4. 保存到数据库
+	// 3. 保存到数据库
 	if err := s.repo.Save(ctx, client); err != nil {
 		return nil, err
 	}
 
-	// 5. 异步同步到 ES
+	// 4. 异步同步到 ES
 	if s.esSync != nil {
 		s.esSync.Index(client)
 	}
 
-	// 6. Domain Model → DTO
-	return &ClientResponse{
-		ID:        client.ID,
-		Name:      client.Name,
-		Contact:   client.Contact,
-		Phone:     client.Phone,
-		Email:     client.Email,
-		Address:   client.Address,
-		CreatedAt: client.CreatedAt,
-		UpdatedAt: client.UpdatedAt,
-	}, nil
+	// 5. Domain Model → DTO
+	return toClientResponse(client), nil
 }
 
 // Get 获取客户
@@ -84,16 +80,7 @@ func (s *ClientService) Get(ctx context.Context, id uint) (*ClientResponse, erro
 		return nil, err
 	}
 
-	return &ClientResponse{
-		ID:        client.ID,
-		Name:      client.Name,
-		Contact:   client.Contact,
-		Phone:     client.Phone,
-		Email:     client.Email,
-		Address:   client.Address,
-		CreatedAt: client.CreatedAt,
-		UpdatedAt: client.UpdatedAt,
-	}, nil
+	return toClientResponse(client), nil
 }
 
 // Update 更新客户
@@ -103,64 +90,81 @@ func (s *ClientService) Update(ctx context.Context, id uint, req *UpdateClientRe
 	if err != nil {
 		return err
 	}
-	
-	// 2. 更新字段（通过领域方法）
-	if req.Name != "" {
-		// 检查新名称是否重复
-		if req.Name != client.Name {
-			exists, err := s.repo.ExistsByName(ctx, req.Name)
-			if err != nil {
-				return err
-			}
-			if exists {
-				return domain.ErrClientNameExists
-			}
-		}
-		
-		if err := client.UpdateName(req.Name); err != nil {
-			return err
-		}
+
+	// 2. 更新字段
+	if req.CustomNo != "" {
+		client.CustomNo = req.CustomNo
 	}
-	
-	if req.Contact != "" {
-		if err := client.UpdateContact(req.Contact); err != nil {
-			return err
-		}
+	if req.CustomerCode != "" {
+		client.CustomerCode = req.CustomerCode
 	}
-	
-	if req.Phone != "" {
-		if err := client.UpdatePhone(req.Phone); err != nil {
-			return err
-		}
+	if req.InputDate != nil {
+		client.InputDate = req.InputDate
 	}
-	
-	if req.Email != "" {
-		if err := client.UpdateEmail(req.Email); err != nil {
-			return err
-		}
+	if req.Sales != "" {
+		client.Sales = req.Sales
 	}
-	
+	if req.CustomName != "" {
+		client.CustomName = req.CustomName
+	}
+	if req.StateChNm != "" {
+		client.StateChNm = req.StateChNm
+	}
+	if req.Country != "" {
+		client.Country = req.Country
+	}
 	if req.Address != "" {
-		if err := client.UpdateAddress(req.Address); err != nil {
-			return err
-		}
+		client.Address = req.Address
 	}
-	
+	if req.AddressEn != "" {
+		client.AddressEn = req.AddressEn
+	}
+	if req.CustomNameEn != "" {
+		client.CustomNameEn = req.CustomNameEn
+	}
+	if req.Contactor != "" {
+		client.Contactor = req.Contactor
+	}
+	if req.UnitPhone != "" {
+		client.UnitPhone = req.UnitPhone
+	}
+	if req.Mobile != "" {
+		client.Mobile = req.Mobile
+	}
+	if req.FaxNum != "" {
+		client.FaxNum = req.FaxNum
+	}
+	if req.Email != "" {
+		client.Email = req.Email
+	}
+	if req.PyCustomName != "" {
+		client.PyCustomName = req.PyCustomName
+	}
+	if req.CheckRequest != "" {
+		client.CheckRequest = req.CheckRequest
+	}
+	if req.CustomStatus != "" {
+		client.CustomStatus = req.CustomStatus
+	}
+	if req.DocMan != "" {
+		client.DocMan = req.DocMan
+	}
+
 	// 3. 验证
 	if err := client.Validate(); err != nil {
 		return err
 	}
-	
+
 	// 4. 保存
 	if err := s.repo.Update(ctx, client); err != nil {
 		return err
 	}
-	
+
 	// 5. 异步同步到 ES
 	if s.esSync != nil {
 		s.esSync.Update(client)
 	}
-	
+
 	return nil
 }
 
@@ -191,4 +195,32 @@ func (s *ClientService) Delete(ctx context.Context, id uint) error {
 // Exists 检查客户是否存在（供其他模块调用）
 func (s *ClientService) Exists(ctx context.Context, id uint) (bool, error) {
 	return s.repo.ExistsByID(ctx, id)
+}
+
+// toClientResponse 将 Domain Model 转换为 Response DTO
+func toClientResponse(client *domain.Client) *ClientResponse {
+	return &ClientResponse{
+		ID:           client.ID,
+		CustomNo:     client.CustomNo,
+		CustomerCode: client.CustomerCode,
+		InputDate:    client.InputDate,
+		Sales:        client.Sales,
+		CustomName:   client.CustomName,
+		StateChNm:    client.StateChNm,
+		Country:      client.Country,
+		Address:      client.Address,
+		AddressEn:    client.AddressEn,
+		CustomNameEn: client.CustomNameEn,
+		Contactor:    client.Contactor,
+		UnitPhone:    client.UnitPhone,
+		Mobile:       client.Mobile,
+		FaxNum:       client.FaxNum,
+		Email:        client.Email,
+		PyCustomName: client.PyCustomName,
+		CheckRequest: client.CheckRequest,
+		CustomStatus: client.CustomStatus,
+		DocMan:       client.DocMan,
+		CreatedAt:    client.CreatedAt,
+		UpdatedAt:    client.UpdatedAt,
+	}
 }

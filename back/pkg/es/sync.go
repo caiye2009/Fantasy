@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"reflect"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
@@ -40,20 +41,16 @@ func (s *ESSync) Index(doc interface{}) error {
 	// 获取文档数据
 	docData := indexable.ToDocument()
 
-	// 如果实现了 ScoredIndexable，自动注入 priorityScore
-	if scoredDoc, ok := doc.(ScoredIndexable); ok {
-		scorer := scoredDoc.GetScorer()
-		if scorer != nil {
-			priorityScore := scorer.CalculateScore(doc)
-			docData["priorityScore"] = priorityScore
+	// 尝试计算 priorityScore（通过反射调用 CalculatePriorityScore 方法）
+	if priorityScore := CalculatePriorityScoreIfExists(doc); priorityScore > 0 {
+		docData["priorityScore"] = priorityScore
 
-			if s.logger != nil {
-				s.logger.Info("calculated priority score",
-					"index", indexable.GetIndexName(),
-					"docId", indexable.GetDocumentID(),
-					"score", priorityScore,
-				)
-			}
+		if s.logger != nil {
+			s.logger.Info("calculated priority score",
+				"index", indexable.GetIndexName(),
+				"docId", indexable.GetDocumentID(),
+				"score", priorityScore,
+			)
 		}
 	}
 
@@ -102,20 +99,16 @@ func (s *ESSync) Update(doc interface{}) error {
 	// 获取文档数据
 	docData := indexable.ToDocument()
 
-	// 如果实现了 ScoredIndexable，自动注入 priorityScore
-	if scoredDoc, ok := doc.(ScoredIndexable); ok {
-		scorer := scoredDoc.GetScorer()
-		if scorer != nil {
-			priorityScore := scorer.CalculateScore(doc)
-			docData["priorityScore"] = priorityScore
+	// 尝试计算 priorityScore（通过反射调用 CalculatePriorityScore 方法）
+	if priorityScore := CalculatePriorityScoreIfExists(doc); priorityScore > 0 {
+		docData["priorityScore"] = priorityScore
 
-			if s.logger != nil {
-				s.logger.Info("calculated priority score",
-					"index", indexable.GetIndexName(),
-					"docId", indexable.GetDocumentID(),
-					"score", priorityScore,
-				)
-			}
+		if s.logger != nil {
+			s.logger.Info("calculated priority score",
+				"index", indexable.GetIndexName(),
+				"docId", indexable.GetDocumentID(),
+				"score", priorityScore,
+			)
 		}
 	}
 
@@ -153,6 +146,37 @@ func (s *ESSync) Update(doc interface{}) error {
 	}
 
 	return nil
+}
+
+// CalculatePriorityScoreIfExists 尝试调用 CalculatePriorityScore 方法（如果存在）
+// 通过反射检查对象是否有 CalculatePriorityScore() int 方法
+// 如果有则调用，如果没有或返回 0 则忽略
+func CalculatePriorityScoreIfExists(doc interface{}) int {
+	// 获取对象的反射值
+	v := reflect.ValueOf(doc)
+
+	// 查找 CalculatePriorityScore 方法
+	method := v.MethodByName("CalculatePriorityScore")
+
+	// 如果方法不存在，返回 0
+	if !method.IsValid() {
+		return 0
+	}
+
+	// 调用方法（无参数）
+	result := method.Call(nil)
+
+	// 如果返回值为空或类型不对，返回 0
+	if len(result) == 0 {
+		return 0
+	}
+
+	// 尝试转换为 int
+	if score, ok := result[0].Interface().(int); ok {
+		return score
+	}
+
+	return 0
 }
 
 // Delete 删除文档

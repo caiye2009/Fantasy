@@ -1,21 +1,6 @@
 package config
 
-import (
-	"path/filepath"
-
-	searchInfra "back/internal/search/infra"
-)
-
-// InitSearchRegistry 初始化搜索配置注册中心
-func InitSearchRegistry() (*searchInfra.SearchConfigRegistry, error) {
-	// 配置文件目录（相对于项目根目录）
-	configDir := filepath.Join("config", "search")
-
-	// 加载所有 YAML 配置
-	registry, err := searchInfra.NewSearchConfigRegistry(configDir)
-	if err != nil {
-		return nil, err
-	}
-
-	return registry, nil
-}
+// DEPRECATED: 此文件已被 search_registry.go 替代
+// 新的 DomainAwareRegistry 以 Domain 为唯一字段来源，自动验证和补全配置
+//
+// 保留此文件仅为兼容性说明，实际功能已迁移到 search_registry.go

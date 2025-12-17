@@ -7,6 +7,7 @@ type SearchConfig struct {
 	QueryFields       []QueryFieldConfig       `yaml:"queryFields"`
 	FilterFields      []FilterFieldConfig      `yaml:"filterFields"`
 	AggregationFields []AggregationFieldConfig `yaml:"aggregationFields"`
+	DefaultSort       []SortFieldConfig        `yaml:"defaultSort"` // 默认排序（后端自动添加）
 }
 
 // QueryFieldConfig Query字段配置
@@ -30,6 +31,14 @@ type AggregationFieldConfig struct {
 	Size          int    `yaml:"size"`          // 每页条数
 	SupportSearch bool   `yaml:"supportSearch"` // 是否支持下拉框搜索
 	ExcludeSelf   bool   `yaml:"excludeSelf"`   // 联动时是否排除自身条件
+}
+
+// SortFieldConfig 排序字段配置
+type SortFieldConfig struct {
+	Field      string `yaml:"field"`                // 字段名
+	Order      string `yaml:"order"`                // asc, desc
+	Type       string `yaml:"type,omitempty"`       // computed（计算字段）, 普通字段不填
+	Missing    string `yaml:"missing,omitempty"`    // _last, _first（缺失值处理）
 }
 
 // GetFilterField 获取 Filter 字段配置

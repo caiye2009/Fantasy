@@ -8,13 +8,8 @@ type Indexable interface {
 	ToDocument() map[string]interface{}
 }
 
-// PriorityScorer 优先级评分器接口
-type PriorityScorer interface {
-	CalculateScore(entity interface{}) int
-}
-
-// ScoredIndexable 带评分的 ES 文档接口
-type ScoredIndexable interface {
-	Indexable
-	GetScorer() PriorityScorer
-}
+// 优先级评分机制说明：
+// 如果 Domain 需要业务优先级排序，只需在 Domain 中实现：
+//   func (d *DomainModel) CalculatePriorityScore() int
+// ES 同步时会自动通过反射调用该方法。
+// 如果不实现或返回 0，则不会添加 priorityScore 字段。

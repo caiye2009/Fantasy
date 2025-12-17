@@ -79,7 +79,7 @@ const { searchLoading } = useDataTable('process', 20)
 const pageConfig: PageConfig = {
   pageType: 'process',
   title: '工序管理',
-  entityType: 'process',
+  index: 'processes',
   pageSize: 20,
   columns: [
     { key: 'id', label: 'ID', width: 80, visible: true, sortable: true, order: 0 },

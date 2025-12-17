@@ -89,7 +89,7 @@ type Services struct {
 	ReturnAnalysis *analyticsApp.ReturnAnalysisService
 }
 
-func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client, jwtWang *auth.JWTWang, esSync *es.ESSync, searchRegistry *searchInfra.SearchConfigRegistry) *Services {
+func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client, jwtWang *auth.JWTWang, esSync *es.ESSync, searchRegistry *searchInfra.DomainAwareRegistry) *Services {
 	// ========== Supplier ==========
 	supplierRepo := supplierInfra.NewSupplierRepo(db)
 	supplierService := supplierApp.NewSupplierService(supplierRepo, esSync)

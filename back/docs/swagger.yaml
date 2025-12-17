@@ -78,40 +78,109 @@ definitions:
     properties:
       address:
         type: string
-      contact:
+      addressEn:
         type: string
-      created_at:
+      checkRequest:
+        type: string
+      contactor:
+        type: string
+      country:
+        type: string
+      createdAt:
+        type: string
+      customName:
+        type: string
+      customNameEn:
+        type: string
+      customNo:
+        type: string
+      customStatus:
+        type: string
+      customerCode:
+        type: string
+      docMan:
         type: string
       email:
         type: string
+      faxNum:
+        type: string
       id:
         type: integer
-      name:
+      inputDate:
         type: string
-      phone:
+      mobile:
         type: string
-      updated_at:
+      pyCustomName:
+        type: string
+      sales:
+        type: string
+      stateChNm:
+        type: string
+      unitPhone:
+        type: string
+      updatedAt:
         type: string
     type: object
   application.CreateClientRequest:
     properties:
       address:
+        maxLength: 500
+        type: string
+      addressEn:
+        maxLength: 500
+        type: string
+      checkRequest:
+        type: string
+      contactor:
+        maxLength: 100
+        type: string
+      country:
+        maxLength: 50
+        type: string
+      customName:
+        maxLength: 200
+        minLength: 2
+        type: string
+      customNameEn:
         maxLength: 200
         type: string
-      contact:
+      customNo:
+        maxLength: 50
+        type: string
+      customStatus:
+        maxLength: 50
+        type: string
+      customerCode:
+        maxLength: 50
+        type: string
+      docMan:
         maxLength: 50
         type: string
       email:
         type: string
-      name:
-        maxLength: 100
-        minLength: 2
+      faxNum:
+        maxLength: 50
         type: string
-      phone:
-        maxLength: 20
+      inputDate:
+        type: string
+      mobile:
+        maxLength: 50
+        type: string
+      pyCustomName:
+        maxLength: 200
+        type: string
+      sales:
+        maxLength: 50
+        type: string
+      stateChNm:
+        maxLength: 100
+        type: string
+      unitPhone:
+        maxLength: 50
         type: string
     required:
-    - name
+    - customName
+    - customNo
     type: object
   application.CreateDepartmentRequest:
     properties:
@@ -337,7 +406,7 @@ definitions:
     type: object
   application.IndexListResponse:
     properties:
-      entityTypes:
+      indices:
         items:
           type: string
         type: array
@@ -629,13 +698,13 @@ definitions:
           $ref: '#/definitions/application.AggRequest'
         description: 聚合请求
         type: object
-      entityType:
-        description: material, order, client, etc.
-        type: string
       filters:
         additionalProperties: true
         description: 筛选条件
         type: object
+      index:
+        description: clients, suppliers, orders, etc.
+        type: string
       pagination:
         $ref: '#/definitions/application.PaginationRequest'
       query:
@@ -646,7 +715,7 @@ definitions:
           $ref: '#/definitions/application.SortRequest'
         type: array
     required:
-    - entityType
+    - index
     type: object
   application.SearchResponse:
     properties:
@@ -707,19 +776,59 @@ definitions:
   application.UpdateClientRequest:
     properties:
       address:
+        maxLength: 500
+        type: string
+      addressEn:
+        maxLength: 500
+        type: string
+      checkRequest:
+        type: string
+      contactor:
+        maxLength: 100
+        type: string
+      country:
+        maxLength: 50
+        type: string
+      customName:
+        maxLength: 200
+        minLength: 2
+        type: string
+      customNameEn:
         maxLength: 200
         type: string
-      contact:
+      customNo:
+        maxLength: 50
+        type: string
+      customStatus:
+        maxLength: 50
+        type: string
+      customerCode:
+        maxLength: 50
+        type: string
+      docMan:
         maxLength: 50
         type: string
       email:
         type: string
-      name:
-        maxLength: 100
-        minLength: 2
+      faxNum:
+        maxLength: 50
         type: string
-      phone:
-        maxLength: 20
+      inputDate:
+        type: string
+      mobile:
+        maxLength: 50
+        type: string
+      pyCustomName:
+        maxLength: 200
+        type: string
+      sales:
+        maxLength: 50
+        type: string
+      stateChNm:
+        maxLength: 100
+        type: string
+      unitPhone:
+        maxLength: 50
         type: string
     type: object
   application.UpdateDepartmentRequest:
@@ -2315,21 +2424,21 @@ paths:
       summary: 搜索
       tags:
       - 搜索
-  /search/entity-types:
+  /search/indices:
     get:
       consumes:
       - application/json
-      description: 获取所有支持搜索的实体类型列表
+      description: 获取所有支持搜索的索引列表
       produces:
       - application/json
       responses:
         "200":
-          description: 实体类型列表
+          description: 索引列表
           schema:
             $ref: '#/definitions/application.IndexListResponse'
       security:
       - Bearer: []
-      summary: 获取实体类型列表
+      summary: 获取索引列表
       tags:
       - 搜索
   /supplier:

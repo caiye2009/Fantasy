@@ -12,53 +12,153 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="600px"
+      width="800px"
       @close="handleDialogClose"
     >
-      <el-form :model="currentRow" label-width="100px">
-        <el-form-item label="ID">
-          <el-input v-model="currentRow.id" disabled />
-        </el-form-item>
+      <el-form :model="currentRow" label-width="100px" style="max-height: 70vh; overflow-y: auto;">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="ID">
+              <el-input v-model="currentRow.id" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="客户代码">
+              <el-input v-model="currentRow.customNo" :disabled="dialogMode === 'view'" />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-        <el-form-item label="客户编码">
-          <el-input v-model="currentRow.code" :disabled="dialogMode === 'view'" />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="内部编码">
+              <el-input v-model="currentRow.customerCode" :disabled="dialogMode === 'view'" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="业务员">
+              <el-input v-model="currentRow.sales" :disabled="dialogMode === 'view'" />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
         <el-form-item label="客户名称">
-          <el-input v-model="currentRow.name" :disabled="dialogMode === 'view'" />
+          <el-input v-model="currentRow.customName" :disabled="dialogMode === 'view'" />
         </el-form-item>
 
-        <el-form-item label="联系人">
-          <el-input v-model="currentRow.contact" :disabled="dialogMode === 'view'" />
+        <el-form-item label="英文名称">
+          <el-input v-model="currentRow.customNameEn" :disabled="dialogMode === 'view'" />
         </el-form-item>
 
-        <el-form-item label="电话">
-          <el-input v-model="currentRow.phone" :disabled="dialogMode === 'view'" />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="联系人">
+              <el-input v-model="currentRow.contactor" :disabled="dialogMode === 'view'" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="电话">
+              <el-input v-model="currentRow.unitPhone" :disabled="dialogMode === 'view'" />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-        <el-form-item label="Email">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="手机">
+              <el-input v-model="currentRow.mobile" :disabled="dialogMode === 'view'" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="传真">
+              <el-input v-model="currentRow.faxNum" :disabled="dialogMode === 'view'" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-form-item label="邮箱">
           <el-input v-model="currentRow.email" :disabled="dialogMode === 'view'" />
         </el-form-item>
 
-        <el-form-item label="地址">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="国家">
+              <el-input v-model="currentRow.stateChNm" :disabled="dialogMode === 'view'" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="国家代码">
+              <el-input v-model="currentRow.country" :disabled="dialogMode === 'view'" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-form-item label="中文地址">
           <el-input
             v-model="currentRow.address"
+            type="textarea"
+            :rows="2"
+            :disabled="dialogMode === 'view'"
+          />
+        </el-form-item>
+
+        <el-form-item label="英文地址">
+          <el-input
+            v-model="currentRow.addressEn"
+            type="textarea"
+            :rows="2"
+            :disabled="dialogMode === 'view'"
+          />
+        </el-form-item>
+
+        <el-form-item label="所属客户">
+          <el-input v-model="currentRow.pyCustomName" :disabled="dialogMode === 'view'" />
+        </el-form-item>
+
+        <el-form-item label="检验要求">
+          <el-input
+            v-model="currentRow.checkRequest"
             type="textarea"
             :rows="3"
             :disabled="dialogMode === 'view'"
           />
         </el-form-item>
 
-        <el-form-item label="创建时间" v-if="currentRow.created_at">
-          <el-input
-            :value="new Date(currentRow.created_at).toLocaleString('zh-CN')"
-            disabled
-          />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="状态">
+              <el-input v-model="currentRow.customStatus" :disabled="dialogMode === 'view'" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="输入人">
+              <el-input v-model="currentRow.docMan" :disabled="dialogMode === 'view'" />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-        <el-form-item label="更新时间" v-if="currentRow.updated_at">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="添加时间" v-if="currentRow.inputDate">
+              <el-input
+                :value="new Date(currentRow.inputDate).toLocaleDateString('zh-CN')"
+                disabled
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="创建时间" v-if="currentRow.createdAt">
+              <el-input
+                :value="new Date(currentRow.createdAt).toLocaleString('zh-CN')"
+                disabled
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-form-item label="更新时间" v-if="currentRow.updatedAt">
           <el-input
-            :value="new Date(currentRow.updated_at).toLocaleString('zh-CN')"
+            :value="new Date(currentRow.updatedAt).toLocaleString('zh-CN')"
             disabled
           />
         </el-form-item>
@@ -93,32 +193,53 @@ const { searchLoading } = useDataTable('client', 20);
 const pageConfig: PageConfig = {
   pageType: 'client',
   title: '客户管理',
-  entityType: 'client',
+  index: 'clients',
   pageSize: 20,
   columns: [
     { key: 'id', label: 'ID', width: 80, sortable: true, visible: true, order: 0 },
-    { key: 'code', label: '客户编码', width: 120, sortable: true, visible: true, order: 1 },
-    { key: 'name', label: '客户名称', width: 200, sortable: true, visible: true, order: 2 },
-    { key: 'contact', label: '联系人', width: 150, visible: true, order: 3 },
-    { key: 'phone', label: '电话', width: 150, visible: true, order: 4 },
-    { key: 'email', label: 'Email', width: 200, visible: true, order: 5 },
-    { key: 'address', label: '地址', width: 250, visible: true, order: 6 },
+    { key: 'customNo', label: '客户代码', width: 120, sortable: true, visible: true, order: 1 },
+    { key: 'customerCode', label: '内部编码', width: 120, sortable: true, visible: true, order: 2 },
+    { key: 'customName', label: '客户名称', width: 200, sortable: true, visible: true, order: 3 },
+    { key: 'customNameEn', label: '英文名称', width: 200, visible: false, order: 4 },
+    { key: 'sales', label: '业务员', width: 120, visible: true, order: 5 },
+    { key: 'contactor', label: '联系人', width: 120, visible: true, order: 6 },
+    { key: 'unitPhone', label: '电话', width: 130, visible: true, order: 7 },
+    { key: 'mobile', label: '手机', width: 130, visible: true, order: 8 },
+    { key: 'email', label: '邮箱', width: 180, visible: false, order: 9 },
+    { key: 'stateChNm', label: '国家', width: 100, visible: true, order: 10 },
+    { key: 'country', label: '国家代码', width: 100, visible: false, order: 11 },
+    { key: 'address', label: '中文地址', width: 250, visible: true, order: 12 },
+    { key: 'addressEn', label: '英文地址', width: 250, visible: false, order: 13 },
+    { key: 'faxNum', label: '传真', width: 130, visible: false, order: 14 },
+    { key: 'pyCustomName', label: '所属客户', width: 150, visible: false, order: 15 },
+    { key: 'checkRequest', label: '检验要求', width: 200, visible: false, order: 16 },
+    { key: 'customStatus', label: '状态', width: 100, visible: true, order: 17 },
+    { key: 'docMan', label: '输入人', width: 100, visible: false, order: 18 },
     {
-      key: 'created_at',
+      key: 'inputDate',
+      label: '添加时间',
+      width: 120,
+      sortable: true,
+      visible: true,
+      order: 19,
+      formatter: (v: string) => (v ? new Date(v).toLocaleDateString('zh-CN') : '-'),
+    },
+    {
+      key: 'createdAt',
       label: '创建时间',
       width: 180,
       sortable: true,
-      visible: true,
-      order: 7,
+      visible: false,
+      order: 20,
       formatter: (v: string) => (v ? new Date(v).toLocaleString('zh-CN') : '-'),
     },
     {
-      key: 'updated_at',
+      key: 'updatedAt',
       label: '更新时间',
       width: 180,
       sortable: true,
       visible: false,
-      order: 8,
+      order: 21,
       formatter: (v: string) => (v ? new Date(v).toLocaleString('zh-CN') : '-'),
     },
   ] as ColumnConfig[],
@@ -190,7 +311,7 @@ const handleSave = async () => {
   saving.value = true;
 
   try {
-    const { _id, id, created_at, updated_at, ...updateData } = currentRow.value;
+    const { _id, id, createdAt, updatedAt, ...updateData } = currentRow.value;
     await elasticsearchService.update(_id, 'clients', updateData);
 
     ElMessage.success('保存成功');

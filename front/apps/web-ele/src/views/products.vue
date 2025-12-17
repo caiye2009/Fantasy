@@ -77,7 +77,7 @@ const { searchLoading } = useDataTable('product', 20)
 const pageConfig: PageConfig = {
   pageType: 'product',
   title: '产品管理',
-  entityType: 'product',
+  index: 'products',
   pageSize: 20,
   columns: [
     { key: 'id', label: 'ID', width: 80, visible: true, sortable: true, order: 0 },

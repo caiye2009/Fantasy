@@ -4,7 +4,7 @@ import { ElMessage } from 'element-plus'
 import { elasticsearchService } from '#/api/core/es'
 import type { ESResponse } from '#/components/DataTable/types'
 
-export function useDataTable(entityType: string, pageSize: number = 20) {
+export function useDataTable(index: string, pageSize: number = 20) {
   const router = useRouter()
   const route = useRoute()
 
@@ -83,7 +83,7 @@ export function useDataTable(entityType: string, pageSize: number = 20) {
 
   /** 构建请求体（POST body） */
   const buildSearchRequest = (page: number) => ({
-    entityType,
+    index,
     query: query.value || undefined,
     filters: Object.keys(filters.value).length > 0 ? filters.value : undefined,
     sort: sort.value.length > 0 ? sort.value : undefined,

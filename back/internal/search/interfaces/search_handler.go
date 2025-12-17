@@ -53,24 +53,24 @@ func (h *SearchHandler) Search(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// GetEntityTypes 获取所有支持搜索的实体类型
-// @Summary      获取实体类型列表
-// @Description  获取所有支持搜索的实体类型列表
+// GetIndices 获取所有支持搜索的索引
+// @Summary      获取索引列表
+// @Description  获取所有支持搜索的索引列表
 // @Tags         搜索
 // @Accept       json
 // @Produce      json
-// @Success      200 {object} application.IndexListResponse "实体类型列表"
+// @Success      200 {object} application.IndexListResponse "索引列表"
 // @Security     Bearer
-// @Router       /search/entity-types [get]
-func (h *SearchHandler) GetEntityTypes(c *gin.Context) {
-	resp := h.service.GetEntityTypes()
+// @Router       /search/indices [get]
+func (h *SearchHandler) GetIndices(c *gin.Context) {
+	resp := h.service.GetIndices()
 	c.JSON(http.StatusOK, resp)
 }
 
 // isClientError 判断是否为客户端错误
 func isClientError(err error) bool {
 	errMsg := err.Error()
-	return strings.Contains(errMsg, "unsupported entity type") ||
+	return strings.Contains(errMsg, "unsupported index") ||
 		strings.Contains(errMsg, "is not filterable") ||
 		strings.Contains(errMsg, "is not aggregable") ||
 		strings.Contains(errMsg, "must be") ||
@@ -84,6 +84,6 @@ func RegisterSearchHandlers(router *gin.RouterGroup, service *application.Search
 	searchGroup := router.Group("/search")
 	{
 		searchGroup.POST("", handler.Search)
-		searchGroup.GET("/entity-types", handler.GetEntityTypes)
+		searchGroup.GET("/indices", handler.GetIndices)
 	}
 }

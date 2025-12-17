@@ -36,7 +36,7 @@ export interface BulkAction {
 export interface PageConfig {
   pageType: string
   title: string
-  entityType: string // 单个实体类型，如 'material', 'order', 'client'
+  index: string // 单个实体类型，如 'material', 'order', 'client'
   columns: ColumnConfig[]
   filters: FilterConfig[]
   bulkActions: BulkAction[]
@@ -45,7 +45,7 @@ export interface PageConfig {
 }
 
 export interface ESRequest {
-  entityType: string // material, order, client, etc. (required)
+  index: string // material, order, client, etc. (required)
   query?: string
   filters?: Record<string, any>
   aggRequests?: Record<string, any>
