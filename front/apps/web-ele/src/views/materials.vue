@@ -36,15 +36,15 @@
             :rows="3"
           />
         </el-form-item>
-        <el-form-item label="创建时间" v-if="currentRow.created_at">
+        <el-form-item label="创建时间" v-if="currentRow.createdAt">
           <el-input
-            :value="new Date(currentRow.created_at).toLocaleString('zh-CN')"
+            :value="new Date(currentRow.createdAt).toLocaleString('zh-CN')"
             disabled
           />
         </el-form-item>
-        <el-form-item label="更新时间" v-if="currentRow.updated_at">
+        <el-form-item label="更新时间" v-if="currentRow.updatedAt">
           <el-input
-            :value="new Date(currentRow.updated_at).toLocaleString('zh-CN')"
+            :value="new Date(currentRow.updatedAt).toLocaleString('zh-CN')"
             disabled
           />
         </el-form-item>
@@ -128,10 +128,10 @@
             {{ materialDetail.description || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="创建时间">
-            {{ formatDate(materialDetail.created_at) }}
+            {{ formatDate(materialDetail.createdAt) }}
           </el-descriptions-item>
           <el-descriptions-item label="更新时间">
-            {{ formatDate(materialDetail.updated_at) }}
+            {{ formatDate(materialDetail.updatedAt) }}
           </el-descriptions-item>
         </el-descriptions>
       </div>
@@ -216,7 +216,7 @@ const { searchLoading } = useDataTable('material', 20)
 const pageConfig: PageConfig = {
   pageType: 'material',
   title: '原料管理',
-  index: 'materials',
+  index: 'material',
   pageSize: 20,
   columns: [
     {
@@ -257,7 +257,7 @@ const pageConfig: PageConfig = {
       order: 4,
     },
     {
-      key: 'created_at',
+      key: 'createdAt',
       label: '创建时间',
       width: 180,
       sortable: true,
@@ -268,7 +268,7 @@ const pageConfig: PageConfig = {
       },
     },
     {
-      key: 'updated_at',
+      key: 'updatedAt',
       label: '更新时间',
       width: 180,
       sortable: true,
@@ -389,7 +389,7 @@ const handleSave = async () => {
 
   saving.value = true
   try {
-    const { _id, id, created_at, updated_at, ...updateData } = currentRow.value
+    const { _id, id, createdAt, updatedAt, ...updateData } = currentRow.value
 
     await elasticsearchService.update(_id, 'materials', updateData)
 

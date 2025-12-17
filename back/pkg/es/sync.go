@@ -179,6 +179,122 @@ func CalculatePriorityScoreIfExists(doc interface{}) int {
 	return 0
 }
 
+// BulkIndex 批量索引文档（更高效，适合大批量操作）
+// batchSize 指定每批处理的文档数量（建议 100-500）
+// refresh 控制是否在批次完成后刷新索引（reindex 时建议 false，只在最后刷新）
+func (s *ESSync) BulkIndex(docs []interface{}, refresh bool) (success, failed int, err error) {
+	if len(docs) == 0 {
+		return 0, 0, nil
+	}
+
+	var buf bytes.Buffer
+	successCount := 0
+	failedCount := 0
+
+	// 构建 bulk 请求体
+	for _, doc := range docs {
+		indexable, ok := doc.(Indexable)
+		if !ok {
+			failedCount++
+			continue
+		}
+
+		// 获取文档数据
+		docData := indexable.ToDocument()
+
+		// 尝试计算 priorityScore
+		if priorityScore := CalculatePriorityScoreIfExists(doc); priorityScore > 0 {
+			docData["priorityScore"] = priorityScore
+		}
+
+		// Bulk API 格式：action_and_meta_data\n + optional_source\n
+		// Index action
+		meta := map[string]interface{}{
+			"index": map[string]interface{}{
+				"_index": indexable.GetIndexName(),
+				"_id":    indexable.GetDocumentID(),
+			},
+		}
+		metaData, err := json.Marshal(meta)
+		if err != nil {
+			failedCount++
+			continue
+		}
+		buf.Write(metaData)
+		buf.WriteByte('\n')
+
+		// Document source
+		docJSON, err := json.Marshal(docData)
+		if err != nil {
+			failedCount++
+			continue
+		}
+		buf.Write(docJSON)
+		buf.WriteByte('\n')
+	}
+
+	// 发送 bulk 请求
+	refreshParam := "false"
+	if refresh {
+		refreshParam = "true"
+	}
+
+	res, err := s.client.Bulk(
+		bytes.NewReader(buf.Bytes()),
+		s.client.Bulk.WithContext(context.Background()),
+		s.client.Bulk.WithRefresh(refreshParam),
+	)
+	if err != nil {
+		if s.logger != nil {
+			s.logger.Error("bulk request failed", "error", err)
+		}
+		return 0, len(docs), err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		if s.logger != nil {
+			s.logger.Error("bulk request error", "status", res.Status())
+		}
+		return 0, len(docs), fmt.Errorf("bulk request error: %s", res.Status())
+	}
+
+	// 解析响应
+	var bulkRes map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&bulkRes); err != nil {
+		if s.logger != nil {
+			s.logger.Error("failed to parse bulk response", "error", err)
+		}
+		return 0, len(docs), err
+	}
+
+	// 统计成功和失败
+	if items, ok := bulkRes["items"].([]interface{}); ok {
+		for _, item := range items {
+			if itemMap, ok := item.(map[string]interface{}); ok {
+				for _, action := range itemMap {
+					if actionMap, ok := action.(map[string]interface{}); ok {
+						status := int(actionMap["status"].(float64))
+						if status >= 200 && status < 300 {
+							successCount++
+						} else {
+							failedCount++
+							if s.logger != nil {
+								s.logger.Error("bulk item failed",
+									"status", status,
+									"error", actionMap["error"],
+								)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return successCount, failedCount, nil
+}
+
 // Delete 删除文档
 func (s *ESSync) Delete(indexName, docID string) error {
 	req := esapi.DeleteRequest{

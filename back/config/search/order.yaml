@@ -1,5 +1,4 @@
-entityType: order
-indexName: orders
+index: order
 
 queryFields:
   - field: orderNo

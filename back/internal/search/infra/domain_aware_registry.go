@@ -11,8 +11,8 @@ import (
 // DomainAwareRegistry Domain 感知的搜索配置注册中心
 // 以 Domain 为唯一字段来源，自动验证和补全配置
 type DomainAwareRegistry struct {
-	schemas map[string]*es.DomainSchema     // indexName -> schema
-	configs map[string]*domain.SearchConfig // indexName -> config
+	schemas map[string]*es.DomainSchema     // index -> schema
+	configs map[string]*domain.SearchConfig // index -> config
 }
 
 // NewDomainAwareRegistry 创建 Domain 感知的注册中心
@@ -24,28 +24,28 @@ func NewDomainAwareRegistry() *DomainAwareRegistry {
 }
 
 // RegisterDomain 注册 Domain 模型
-// 示例: RegisterDomain("client", "clients", &clientDomain.Client{})
-func (r *DomainAwareRegistry) RegisterDomain(entityType, indexName string, domainModel interface{}) error {
+// 示例: RegisterDomain("client", &clientDomain.Client{})
+func (r *DomainAwareRegistry) RegisterDomain(index string, domainModel interface{}) error {
 	// 提取 Domain schema
-	schema, err := es.ExtractSchema(entityType, indexName, domainModel)
+	schema, err := es.ExtractSchema(index, domainModel)
 	if err != nil {
-		return fmt.Errorf("extract schema for %s: %w", entityType, err)
+		return fmt.Errorf("extract schema for %s: %w", index, err)
 	}
 
-	r.schemas[indexName] = schema
-	log.Printf("✓ Registered domain schema for index '%s' (%s) with %d fields", indexName, entityType, len(schema.Fields))
+	r.schemas[index] = schema
+	log.Printf("✓ Registered domain schema for index '%s' with %d fields", index, len(schema.Fields))
 
 	return nil
 }
 
 // LoadConfig 加载配置并自动验证、补全
 func (r *DomainAwareRegistry) LoadConfig(config *domain.SearchConfig) error {
-	indexName := config.IndexName
+	index := config.Index
 
 	// 1. 检查是否已注册 Domain
-	schema, ok := r.schemas[indexName]
+	schema, ok := r.schemas[index]
 	if !ok {
-		return fmt.Errorf("domain not registered for index: %s", indexName)
+		return fmt.Errorf("domain not registered for index: %s", index)
 	}
 
 	// 2. 验证所有配置的字段都存在于 Domain
@@ -71,8 +71,8 @@ func (r *DomainAwareRegistry) LoadConfig(config *domain.SearchConfig) error {
 	}
 
 	// 4. 保存配置
-	r.configs[indexName] = config
-	log.Printf("✓ Loaded search config for index '%s'", indexName)
+	r.configs[index] = config
+	log.Printf("✓ Loaded search config for index '%s'", index)
 
 	return nil
 }
@@ -186,14 +186,14 @@ func mapESTypeToAggregationType(esType string) string {
 }
 
 // GetConfigByIndex 通过索引名获取配置
-func (r *DomainAwareRegistry) GetConfigByIndex(indexName string) (*domain.SearchConfig, bool) {
-	config, ok := r.configs[indexName]
+func (r *DomainAwareRegistry) GetConfigByIndex(index string) (*domain.SearchConfig, bool) {
+	config, ok := r.configs[index]
 	return config, ok
 }
 
 // GetSchema 获取 Domain schema
-func (r *DomainAwareRegistry) GetSchema(indexName string) (*es.DomainSchema, bool) {
-	schema, ok := r.schemas[indexName]
+func (r *DomainAwareRegistry) GetSchema(index string) (*es.DomainSchema, bool) {
+	schema, ok := r.schemas[index]
 	return schema, ok
 }
 

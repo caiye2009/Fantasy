@@ -2,8 +2,7 @@ package domain
 
 // SearchConfig 搜索配置
 type SearchConfig struct {
-	EntityType        string                   `yaml:"entityType"`
-	IndexName         string                   `yaml:"indexName"`
+	Index             string                   `yaml:"index"`
 	QueryFields       []QueryFieldConfig       `yaml:"queryFields"`
 	FilterFields      []FilterFieldConfig      `yaml:"filterFields"`
 	AggregationFields []AggregationFieldConfig `yaml:"aggregationFields"`

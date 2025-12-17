@@ -20,18 +20,16 @@ type FieldInfo struct {
 
 // DomainSchema Domain 模型的字段 schema
 type DomainSchema struct {
-	EntityType string
-	IndexName  string
-	Fields     map[string]*FieldInfo // fieldName -> FieldInfo
+	Index  string
+	Fields map[string]*FieldInfo // fieldName -> FieldInfo
 }
 
 // ExtractSchema 从 Domain 模型提取字段 schema
-// 示例: ExtractSchema("client", "clients", &domain.Client{})
-func ExtractSchema(entityType, indexName string, domainModel interface{}) (*DomainSchema, error) {
+// 示例: ExtractSchema("client", &domain.Client{})
+func ExtractSchema(index string, domainModel interface{}) (*DomainSchema, error) {
 	schema := &DomainSchema{
-		EntityType: entityType,
-		IndexName:  indexName,
-		Fields:     make(map[string]*FieldInfo),
+		Index:  index,
+		Fields: make(map[string]*FieldInfo),
 	}
 
 	t := reflect.TypeOf(domainModel)
@@ -131,7 +129,7 @@ func (s *DomainSchema) GetField(fieldName string) (*FieldInfo, bool) {
 // ValidateField 验证字段是否存在于 Domain
 func (s *DomainSchema) ValidateField(fieldName string) error {
 	if _, ok := s.Fields[fieldName]; !ok {
-		return fmt.Errorf("field '%s' not found in domain model %s", fieldName, s.EntityType)
+		return fmt.Errorf("field '%s' not found in domain model %s", fieldName, s.Index)
 	}
 	return nil
 }

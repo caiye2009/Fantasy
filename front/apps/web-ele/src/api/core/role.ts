@@ -7,9 +7,9 @@ export interface Role {
   description: string;
   status: string;
   level: number;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
 }
 
 export interface RoleListResponse {

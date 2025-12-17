@@ -173,7 +173,7 @@ func (o *Order) ToDocument() map[string]interface{} {
 
 // GetIndexName ES 索引名称
 func (o *Order) GetIndexName() string {
-	return "orders"
+	return "order"
 }
 
 // GetDocumentID ES 文档 ID

@@ -45,22 +45,21 @@ func InitSearchRegistry() (*infra.DomainAwareRegistry, error) {
 // registerAllDomains 注册所有 Domain 模型
 func registerAllDomains(registry *infra.DomainAwareRegistry) error {
 	domains := []struct {
-		entityType string
-		indexName  string
-		model      interface{}
+		index string
+		model interface{}
 	}{
-		{"client", "clients", &clientDomain.Client{}},
-		{"supplier", "suppliers", &supplierDomain.Supplier{}},
-		{"material", "materials", &materialDomain.Material{}},
-		{"product", "products", &productDomain.Product{}},
-		{"process", "processes", &processDomain.Process{}},
-		{"order", "orders", &orderDomain.Order{}},
-		{"plan", "plans", &planDomain.Plan{}},
+		{"client", &clientDomain.Client{}},
+		{"supplier", &supplierDomain.Supplier{}},
+		{"material", &materialDomain.Material{}},
+		{"product", &productDomain.Product{}},
+		{"process", &processDomain.Process{}},
+		{"order", &orderDomain.Order{}},
+		{"plan", &planDomain.Plan{}},
 	}
 
 	for _, d := range domains {
-		if err := registry.RegisterDomain(d.entityType, d.indexName, d.model); err != nil {
-			return fmt.Errorf("register %s: %w", d.entityType, err)
+		if err := registry.RegisterDomain(d.index, d.model); err != nil {
+			return fmt.Errorf("register %s: %w", d.index, err)
 		}
 	}
 

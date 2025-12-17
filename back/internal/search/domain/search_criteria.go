@@ -2,7 +2,7 @@ package domain
 
 // SearchCriteria 搜索条件（领域对象）
 type SearchCriteria struct {
-	IndexName   string                 // ES 索引名（clients, suppliers, etc.）
+	Index       string                 // ES 索引名（client, supplier, etc.）
 	Query       string                 // 全文搜索关键词
 	Filters     map[string]interface{} // 筛选条件
 	AggRequests map[string]AggRequest  // 聚合请求

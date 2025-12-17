@@ -1,5 +1,4 @@
-entityType: supplier
-indexName: vendors
+index: supplier
 
 queryFields:
   - field: name

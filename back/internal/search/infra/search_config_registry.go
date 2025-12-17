@@ -76,19 +76,16 @@ func (r *SearchConfigRegistry) loadConfigFile(filePath string) error {
 		return fmt.Errorf("validate config: %w", err)
 	}
 
-	// 注册配置
-	r.configs[config.EntityType] = &config
+	// 注册配置（使用 index 作为 entityType）
+	r.configs[config.Index] = &config
 
 	return nil
 }
 
 // validateConfig 验证配置合法性
 func (r *SearchConfigRegistry) validateConfig(config *domain.SearchConfig) error {
-	if config.EntityType == "" {
-		return fmt.Errorf("entityType is required")
-	}
-	if config.IndexName == "" {
-		return fmt.Errorf("indexName is required")
+	if config.Index == "" {
+		return fmt.Errorf("index is required")
 	}
 
 	// 验证 Query 字段配置

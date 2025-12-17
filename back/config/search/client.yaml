@@ -2,8 +2,7 @@
 # 字段定义以 internal/client/domain/client.go 为准
 # type 会自动从 Domain 推断，无需手动配置
 
-entityType: client
-indexName: clients
+index: client
 
 # 全文搜索字段（按优先级排序）
 queryFields:

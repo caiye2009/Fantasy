@@ -19,8 +19,8 @@ type Role struct {
 	Description string         `gorm:"size:500" json:"description"`
 	Status      string         `gorm:"size:20;default:active" json:"status"`
 	Level       int            `gorm:"default:0" json:"level"`
-	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
 }
 

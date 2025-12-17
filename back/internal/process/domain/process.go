@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -11,8 +12,8 @@ type Process struct {
 	ID          uint           `gorm:"primaryKey" json:"id"`
 	Name        string         `gorm:"size:100;not null;index" json:"name"`
 	Description string         `gorm:"type:text" json:"description"`
-	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
@@ -52,17 +53,17 @@ func (p *Process) ToDocument() map[string]interface{} {
 		"id":          p.ID,
 		"name":        p.Name,
 		"description": p.Description,
-		"created_at":  p.CreatedAt,
-		"updated_at":  p.UpdatedAt,
+		"createdAt":   p.CreatedAt,
+		"updatedAt":   p.UpdatedAt,
 	}
 }
 
 // GetIndexName ES 索引名称
 func (p *Process) GetIndexName() string {
-	return "processes"
+	return "process"
 }
 
 // GetDocumentID ES 文档 ID
 func (p *Process) GetDocumentID() string {
-	return string(rune(p.ID))
+	return fmt.Sprintf("%d", p.ID)
 }

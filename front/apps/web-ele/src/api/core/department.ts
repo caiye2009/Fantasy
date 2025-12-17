@@ -6,10 +6,10 @@ export interface Department {
   code: string;
   description: string;
   status: string;
-  parent_id?: number;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string;
+  parentId?: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
 }
 
 export interface DepartmentListResponse {
@@ -44,7 +44,7 @@ export async function createDepartmentApi(data: {
   name: string;
   code?: string;
   description?: string;
-  parent_id?: number;
+  parentId?: number;
 }): Promise<Department> {
   const response = await requestClient.post<Department>('/department', data);
   return response.data;
@@ -59,7 +59,7 @@ export async function updateDepartmentApi(
     name?: string;
     code?: string;
     description?: string;
-    parent_id?: number;
+    parentId?: number;
   },
 ): Promise<Department> {
   const response = await requestClient.put<Department>(`/department/${id}`, data);

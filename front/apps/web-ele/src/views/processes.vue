@@ -33,16 +33,16 @@
           />
         </el-form-item>
 
-        <el-form-item label="创建时间" v-if="currentRow.created_at">
+        <el-form-item label="创建时间" v-if="currentRow.createdAt">
           <el-input
-            :value="new Date(currentRow.created_at).toLocaleString('zh-CN')"
+            :value="new Date(currentRow.createdAt).toLocaleString('zh-CN')"
             disabled
           />
         </el-form-item>
 
-        <el-form-item label="更新时间" v-if="currentRow.updated_at">
+        <el-form-item label="更新时间" v-if="currentRow.updatedAt">
           <el-input
-            :value="new Date(currentRow.updated_at).toLocaleString('zh-CN')"
+            :value="new Date(currentRow.updatedAt).toLocaleString('zh-CN')"
             disabled
           />
         </el-form-item>
@@ -79,14 +79,14 @@ const { searchLoading } = useDataTable('process', 20)
 const pageConfig: PageConfig = {
   pageType: 'process',
   title: '工序管理',
-  index: 'processes',
+  index: 'process',
   pageSize: 20,
   columns: [
     { key: 'id', label: 'ID', width: 80, visible: true, sortable: true, order: 0 },
     { key: 'name', label: '工序名称', width: 200, visible: true, sortable: true, order: 1 },
     { key: 'description', label: '描述', width: 250, visible: true, order: 2 },
     {
-      key: 'created_at',
+      key: 'createdAt',
       label: '创建时间',
       width: 180,
       visible: true,
@@ -95,7 +95,7 @@ const pageConfig: PageConfig = {
       formatter: (value: string) => value ? new Date(value).toLocaleString('zh-CN') : '-'
     },
     {
-      key: 'updated_at',
+      key: 'updatedAt',
       label: '更新时间',
       width: 180,
       visible: false,
@@ -160,7 +160,7 @@ const handleSave = async () => {
 
   saving.value = true
   try {
-    const { _id, created_at, updated_at, ...updateData } = currentRow.value
+    const { _id, createdAt, updatedAt, ...updateData } = currentRow.value
 
     await elasticsearchService.update(_id, 'process', updateData)
     ElMessage.success('保存成功')

@@ -18,9 +18,9 @@ type Department struct {
 	Code        string         `gorm:"size:50;uniqueIndex" json:"code"`
 	Description string         `gorm:"size:500" json:"description"`
 	Status      string         `gorm:"size:20;default:active" json:"status"`
-	ParentID    *uint          `gorm:"index" json:"parent_id"`
-	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	ParentID    *uint          `gorm:"index" json:"parentId"`
+	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
 }
 

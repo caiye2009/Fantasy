@@ -3,6 +3,7 @@ package domain
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"math"
 	"time"
 
@@ -76,8 +77,8 @@ type Product struct {
 	Status    string             `gorm:"size:20;default:draft;index" json:"status"`
 	Materials MaterialConfigJSON `gorm:"type:jsonb" json:"materials"`
 	Processes ProcessConfigJSON  `gorm:"type:jsonb" json:"processes"`
-	CreatedAt time.Time          `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt time.Time          `gorm:"autoUpdateTime" json:"updated_at"`
+	CreatedAt time.Time          `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt time.Time          `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt gorm.DeletedAt     `gorm:"index" json:"-"`
 }
 
@@ -233,17 +234,17 @@ func (p *Product) ToDocument() map[string]interface{} {
 		"status":     p.Status,
 		"materials":  p.Materials,
 		"processes":  p.Processes,
-		"created_at": p.CreatedAt,
-		"updated_at": p.UpdatedAt,
+		"createdAt":  p.CreatedAt,
+		"updatedAt":  p.UpdatedAt,
 	}
 }
 
 // GetIndexName ES 索引名称
 func (p *Product) GetIndexName() string {
-	return "products"
+	return "product"
 }
 
 // GetDocumentID ES 文档 ID
 func (p *Product) GetDocumentID() string {
-	return string(rune(p.ID))
+	return fmt.Sprintf("%d", p.ID)
 }

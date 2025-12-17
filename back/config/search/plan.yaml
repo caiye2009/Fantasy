@@ -1,5 +1,4 @@
-entityType: plan
-indexName: plans
+index: plan
 
 queryFields:
   - field: planNo

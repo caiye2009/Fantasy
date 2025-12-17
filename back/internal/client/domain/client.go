@@ -120,7 +120,7 @@ func (c *Client) ToDocument() map[string]interface{} {
 
 // GetIndexName ES 索引名称
 func (c *Client) GetIndexName() string {
-	return "clients"
+	return "client"
 }
 
 // GetDocumentID ES 文档 ID

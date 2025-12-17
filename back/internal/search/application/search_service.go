@@ -106,7 +106,7 @@ func (s *SearchService) buildCriteria(config *domain.SearchConfig, req *SearchRe
 	}
 
 	return &domain.SearchCriteria{
-		IndexName:   req.Index,
+		Index:       req.Index,
 		Query:       req.Query,
 		Filters:     filters,
 		AggRequests: aggRequests,

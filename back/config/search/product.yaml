@@ -1,5 +1,4 @@
-entityType: product
-indexName: products
+index: product
 
 queryFields:
   - field: name
@@ -17,9 +16,6 @@ filterFields:
   - field: status
     type: keyword
     operator: terms
-  - field: clientId
-    type: keyword
-    operator: terms
   - field: createdAt
     type: date
     operator: range
@@ -33,10 +29,4 @@ aggregationFields:
     aggType: terms
     size: 20
     supportSearch: false
-    excludeSelf: true
-  - field: clientId
-    type: keyword
-    aggType: composite
-    size: 10
-    supportSearch: true
     excludeSelf: true

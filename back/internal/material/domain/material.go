@@ -89,7 +89,7 @@ func (m *Material) ToDocument() map[string]interface{} {
 
 // GetIndexName ES 索引名称
 func (m *Material) GetIndexName() string {
-	return "materials"
+	return "material"
 }
 
 // GetDocumentID ES 文档 ID

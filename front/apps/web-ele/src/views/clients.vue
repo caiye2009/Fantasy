@@ -193,7 +193,7 @@ const { searchLoading } = useDataTable('client', 20);
 const pageConfig: PageConfig = {
   pageType: 'client',
   title: '客户管理',
-  index: 'clients',
+  index: 'client',
   pageSize: 20,
   columns: [
     { key: 'id', label: 'ID', width: 80, sortable: true, visible: true, order: 0 },

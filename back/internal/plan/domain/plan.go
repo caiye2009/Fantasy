@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -17,16 +18,16 @@ const (
 // Plan 计划聚合根
 type Plan struct {
 	ID          uint           `gorm:"primaryKey" json:"id"`
-	PlanNo      string         `gorm:"size:50;uniqueIndex;not null" json:"plan_no"`
-	OrderID     uint           `gorm:"not null;index" json:"order_id"`
-	ProductID   uint           `gorm:"not null;index" json:"product_id"`
+	PlanNo      string         `gorm:"size:50;uniqueIndex;not null" json:"planNo"`
+	OrderID     uint           `gorm:"not null;index" json:"orderId"`
+	ProductID   uint           `gorm:"not null;index" json:"productId"`
 	Quantity    float64        `gorm:"type:decimal(10,2);not null" json:"quantity"`
 	Status      string         `gorm:"size:20;default:planned;index" json:"status"`
-	ScheduledAt *time.Time     `gorm:"type:timestamp" json:"scheduled_at,omitempty"`
-	CompletedAt *time.Time     `gorm:"type:timestamp" json:"completed_at,omitempty"`
-	CreatedBy   uint           `gorm:"not null;index" json:"created_by"`
-	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	ScheduledAt *time.Time     `gorm:"type:timestamp" json:"scheduledAt,omitempty"`
+	CompletedAt *time.Time     `gorm:"type:timestamp" json:"completedAt,omitempty"`
+	CreatedBy   uint           `gorm:"not null;index" json:"createdBy"`
+	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
@@ -124,22 +125,22 @@ func (p *Plan) CanDelete() bool {
 // ToDocument 转换为 ES 文档
 func (p *Plan) ToDocument() map[string]interface{} {
 	doc := map[string]interface{}{
-		"id":         p.ID,
-		"plan_no":    p.PlanNo,
-		"order_id":   p.OrderID,
-		"product_id": p.ProductID,
-		"quantity":   p.Quantity,
-		"status":     p.Status,
-		"created_by": p.CreatedBy,
-		"created_at": p.CreatedAt,
-		"updated_at": p.UpdatedAt,
+		"id":        p.ID,
+		"planNo":    p.PlanNo,
+		"orderId":   p.OrderID,
+		"productId": p.ProductID,
+		"quantity":  p.Quantity,
+		"status":    p.Status,
+		"createdBy": p.CreatedBy,
+		"createdAt": p.CreatedAt,
+		"updatedAt": p.UpdatedAt,
 	}
 
 	if p.ScheduledAt != nil {
-		doc["scheduled_at"] = p.ScheduledAt
+		doc["scheduledAt"] = p.ScheduledAt
 	}
 	if p.CompletedAt != nil {
-		doc["completed_at"] = p.CompletedAt
+		doc["completedAt"] = p.CompletedAt
 	}
 
 	return doc
@@ -147,10 +148,10 @@ func (p *Plan) ToDocument() map[string]interface{} {
 
 // GetIndexName ES 索引名称
 func (p *Plan) GetIndexName() string {
-	return "plans"
+	return "plan"
 }
 
 // GetDocumentID ES 文档 ID
 func (p *Plan) GetDocumentID() string {
-	return string(rune(p.ID))
+	return fmt.Sprintf("%d", p.ID)
 }

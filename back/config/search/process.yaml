@@ -1,5 +1,4 @@
-entityType: process
-indexName: processes
+index: process
 
 queryFields:
   - field: name

@@ -1,5 +1,4 @@
-entityType: material
-indexName: materials
+index: material
 
 # Query字段：全文搜索，算分排序
 queryFields:

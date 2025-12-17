@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"regexp"
 	"time"
 
@@ -15,8 +16,8 @@ type Supplier struct {
 	Phone     string         `gorm:"size:20;index" json:"phone"`
 	Email     string         `gorm:"size:100;index" json:"email"`
 	Address   string         `gorm:"size:200" json:"address"`
-	CreatedAt time.Time      `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	CreatedAt time.Time      `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
@@ -137,19 +138,19 @@ func (s *Supplier) ToDocument() map[string]interface{} {
 		"phone":      s.Phone,
 		"email":      s.Email,
 		"address":    s.Address,
-		"created_at": s.CreatedAt,
-		"updated_at": s.UpdatedAt,
+		"createdAt":  s.CreatedAt,
+		"updatedAt":  s.UpdatedAt,
 	}
 }
 
 // GetIndexName ES 索引名称
 func (s *Supplier) GetIndexName() string {
-	return "suppliers"
+	return "supplier"
 }
 
 // GetDocumentID ES 文档 ID
 func (s *Supplier) GetDocumentID() string {
-	return string(rune(s.ID))
+	return fmt.Sprintf("%d", s.ID)
 }
 
 // isValidEmail 验证邮箱格式

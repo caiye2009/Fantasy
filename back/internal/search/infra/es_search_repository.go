@@ -37,7 +37,7 @@ func (r *ESSearchRepository) Search(
 	esQuery := r.buildESQuery(criteria, config)
 
 	// 2. 执行查询
-	esResponse, err := r.executeSearch(ctx, config.IndexName, esQuery)
+	esResponse, err := r.executeSearch(ctx, config.Index, esQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (r *ESSearchRepository) buildESQuery(
 // executeSearch 执行 ES 查询
 func (r *ESSearchRepository) executeSearch(
 	ctx context.Context,
-	indexName string,
+	index string,
 	esQuery map[string]interface{},
 ) (map[string]interface{}, error) {
 	// 序列化查询
@@ -119,7 +119,7 @@ func (r *ESSearchRepository) executeSearch(
 	// 执行搜索
 	res, err := r.client.Search(
 		r.client.Search.WithContext(ctx),
-		r.client.Search.WithIndex(indexName),
+		r.client.Search.WithIndex(index),
 		r.client.Search.WithBody(&buf),
 		r.client.Search.WithTrackTotalHits(true),
 	)
