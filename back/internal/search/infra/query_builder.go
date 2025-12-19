@@ -105,16 +105,26 @@ func (b *QueryBuilder) buildFilterClauses(filters map[string]interface{}, config
 		// 根据 operator 类型构建子句
 		switch fieldConfig.Operator {
 		case "term":
+			// 对于 text/keyword 类型（在 ES 中是 text + keyword multi-field），term 查询需要使用 .keyword 子字段
+			fieldName := filterField
+			if fieldConfig.Type == "text" || fieldConfig.Type == "keyword" {
+				fieldName = filterField + ".keyword"
+			}
 			clauses = append(clauses, map[string]interface{}{
 				"term": map[string]interface{}{
-					filterField: filterValue,
+					fieldName: filterValue,
 				},
 			})
 
 		case "terms":
+			// 对于 text/keyword 类型（在 ES 中是 text + keyword multi-field），terms 查询需要使用 .keyword 子字段
+			fieldName := filterField
+			if fieldConfig.Type == "text" || fieldConfig.Type == "keyword" {
+				fieldName = filterField + ".keyword"
+			}
 			clauses = append(clauses, map[string]interface{}{
 				"terms": map[string]interface{}{
-					filterField: filterValue,
+					fieldName: filterValue,
 				},
 			})
 

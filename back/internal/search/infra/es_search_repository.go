@@ -116,6 +116,10 @@ func (r *ESSearchRepository) executeSearch(
 		return nil, fmt.Errorf("encode query: %w", err)
 	}
 
+	// 调试：打印 ES 查询
+	queryJSON, _ := json.MarshalIndent(esQuery, "", "  ")
+	fmt.Printf("\n=== ES Query ===\n%s\n================\n", string(queryJSON))
+
 	// 执行搜索
 	res, err := r.client.Search(
 		r.client.Search.WithContext(ctx),
@@ -124,13 +128,18 @@ func (r *ESSearchRepository) executeSearch(
 		r.client.Search.WithTrackTotalHits(true),
 	)
 	if err != nil {
+		fmt.Printf("[ERROR] ES search request failed: %v\n", err)
 		return nil, fmt.Errorf("search request: %w", err)
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return nil, fmt.Errorf("search error: %s", res.String())
+		errorBody := res.String()
+		fmt.Printf("[ERROR] ES returned error (status %s): %s\n", res.Status(), errorBody)
+		return nil, fmt.Errorf("search error: %s", errorBody)
 	}
+
+	fmt.Printf("[DEBUG] ES search succeeded (status %s)\n", res.Status())
 
 	// 解析响应
 	var esResponse map[string]interface{}

@@ -35,8 +35,9 @@ export async function createUserApi(data: {
  * 获取部门列表
  */
 export async function getDepartmentsApi(): Promise<{ departments: string[] }> {
-  const response = await requestClient.get<{ departments: string[] }>('/user/departments');
-  return response.data;
+  const response = await requestClient.get<{ departments: { name: string }[] }>('/user/departments');
+  const departmentNames = response.departments.map(dep => dep.name);
+  return { departments: departmentNames };
 }
 
 /**

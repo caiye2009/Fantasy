@@ -168,8 +168,6 @@ func (s *UserService) Update(ctx context.Context, id uint, req *UpdateUserReques
 			if err := user.Suspend(); err != nil {
 				return err
 			}
-		case domain.UserStatusInactive:
-			user.Status = domain.UserStatusInactive
 		}
 	}
 	

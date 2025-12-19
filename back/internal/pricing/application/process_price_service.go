@@ -161,20 +161,46 @@ func (s *ProcessPriceService) GetMaxPrice(ctx context.Context, processID uint) (
 	return priceData, nil
 }
 
+// GetCurrentPrice 获取当前价格（最新报价）
+func (s *ProcessPriceService) GetCurrentPrice(ctx context.Context, processID uint) (*domain.PriceData, error) {
+	// 获取最新的一条报价
+	prices, err := s.repo.FindHistory(ctx, domain.TargetTypeProcess, processID, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(prices) == 0 {
+		return nil, domain.ErrPriceNotFound
+	}
+
+	// 获取供应商信息
+	supplier, err := s.supplierService.GetSupplierInfo(ctx, prices[0].SupplierID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.PriceData{
+		Price:        prices[0].Price,
+		SupplierID:   prices[0].SupplierID,
+		SupplierName: supplier.Name,
+		QuotedAt:     prices[0].QuotedAt,
+	}, nil
+}
+
 // GetHistory 获取报价历史
 func (s *ProcessPriceService) GetHistory(ctx context.Context, processID uint, limit int) ([]*domain.PriceData, error) {
 	prices, err := s.repo.FindHistory(ctx, domain.TargetTypeProcess, processID, limit)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	result := make([]*domain.PriceData, len(prices))
 	for i, p := range prices {
 		supplier, err := s.supplierService.GetSupplierInfo(ctx, p.SupplierID)
 		if err != nil {
 			return nil, err
 		}
-		
+
 		result[i] = &domain.PriceData{
 			Price:        p.Price,
 			SupplierID:   p.SupplierID,
@@ -182,6 +208,6 @@ func (s *ProcessPriceService) GetHistory(ctx context.Context, processID uint, li
 			QuotedAt:     p.QuotedAt,
 		}
 	}
-	
+
 	return result, nil
 }

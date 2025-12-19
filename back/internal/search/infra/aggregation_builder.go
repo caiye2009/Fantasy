@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"fmt"
 	"strings"
 
 	"back/internal/search/domain"
@@ -29,13 +30,19 @@ func (b *AggregationBuilder) Build(
 	for aggField, aggReq := range aggRequests {
 		aggConfig := config.GetAggField(aggField)
 		if aggConfig == nil {
+			fmt.Printf("[WARN] Aggregation field '%s' not found in config, skipping\n", aggField)
 			continue // 字段不在白名单，忽略
 		}
+
+		fmt.Printf("[DEBUG] Building aggregation for field '%s': type=%s, aggType=%s\n", aggField, aggConfig.Type, aggConfig.AggType)
 
 		// 构建聚合
 		agg := b.buildAggregation(aggField, aggReq, aggConfig, currentFilters, config)
 		if agg != nil {
 			aggregations[aggField] = agg
+			fmt.Printf("[DEBUG] Aggregation '%s' built successfully\n", aggField)
+		} else {
+			fmt.Printf("[WARN] Aggregation '%s' returned nil\n", aggField)
 		}
 	}
 
@@ -113,8 +120,14 @@ func (b *AggregationBuilder) buildTermsAggregation(
 	aggConfig *domain.AggregationFieldConfig,
 	size int,
 ) map[string]interface{} {
+	// 对于 text/keyword 类型（在 ES 中是 text + keyword multi-field），聚合需要使用 .keyword 子字段
+	fieldName := aggField
+	if aggConfig.Type == "text" || aggConfig.Type == "keyword" {
+		fieldName = aggField + ".keyword"
+	}
+
 	termsAgg := map[string]interface{}{
-		"field": aggField,
+		"field": fieldName,
 		"size":  size,
 	}
 
@@ -135,8 +148,14 @@ func (b *AggregationBuilder) buildCompositeAggregation(
 	aggConfig *domain.AggregationFieldConfig,
 	size int,
 ) map[string]interface{} {
+	// 对于 text/keyword 类型（在 ES 中是 text + keyword multi-field），聚合需要使用 .keyword 子字段
+	fieldName := aggField
+	if aggConfig.Type == "text" || aggConfig.Type == "keyword" {
+		fieldName = aggField + ".keyword"
+	}
+
 	termsSource := map[string]interface{}{
-		"field": aggField,
+		"field": fieldName,
 	}
 
 	// 下拉框搜索（正则匹配）

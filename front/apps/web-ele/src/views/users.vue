@@ -16,7 +16,11 @@
       <el-table-column prop="login_id" label="登录ID" width="120" />
       <el-table-column prop="username" label="用户名" width="150" />
       <el-table-column prop="department" label="部门" width="150" />
-      <el-table-column prop="role" label="角色" width="120" />
+      <el-table-column prop="role" label="角色" width="150">
+        <template #default="{ row }">
+          {{ getRoleLabel(row.role) }}
+        </template>
+      </el-table-column>
       <el-table-column prop="email" label="邮箱" width="200" />
       <el-table-column prop="status" label="状态" width="100">
         <template #default="{ row }">
@@ -280,9 +284,13 @@ const updating = ref(false)
 const roleLabels: Record<string, string> = {
   admin: '管理员',
   hr: '人力资源',
-  sales: '销售',
-  follower: '跟单员',
-  assistant: '助理',
+  financeDirector: '财务总监',
+  finance: '财务',
+  productionDirector: '生产总监',
+  productionSpecialist: '生产专员',
+  orderCoordinator: '订单协调员',
+  salesManager: '销售经理',
+  salesAssistant: '销售助理',
   user: '普通用户',
 }
 

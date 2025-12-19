@@ -126,6 +126,7 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
     "axios": "catalog:",
+    "echarts": "catalog:",
     "element-plus": "catalog:"
   }
 }

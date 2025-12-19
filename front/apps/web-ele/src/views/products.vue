@@ -8,47 +8,113 @@
       @bulkAction="handleBulkAction"
     />
 
-    <!-- 详情/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="600px"
+      width="900px"
       @close="handleDialogClose"
     >
-      <el-form :model="currentRow" label-width="100px">
-        <el-form-item label="ID">
-          <el-input v-model="currentRow.id" disabled />
+      <el-form
+        ref="formRef"
+        :model="formData"
+        :rules="formRules"
+        label-width="120px"
+      >
+        <el-form-item label="产品名称" prop="name">
+          <el-input
+            v-model="formData.name"
+            :disabled="dialogMode === 'view'"
+          />
         </el-form-item>
 
-        <el-form-item label="产品名称">
-          <el-input v-model="currentRow.name" :disabled="dialogMode === 'view'" />
+        <!-- 原料配置 -->
+        <el-form-item label="原料配置" prop="materials">
+          <el-button
+            v-if="dialogMode !== 'view'"
+            size="small"
+            type="primary"
+            @click="addMaterial"
+            style="margin-bottom: 8px"
+          >
+            添加原料
+          </el-button>
+
+          <el-table :data="formData.materials" border>
+            <el-table-column label="原料">
+              <template #default="{ row }">
+                <el-select
+                  v-model="row.material_id"
+                  :disabled="dialogMode === 'view'"
+                  filterable
+                  placeholder="选择原料"
+                  @visible-change="onMaterialSelectVisible"
+                >
+                  <el-option
+                    v-for="m in materialsList"
+                    :key="m.id"
+                    :label="m.name"
+                    :value="m.id"
+                  />
+                </el-select>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="占比 %">
+              <template #default="{ row }">
+                <el-input-number
+                  v-model="row.ratioPercent"
+                  :disabled="dialogMode === 'view'"
+                  :min="0"
+                  :max="100"
+                />
+              </template>
+            </el-table-column>
+
+            <el-table-column v-if="dialogMode !== 'view'" label="操作">
+              <template #default="{ $index }">
+                <el-button
+                  type="danger"
+                  size="small"
+                  @click="removeMaterial($index)"
+                >
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <div
+            class="ratio-summary"
+            :class="{ error: totalRatio !== 100 && formData.materials.length }"
+          >
+            总占比：{{ totalRatio }}%
+          </div>
         </el-form-item>
 
-        <el-form-item label="状态">
-          <el-select v-model="currentRow.status" :disabled="dialogMode === 'view'">
-            <el-option :label="'启用'" :value="'enabled'" />
-            <el-option :label="'禁用'" :value="'disabled'" />
+        <!-- 工艺配置 -->
+        <el-form-item label="工艺配置" prop="processes">
+          <el-select
+            v-model="selectedProcessIds"
+            multiple
+            filterable
+            placeholder="选择工艺"
+            :disabled="dialogMode === 'view'"
+            @visible-change="onProcessSelectVisible"
+            @change="onProcessChange"
+          >
+            <el-option
+              v-for="p in processesList"
+              :key="p.id"
+              :label="p.name"
+              :value="p.id"
+            />
           </el-select>
-        </el-form-item>
-
-        <el-form-item label="创建时间" v-if="currentRow.createdAt">
-          <el-input
-            :value="new Date(currentRow.createdAt).toLocaleString('zh-CN')"
-            disabled
-          />
-        </el-form-item>
-
-        <el-form-item label="更新时间" v-if="currentRow.updatedAt">
-          <el-input
-            :value="new Date(currentRow.updatedAt).toLocaleString('zh-CN')"
-            disabled
-          />
         </el-form-item>
       </el-form>
 
-      <template #footer v-if="dialogMode === 'edit'">
+      <template #footer v-if="dialogMode !== 'view'">
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave" :loading="saving">
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">
           保存
         </el-button>
       </template>
@@ -58,200 +124,194 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import DataTable from '#/components/Table/index.vue'
 import { elasticsearchService } from '#/api/core/es'
-
-import type {
-  PageConfig,
-  ColumnConfig,
-  FilterConfig,
-  BulkAction,
-} from '#/components/Table/types'
-
-// 复用 useDataTable 的 searchLoading
+import { createProductApi, updateProductApi } from '#/api/core/product'
 import { useDataTable } from '#/composables/useDataTable'
+
+/* ================= 基础 ================= */
+
 const { searchLoading } = useDataTable('product', 20)
 
-// 配置
-const pageConfig: PageConfig = {
+const pageConfig = {
   pageType: 'product',
   title: '产品管理',
   index: 'product',
-  pageSize: 20,
-  columns: [
-    { key: 'id', label: 'ID', width: 80, visible: true, sortable: true, order: 0 },
-    { key: 'name', label: '产品名称', width: 200, visible: true, sortable: true, order: 1 },
-    { key: 'status', label: '状态', width: 120, visible: true, order: 2 },
-    {
-      key: 'createdAt',
-      label: '创建时间',
-      width: 180,
-      visible: true,
-      sortable: true,
-      order: 3,
-      formatter: (value: string) => value ? new Date(value).toLocaleString('zh-CN') : '-'
-    },
-    {
-      key: 'updatedAt',
-      label: '更新时间',
-      width: 180,
-      visible: false,
-      sortable: true,
-      order: 4,
-      formatter: (value: string) => value ? new Date(value).toLocaleString('zh-CN') : '-'
-    }
-  ] as ColumnConfig[],
-  filters: [
-    { key: 'name', label: '产品名称', type: 'text', placeholder: '请输入产品名称' },
-  ] as FilterConfig[],
-  bulkActions: [
-    { key: 'delete', label: '批量删除', type: 'danger', confirm: true, confirmMessage: '确定要删除选中的产品吗？此操作不可恢复！' },
-    { key: 'export', label: '导出数据', type: 'primary' },
-  ] as BulkAction[],
+  rowKey: 'id',
+  actions: ['view', 'edit', 'create'],
 }
 
-// dialog 状态
-const dialogVisible = ref(false)
-const dialogMode = ref<'view' | 'edit'>('view')
-const currentRow = ref<any>({})
-const saving = ref(false)
+/* ================= Dialog ================= */
 
-// 动态标题
+const dialogVisible = ref(false)
+const dialogMode = ref<'create' | 'edit' | 'view'>('view')
 const dialogTitle = computed(() =>
-  dialogMode.value === 'view' ? '查看产品' : '编辑产品'
+  dialogMode.value === 'create'
+    ? '新建产品'
+    : dialogMode.value === 'edit'
+    ? '编辑产品'
+    : '查看产品'
 )
 
-// 查看
-const handleView = (row: any) => {
-  dialogMode.value = 'view'
-  currentRow.value = { ...row }
-  dialogVisible.value = true
+const submitting = ref(false)
+const formRef = ref<FormInstance>()
+
+/* ================= 数据 ================= */
+
+const formData = ref({
+  name: '',
+  materials: [] as { material_id: number; ratioPercent: number }[],
+  processes: [] as { process_id: number }[],
+})
+
+const selectedProcessIds = ref<number[]>([])
+
+/* ================= 校验 ================= */
+
+const totalRatio = computed(() =>
+  formData.value.materials.reduce((s, m) => s + (m.ratioPercent || 0), 0)
+)
+
+const formRules: FormRules = {
+  name: [{ required: true, message: '请输入产品名称' }],
+  materials: [
+    {
+      validator: (_, __, cb) => {
+        if (!formData.value.materials.length) {
+          cb(new Error('至少一个原料'))
+        } else if (totalRatio.value !== 100) {
+          cb(new Error('原料占比必须等于100%'))
+        } else cb()
+      },
+    },
+  ],
 }
 
-// 编辑
-const handleEdit = (row: any) => {
+/* ================= 懒加载（关键） ================= */
+
+const materialsList = ref<any[]>([])
+const processesList = ref<any[]>([])
+
+const materialsLoaded = ref(false)
+const processesLoaded = ref(false)
+
+const loadMaterials = async () => {
+  if (materialsLoaded.value) return
+  const res = await elasticsearchService.search({
+    index: 'material',
+    pagination: { offset: 0, size: 1000 },
+  })
+  materialsList.value = res.items || []
+  materialsLoaded.value = true
+}
+
+const loadProcesses = async () => {
+  if (processesLoaded.value) return
+  const res = await elasticsearchService.search({
+    index: 'process',
+    pagination: { offset: 0, size: 1000 },
+  })
+  processesList.value = res.items || []
+  processesLoaded.value = true
+}
+
+const onMaterialSelectVisible = (visible: boolean) => {
+  if (visible) loadMaterials()
+}
+
+const onProcessSelectVisible = (visible: boolean) => {
+  if (visible) loadProcesses()
+}
+
+/* ================= 行为 ================= */
+
+const addMaterial = () => {
+  formData.value.materials.push({ material_id: 0, ratioPercent: 0 })
+}
+
+const removeMaterial = (i: number) => {
+  formData.value.materials.splice(i, 1)
+}
+
+const onProcessChange = (ids: number[]) => {
+  formData.value.processes = ids.map(id => ({ process_id: id }))
+}
+
+const handleCreate = async () => {
+  dialogMode.value = 'create'
+  dialogVisible.value = true
+  await Promise.all([loadMaterials(), loadProcesses()])
+}
+
+const handleEdit = async (row: any) => {
   dialogMode.value = 'edit'
-  currentRow.value = { ...row }
+  formData.value = {
+    name: row.name,
+    materials: row.materials.map((m: any) => ({
+      material_id: m.material_id,
+      ratioPercent: m.ratio * 100,
+    })),
+    processes: row.processes,
+  }
+  selectedProcessIds.value = row.processes.map((p: any) => p.process_id)
   dialogVisible.value = true
+  await Promise.all([loadMaterials(), loadProcesses()])
 }
 
-// 保存
-const handleSave = async () => {
-  if (!currentRow.value._id) {
-    ElMessage.error('缺少必要的 ID 信息')
-    return
+const handleView = async (row: any) => {
+  dialogMode.value = 'view'
+  await handleEdit(row)
+}
+
+/* ================= 提交 ================= */
+
+const handleSubmit = async () => {
+  await formRef.value?.validate()
+  submitting.value = true
+
+  const payload = {
+    name: formData.value.name,
+    materials: formData.value.materials.map(m => ({
+      material_id: m.material_id,
+      ratio: m.ratioPercent / 100,
+    })),
+    processes: formData.value.processes,
   }
 
-  saving.value = true
   try {
-    const { _id, createdAt, updatedAt, ...updateData } = currentRow.value
+    dialogMode.value === 'create'
+      ? await createProductApi(payload)
+      : await updateProductApi(payload)
 
-    await elasticsearchService.update(_id, 'products', updateData)
     ElMessage.success('保存成功')
-
     dialogVisible.value = false
-    window.location.reload()
-  } catch (error) {
-    console.error('保存出错:', error)
+    location.reload()
   } finally {
-    saving.value = false
+    submitting.value = false
   }
 }
 
-// 批量操作入口
-const handleBulkAction = async ({
-  action,
-  rows,
-}: {
-  action: string
-  rows: any[]
-}) => {
-  if (rows.length === 0) return ElMessage.warning('请先选择数据')
+/* ================= 批量 ================= */
 
-  const ids = rows.map(r => r._id).filter(Boolean)
-  if (ids.length === 0) return ElMessage.error('选中数据缺少 _id')
-
-  switch (action) {
-    case 'delete':
-      await handleBulkDelete(ids)
-      break
-    case 'export':
-      await handleExport(rows)
-      break
-    default:
-      ElMessage.warning(`未知操作：${action}`)
-  }
+const handleBulkAction = ({ action }: any) => {
+  if (action === 'create') handleCreate()
 }
 
-// 批量删除
-const handleBulkDelete = async (ids: string[]) => {
-  try {
-    const result = await elasticsearchService.bulkDelete(ids, 'products')
-
-    if (result.success) {
-      ElMessage.success(`成功删除 ${result.successCount} 条数据`)
-      if (result.failedCount > 0) {
-        ElMessage.warning(`${result.failedCount} 条数据删除失败`)
-      }
-      setTimeout(() => window.location.reload(), 400)
-    }
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-// 导出
-const handleExport = async (rows: any[]) => {
-  try {
-    const data = rows.map(({ _id, ...rest }) => rest)
-    const headers = Object.keys(data[0] || {})
-
-    const csvContent = [
-      headers.join(','),
-      ...data.map(row =>
-        headers.map(h => JSON.stringify(row[h] || '')).join(',')
-      ),
-    ].join('\n')
-
-    const blob = new Blob(['\ufeff' + csvContent], {
-      type: 'text/csv;charset=utf-8;',
-    })
-
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `product_${Date.now()}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-
-    ElMessage.success('导出成功')
-  } catch (e) {
-    console.error(e)
-    ElMessage.error('导出失败')
-  }
-}
+/* ================= reset ================= */
 
 const handleDialogClose = () => {
-  currentRow.value = {}
-  saving.value = false
+  formRef.value?.clearValidate()
+  formData.value = { name: '', materials: [], processes: [] }
+  selectedProcessIds.value = []
 }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .product-management {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: #f5f7fa;
-  overflow: hidden;
-
-  :deep(.data-table-container) {
-    flex: 1;
-    margin: 20px;
-    overflow: hidden;
-  }
+  height: 100%;
+}
+.ratio-summary.error {
+  color: #f56c6c;
 }
 </style>

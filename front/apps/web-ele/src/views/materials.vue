@@ -172,6 +172,12 @@
         />
       </div>
 
+      <!-- 价格趋势图 -->
+      <div class="detail-section" v-if="priceHistory.length > 0">
+        <h3 class="section-title">价格趋势</h3>
+        <div ref="priceChartRef" class="price-chart"></div>
+      </div>
+
       <!-- 库存信息 -->
       <div class="detail-section">
         <h3 class="section-title">库存信息</h3>
@@ -192,8 +198,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import * as echarts from 'echarts'
+import type { EChartsOption } from 'echarts'
 import DataTable from '#/components/Table/index.vue'
 import { elasticsearchService } from '#/api/core/es'
 import {
@@ -339,10 +347,90 @@ const detailDialogVisible = ref(false)
 const materialDetail = ref<any>({})
 const priceHistory = ref<PriceData[]>([])
 const loadingPriceHistory = ref(false)
+const priceChartRef = ref<HTMLElement>()
 
 // 格式化日期
 const formatDate = (date: string) => {
   return date ? new Date(date).toLocaleString('zh-CN') : '-'
+}
+
+// 渲染价格趋势图
+const renderPriceChart = () => {
+  if (!priceChartRef.value || priceHistory.value.length === 0) return
+
+  const chart = echarts.init(priceChartRef.value)
+
+  // 按时间排序（从旧到新）
+  const sortedHistory = [...priceHistory.value].sort((a, b) =>
+    new Date(a.quoted_at).getTime() - new Date(b.quoted_at).getTime()
+  )
+
+  const option: EChartsOption = {
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params: any) => {
+        const data = params[0]
+        return `${data.name}<br/>价格: ¥${data.value.toFixed(2)}`
+      }
+    },
+    xAxis: {
+      type: 'category',
+      data: sortedHistory.map(item => formatDate(item.quoted_at)),
+      axisLabel: {
+        rotate: 45,
+        interval: 0,
+        fontSize: 10
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: '价格（元）',
+      axisLabel: {
+        formatter: '¥{value}'
+      }
+    },
+    series: [
+      {
+        name: '价格',
+        type: 'line',
+        data: sortedHistory.map(item => item.price),
+        smooth: true,
+        itemStyle: {
+          color: '#409eff'
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              {
+                offset: 0,
+                color: 'rgba(64, 158, 255, 0.3)'
+              },
+              {
+                offset: 1,
+                color: 'rgba(64, 158, 255, 0.05)'
+              }
+            ]
+          }
+        }
+      }
+    ],
+    grid: {
+      left: '10%',
+      right: '5%',
+      bottom: '15%',
+      top: '10%'
+    }
+  }
+
+  chart.setOption(option)
+
+  // 响应式调整
+  window.addEventListener('resize', () => chart.resize())
 }
 
 // 加载供应商列表
@@ -365,6 +453,9 @@ const handleViewDetail = async (row: any) => {
     loadingPriceHistory.value = true
     try {
       priceHistory.value = await getMaterialPriceHistoryApi(row.id)
+      // 等待DOM更新后渲染图表
+      await nextTick()
+      renderPriceChart()
     } catch (error) {
       console.error('加载报价历史失败:', error)
       priceHistory.value = []
@@ -452,6 +543,9 @@ const handleQuoteSubmit = async () => {
         priceHistory.value = await getMaterialPriceHistoryApi(
           materialDetail.value.id
         )
+        // 刷新图表
+        await nextTick()
+        renderPriceChart()
       } catch (error) {
         console.error('刷新报价历史失败:', error)
       } finally {
@@ -618,6 +712,11 @@ const handleDetailDialogClose = () => {
     font-size: 16px;
     font-weight: 600;
     color: #303133;
+  }
+
+  .price-chart {
+    width: 100%;
+    height: 350px;
   }
 }
 </style>

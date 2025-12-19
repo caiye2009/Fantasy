@@ -1,19 +1,40 @@
 <template>
-  <el-dialog :visible.sync="dialogVisible" title="这是一个Modal">
-    <p>这里是Modal内容</p>
-    <span slot="footer" class="dialog-footer">
-      <el-button @click="dialogVisible = false">取消</el-button>
-      <el-button type="primary" @click="dialogVisible = false">确认</el-button>
-    </span>
+  <el-dialog
+    v-model="visible"
+    :title="title"
+    width="400px"
+  >
+    <slot>
+      <p>这里是 Modal 内容</p>
+    </slot>
+
+    <template #footer>
+      <el-button @click="visible = false">取消</el-button>
+      <el-button type="primary" @click="handleConfirm">确认</el-button>
+    </template>
   </el-dialog>
 </template>
 
-<script setup>
-import { ref } from 'vue';
+<script setup lang="ts">
+import { computed } from 'vue'
 
-const dialogVisible = ref(false);
+const props = defineProps<{
+  modelValue: boolean
+  title?: string
+}>()
 
-const openModal = () => {
-  dialogVisible.value = true;
-};
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: boolean): void
+  (e: 'confirm'): void
+}>()
+
+const visible = computed({
+  get: () => props.modelValue,
+  set: (val: boolean) => emit('update:modelValue', val),
+})
+
+const handleConfirm = () => {
+  emit('confirm')
+  visible.value = false
+}
 </script>

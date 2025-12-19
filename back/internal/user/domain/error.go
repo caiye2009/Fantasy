@@ -17,6 +17,7 @@ var (
 	ErrCurrentPasswordIncorrect  = errors.New("current password is incorrect")
 	ErrUserAlreadyActive         = errors.New("user is already active")
 	ErrUserAlreadySuspended      = errors.New("user is already suspended")
+	ErrUserStatusInvalid         = errors.New("invalid user status")
 	ErrCannotDeleteAdmin         = errors.New("cannot delete admin user")
 	ErrInvalidRole               = errors.New("invalid user role")
 

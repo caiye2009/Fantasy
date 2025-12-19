@@ -13,15 +13,21 @@ import (
 
 // ProductHandler 产品 Handler
 type ProductHandler struct {
-	service    *application.ProductService
-	calculator *application.CostCalculator
+	service      *application.ProductService
+	calculator   *application.CostCalculator
+	priceService *application.ProductPriceService
 }
 
 // NewProductHandler 创建 Handler
-func NewProductHandler(service *application.ProductService, calculator *application.CostCalculator) *ProductHandler {
+func NewProductHandler(
+	service *application.ProductService,
+	calculator *application.CostCalculator,
+	priceService *application.ProductPriceService,
+) *ProductHandler {
 	return &ProductHandler{
-		service:    service,
-		calculator: calculator,
+		service:      service,
+		calculator:   calculator,
+		priceService: priceService,
 	}
 }
 
@@ -166,7 +172,7 @@ func (h *ProductHandler) CalculateCost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	result, err := h.calculator.Calculate(c.Request.Context(), &req)
 	if err != nil {
 		if errors.Is(err, domain.ErrProductNotFound) {
@@ -176,16 +182,50 @@ func (h *ProductHandler) CalculateCost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
+
+	c.JSON(http.StatusOK, result)
+}
+
+// GetPrice 获取产品价格
+// @Summary      获取产品价格
+// @Description  获取产品的当前价、历史最高价和历史最低价
+// @Tags         产品管理
+// @Accept       json
+// @Produce      json
+// @Param        id path int true "产品ID"
+// @Success      200 {object} application.ProductPriceResponse "价格信息"
+// @Failure      404 {object} map[string]string "产品不存在"
+// @Failure      500 {object} map[string]string "服务器错误"
+// @Security     Bearer
+// @Router       /product/{id}/price [get]
+func (h *ProductHandler) GetPrice(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	result, err := h.priceService.GetPrice(c.Request.Context(), uint(id))
+	if err != nil {
+		if errors.Is(err, domain.ErrProductNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "产品不存在"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, result)
 }
 
 // RegisterProductHandlers 注册路由
-func RegisterProductHandlers(rg *gin.RouterGroup, service *application.ProductService, calculator *application.CostCalculator) {
-	handler := NewProductHandler(service, calculator)
+func RegisterProductHandlers(
+	rg *gin.RouterGroup,
+	service *application.ProductService,
+	calculator *application.CostCalculator,
+	priceService *application.ProductPriceService,
+) {
+	handler := NewProductHandler(service, calculator, priceService)
 
 	rg.POST("/product", handler.Create)
 	rg.GET("/product/:id", handler.Get)
+	rg.GET("/product/:id/price", handler.GetPrice)
 	// List 接口已移除，使用 POST /search 替代
 	rg.POST("/product/:id", handler.Update)
 	rg.DELETE("/product/:id", handler.Delete)

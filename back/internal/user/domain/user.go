@@ -2,36 +2,42 @@ package domain
 
 import (
 	"time"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // 用户角色常量
 const (
-	UserRoleAdmin     = "admin"     // 管理员
-	UserRoleHR        = "hr"        // 人力资源
-	UserRoleSales     = "sales"     // 销售
-	UserRoleFollower  = "follower"  // 跟单员
-	UserRoleAssistant = "assistant" // 助理
-	UserRoleUser      = "user"      // 普通用户
+	RoleAdmin                = "admin"                // 管理员
+	RoleHR                   = "hr"                   // 人力资源
+	RoleFinanceDirector      = "financeDirector"      // 财务总监
+	RoleFinance              = "finance"              // 财务
+	RoleProductionDirector   = "productionDirector"   // 生产总监
+	RoleProductionSpecialist = "productionSpecialist" // 生产专员
+	RoleOrderCoordinator     = "orderCoordinator"     // 订单协调员
+	RoleSalesManager         = "salesManager"         // 销售经理
+	RoleSalesAssistant       = "salesAssistant"       // 销售助理
 )
 
-// GetAllRoles 获取所有角色（统一维护角色列表）
+// 获取所有角色
 func GetAllRoles() []string {
 	return []string{
-		UserRoleAdmin,
-		UserRoleHR,
-		UserRoleSales,
-		UserRoleFollower,
-		UserRoleAssistant,
-		UserRoleUser,
+		RoleAdmin,
+		RoleHR,
+		RoleFinanceDirector,
+		RoleFinance,
+		RoleProductionDirector,
+		RoleProductionSpecialist,
+		RoleOrderCoordinator,
+		RoleSalesManager,
+		RoleSalesAssistant,
 	}
 }
 
-// IsValidRole 验证角色是否有效
+// 验证角色是否有效
 func IsValidRole(role string) bool {
-	for _, validRole := range GetAllRoles() {
-		if validRole == role {
+	for _, r := range GetAllRoles() {
+		if r == role {
 			return true
 		}
 	}
@@ -40,12 +46,11 @@ func IsValidRole(role string) bool {
 
 // 用户状态常量
 const (
-	UserStatusActive    = "active"    // 激活
-	UserStatusInactive  = "inactive"  // 未激活
+	UserStatusActive    = "active"    // 在职
 	UserStatusSuspended = "suspended" // 停用
 )
 
-// User 用户聚合根
+// User 聚合根
 type User struct {
 	ID           uint           `gorm:"primaryKey" json:"id"`
 	LoginID      string         `gorm:"size:50;not null;uniqueIndex" json:"login_id"`
@@ -71,23 +76,23 @@ func (u *User) Validate() error {
 	if u.LoginID == "" {
 		return ErrLoginIDEmpty
 	}
-	
+
 	if len(u.LoginID) < 4 || len(u.LoginID) > 20 {
 		return ErrLoginIDInvalid
 	}
-	
+
 	if u.Username == "" {
 		return ErrUsernameEmpty
 	}
-	
+
 	if len(u.Username) < 2 || len(u.Username) > 50 {
 		return ErrUsernameInvalid
 	}
-	
+
 	if u.PasswordHash == "" {
 		return ErrPasswordRequired
 	}
-	
+
 	return nil
 }
 
@@ -98,7 +103,7 @@ func (u *User) SetDefaultPassword() error {
 	if err != nil {
 		return err
 	}
-	
+
 	u.PasswordHash = string(hashedPassword)
 	u.HasInitPass = true
 	return nil
@@ -106,31 +111,27 @@ func (u *User) SetDefaultPassword() error {
 
 // ChangePassword 修改密码
 func (u *User) ChangePassword(currentPassword, newPassword string) error {
-	// 1. 如果不是初始密码，需要验证当前密码
 	if !u.HasInitPass {
 		if currentPassword == "" {
 			return ErrCurrentPasswordRequired
 		}
-		
+
 		if err := u.ValidatePassword(currentPassword); err != nil {
 			return ErrCurrentPasswordIncorrect
 		}
 	}
-	
-	// 2. 验证新密码长度
+
 	if len(newPassword) < 6 {
 		return ErrPasswordTooShort
 	}
-	
-	// 3. 生成新密码哈希
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
-	
+
 	u.PasswordHash = string(hashedPassword)
 	u.HasInitPass = false
-	
 	return nil
 }
 
@@ -168,11 +169,10 @@ func (u *User) UpdateDepartment(newDepartment string) error {
 
 // UpdateEmail 更新邮箱
 func (u *User) UpdateEmail(newEmail string) error {
-	// 简单的邮箱格式验证（实际应该用正则）
 	if newEmail != "" && len(newEmail) < 5 {
 		return ErrEmailInvalid
 	}
-	
+
 	u.Email = newEmail
 	return nil
 }
@@ -191,7 +191,7 @@ func (u *User) Activate() error {
 	if u.Status == UserStatusActive {
 		return ErrUserAlreadyActive
 	}
-	
+
 	u.Status = UserStatusActive
 	return nil
 }
@@ -201,7 +201,7 @@ func (u *User) Suspend() error {
 	if u.Status == UserStatusSuspended {
 		return ErrUserAlreadySuspended
 	}
-	
+
 	u.Status = UserStatusSuspended
 	return nil
 }
@@ -213,6 +213,5 @@ func (u *User) IsActive() bool {
 
 // CanDelete 是否可以删除
 func (u *User) CanDelete() bool {
-	// 管理员不能删除（可以根据业务规则调整）
-	return u.Role != UserRoleAdmin
+	return u.Role != RoleAdmin
 }

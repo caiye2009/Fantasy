@@ -59,7 +59,7 @@ func InitRoutes(authWang *auth.AuthWang, services *Services) *gin.Engine {
 		processInterfaces.RegisterProcessHandlers(protected, services.Process)
 		pricingInterfaces.RegisterMaterialPriceHandlers(protected, services.MaterialPrice)
 		pricingInterfaces.RegisterProcessPriceHandlers(protected, services.ProcessPrice)
-		productInterfaces.RegisterProductHandlers(protected, services.Product, services.ProductCostCalculator)
+		productInterfaces.RegisterProductHandlers(protected, services.Product, services.ProductCostCalculator, services.ProductPrice)
 		planInterfaces.RegisterPlanHandlers(protected, services.Plan)
 		orderInterfaces.RegisterOrderHandlers(protected, services.Order)
 		searchInterfaces.RegisterSearchHandlers(protected, services.Search)

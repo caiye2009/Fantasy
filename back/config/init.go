@@ -95,7 +95,7 @@ func InitAdminUser(db *gorm.DB) {
 		Username:     "admin",
 		PasswordHash: string(hash),
 		Email:        "admin@example.com",
-		Role:         userDomain.UserRoleAdmin,
+		Role:         userDomain.RoleAdmin,
 		Status:       userDomain.UserStatusActive,
 		HasInitPass:  false,
 	}

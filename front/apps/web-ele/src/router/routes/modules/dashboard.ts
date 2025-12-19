@@ -31,6 +31,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    name: 'Products',
+    path: '/products',
+    component: () => import('#/views/products.vue'),
+    meta: {
+      icon: 'lucide:package',
+      title: $t('page.dashboard.products'),
+    },
+  },
+  {
     name: 'Clients',
     path: '/clients',
     component: () => import('#/views/clients.vue'),
@@ -70,6 +79,15 @@ const routes: RouteRecordRaw[] = [
     name: 'Orders',
     path: '/orders',
     component: () => import('#/views/orders.vue'),
+    meta: {
+      icon: 'lucide:users',
+      title: $t('page.dashboard.orders'),
+    },
+  },
+  {
+    name: 'Test',
+    path: '/test',
+    component: () => import('#/views/test.vue'),
     meta: {
       icon: 'lucide:users',
       title: $t('page.dashboard.orders'),

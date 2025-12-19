@@ -77,6 +77,7 @@ type Services struct {
 	// Product
 	Product               *productApp.ProductService
 	ProductCostCalculator *productApp.CostCalculator
+	ProductPrice          *productApp.ProductPriceService
 
 	// Plan & Order
 	Plan  *planApp.PlanService
@@ -151,6 +152,12 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 		processPriceService,
 	)
 
+	productPriceService := productApp.NewProductPriceService(
+		productRepo,
+		materialPriceService,
+		processPriceService,
+	)
+
 	// ========== Plan ==========
 	planRepo := planInfra.NewPlanRepo(db)
 	planService := planApp.NewPlanService(planRepo, esSync)
@@ -180,6 +187,7 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 		ProcessPrice:          processPriceService,
 		Product:               productService,
 		ProductCostCalculator: productCostCalculator,
+		ProductPrice:          productPriceService,
 		Plan:                  planService,
 		Order:                 orderService,
 		Search:                searchService,

@@ -24,14 +24,22 @@ func NewSearchService(registry *infra.DomainAwareRegistry, repo domain.SearchRep
 
 // Search 执行搜索
 func (s *SearchService) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+	fmt.Printf("\n=== Search Request ===\nIndex: %s\nAggRequests: %+v\n==================\n", req.Index, req.AggRequests)
+
 	// 1. 加载配置（通过索引名查找配置）
 	config, ok := s.registry.GetConfigByIndex(req.Index)
 	if !ok {
 		return nil, fmt.Errorf("unsupported index: %s", req.Index)
 	}
 
+	fmt.Printf("[DEBUG] Config loaded for index '%s': %d aggregation fields configured\n", req.Index, len(config.AggregationFields))
+	for _, af := range config.AggregationFields {
+		fmt.Printf("  - %s (aggType: %s, size: %d)\n", af.Field, af.AggType, af.Size)
+	}
+
 	// 2. 验证请求参数
 	if err := s.validateRequest(config, req); err != nil {
+		fmt.Printf("[ERROR] Validation failed: %v\n", err)
 		return nil, err
 	}
 
