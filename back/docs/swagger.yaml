@@ -201,6 +201,18 @@ definitions:
     type: object
   application.CreateMaterialRequest:
     properties:
+      category:
+        description: 分类
+        maxLength: 50
+        type: string
+      code:
+        description: 原料编号（可选，不填自动生成）
+        maxLength: 50
+        type: string
+      currentPrice:
+        description: 当前价格
+        minimum: 0
+        type: number
       description:
         type: string
       name:
@@ -264,6 +276,10 @@ definitions:
     type: object
   application.CreateProcessRequest:
     properties:
+      currentPrice:
+        description: 当前价格
+        minimum: 0
+        type: number
       description:
         type: string
       name:
@@ -442,8 +458,14 @@ definitions:
     type: object
   application.MaterialResponse:
     properties:
-      created_at:
+      category:
         type: string
+      code:
+        type: string
+      createdAt:
+        type: string
+      currentPrice:
+        type: number
       description:
         type: string
       id:
@@ -452,9 +474,11 @@ definitions:
         type: string
       spec:
         type: string
+      status:
+        type: string
       unit:
         type: string
-      updated_at:
+      updatedAt:
         type: string
     type: object
   application.MeterDimensionResponse:
@@ -555,16 +579,27 @@ definitions:
     type: object
   application.ProcessResponse:
     properties:
-      created_at:
+      createdAt:
         type: string
+      currentPrice:
+        type: number
       description:
         type: string
       id:
         type: integer
       name:
         type: string
-      updated_at:
+      updatedAt:
         type: string
+    type: object
+  application.ProductPriceResponse:
+    properties:
+      current_price:
+        type: number
+      historical_high:
+        type: number
+      historical_low:
+        type: number
     type: object
   application.ProductResponse:
     properties:
@@ -848,6 +883,15 @@ definitions:
     type: object
   application.UpdateMaterialRequest:
     properties:
+      category:
+        maxLength: 50
+        type: string
+      code:
+        maxLength: 50
+        type: string
+      currentPrice:
+        minimum: 0
+        type: number
       description:
         type: string
       name:
@@ -893,6 +937,9 @@ definitions:
     type: object
   application.UpdateProcessRequest:
     properties:
+      currentPrice:
+        minimum: 0
+        type: number
       description:
         type: string
       name:
@@ -2284,6 +2331,41 @@ paths:
       security:
       - Bearer: []
       summary: 更新产品信息
+      tags:
+      - 产品管理
+  /product/{id}/price:
+    get:
+      consumes:
+      - application/json
+      description: 获取产品的当前价、历史最高价和历史最低价
+      parameters:
+      - description: 产品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 价格信息
+          schema:
+            $ref: '#/definitions/application.ProductPriceResponse'
+        "404":
+          description: 产品不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取产品价格
       tags:
       - 产品管理
   /product/calculate-cost:

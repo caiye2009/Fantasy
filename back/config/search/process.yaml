@@ -13,6 +13,9 @@ filterFields:
   - field: name
     type: text
     operator: match
+  - field: currentPrice
+    type: numeric
+    operator: range
   - field: createdAt
     type: date
     operator: range
@@ -20,4 +23,8 @@ filterFields:
     type: date
     operator: range
 
-aggregationFields: []
+aggregationFields:
+  - field: currentPrice
+    type: numeric
+    aggType: stats
+    excludeSelf: false

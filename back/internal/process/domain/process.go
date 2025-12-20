@@ -9,12 +9,13 @@ import (
 
 // Process 工序聚合根
 type Process struct {
-	ID          uint           `gorm:"primaryKey" json:"id"`
-	Name        string         `gorm:"size:100;not null;index" json:"name"`
-	Description string         `gorm:"type:text" json:"description"`
-	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"createdAt"`
-	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+	ID           uint           `gorm:"primaryKey" json:"id"`
+	Name         string         `gorm:"size:100;not null;index" json:"name"`
+	Description  string         `gorm:"type:text" json:"description"`
+	CurrentPrice float64        `gorm:"type:decimal(10,2);column:current_price;default:0" json:"currentPrice"` // 当前价格
+	CreatedAt    time.Time      `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt    time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 // TableName 表名
@@ -50,11 +51,12 @@ func (p *Process) UpdateName(newName string) error {
 // ToDocument 转换为 ES 文档
 func (p *Process) ToDocument() map[string]interface{} {
 	return map[string]interface{}{
-		"id":          p.ID,
-		"name":        p.Name,
-		"description": p.Description,
-		"createdAt":   p.CreatedAt,
-		"updatedAt":   p.UpdatedAt,
+		"id":           p.ID,
+		"name":         p.Name,
+		"description":  p.Description,
+		"currentPrice": p.CurrentPrice,
+		"createdAt":    p.CreatedAt,
+		"updatedAt":    p.UpdatedAt,
 	}
 }
 

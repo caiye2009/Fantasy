@@ -33,10 +33,14 @@ func NewMaterialService(repo *infra.MaterialRepo, esSync ESSync) *MaterialServic
 func (s *MaterialService) Create(ctx context.Context, req *CreateMaterialRequest) (*MaterialResponse, error) {
 	// 1. DTO → Domain Model
 	material := &domain.Material{
-		Name:        req.Name,
-		Spec:        req.Spec,
-		Unit:        req.Unit,
-		Description: req.Description,
+		Code:         req.Code,
+		Name:         req.Name,
+		Spec:         req.Spec,
+		Unit:         req.Unit,
+		Category:     req.Category,
+		CurrentPrice: req.CurrentPrice,
+		Status:       "active",
+		Description:  req.Description,
 	}
 
 	// 2. 领域验证
@@ -55,15 +59,24 @@ func (s *MaterialService) Create(ctx context.Context, req *CreateMaterialRequest
 	}
 
 	// 5. Domain Model → DTO
+	return toMaterialResponse(material), nil
+}
+
+// toMaterialResponse 领域模型转DTO
+func toMaterialResponse(m *domain.Material) *MaterialResponse {
 	return &MaterialResponse{
-		ID:          material.ID,
-		Name:        material.Name,
-		Spec:        material.Spec,
-		Unit:        material.Unit,
-		Description: material.Description,
-		CreatedAt:   material.CreatedAt,
-		UpdatedAt:   material.UpdatedAt,
-	}, nil
+		ID:           m.ID,
+		Code:         m.Code,
+		Name:         m.Name,
+		Spec:         m.Spec,
+		Unit:         m.Unit,
+		Category:     m.Category,
+		CurrentPrice: m.CurrentPrice,
+		Status:       m.Status,
+		Description:  m.Description,
+		CreatedAt:    m.CreatedAt,
+		UpdatedAt:    m.UpdatedAt,
+	}
 }
 
 // Get 获取材料
@@ -73,15 +86,7 @@ func (s *MaterialService) Get(ctx context.Context, id uint) (*MaterialResponse, 
 		return nil, err
 	}
 
-	return &MaterialResponse{
-		ID:          material.ID,
-		Name:        material.Name,
-		Spec:        material.Spec,
-		Unit:        material.Unit,
-		Description: material.Description,
-		CreatedAt:   material.CreatedAt,
-		UpdatedAt:   material.UpdatedAt,
-	}, nil
+	return toMaterialResponse(material), nil
 }
 
 // Update 更新材料
@@ -93,22 +98,34 @@ func (s *MaterialService) Update(ctx context.Context, id uint, req *UpdateMateri
 	}
 	
 	// 2. 更新字段（通过领域方法）
+	if req.Code != "" {
+		material.Code = req.Code
+	}
+
 	if req.Name != "" {
 		if err := material.UpdateName(req.Name); err != nil {
 			return err
 		}
 	}
-	
+
 	if req.Spec != "" {
 		if err := material.UpdateSpec(req.Spec); err != nil {
 			return err
 		}
 	}
-	
+
 	if req.Unit != "" {
 		material.Unit = req.Unit
 	}
-	
+
+	if req.Category != "" {
+		material.Category = req.Category
+	}
+
+	if req.CurrentPrice > 0 {
+		material.CurrentPrice = req.CurrentPrice
+	}
+
 	if req.Description != "" {
 		material.Description = req.Description
 	}

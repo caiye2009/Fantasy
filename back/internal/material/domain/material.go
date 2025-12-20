@@ -9,18 +9,19 @@ import (
 
 // Material 材料聚合根
 type Material struct {
-	ID          uint           `gorm:"primaryKey" json:"id"`
-	Name        string         `gorm:"size:100;not null;index" json:"name"`
-	Spec        string         `gorm:"size:200" json:"spec"`
-	Unit        string         `gorm:"size:20" json:"unit"`
-	Category    string         `gorm:"size:50;index" json:"category"`
-	SupplierID  uint           `gorm:"index" json:"supplierId"`
-	Price       float64        `gorm:"type:decimal(10,2)" json:"price"`
-	Status      string         `gorm:"size:20;default:active" json:"status"`
-	Description string         `gorm:"type:text" json:"description"`
-	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"createdAt"`
-	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+	ID           uint           `gorm:"primaryKey" json:"id"`
+	Code         string         `gorm:"size:50;uniqueIndex" json:"code"`                // 原料编号（唯一）
+	Name         string         `gorm:"size:100;not null;index" json:"name"`
+	Spec         string         `gorm:"size:200" json:"spec"`
+	Unit         string         `gorm:"size:20" json:"unit"`
+	Category     string         `gorm:"size:50;index" json:"category"`
+	SupplierID   uint           `gorm:"index" json:"supplierId"`
+	CurrentPrice float64        `gorm:"type:decimal(10,2);column:current_price" json:"currentPrice"` // 改名为currentPrice
+	Status       string         `gorm:"size:20;default:active" json:"status"`
+	Description  string         `gorm:"type:text" json:"description"`
+	CreatedAt    time.Time      `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt    time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 // TableName 表名
@@ -73,17 +74,18 @@ func (m *Material) UpdateName(newName string) error {
 // ToDocument 转换为 ES 文档（小驼峰字段名）
 func (m *Material) ToDocument() map[string]interface{} {
 	return map[string]interface{}{
-		"id":          m.ID,
-		"name":        m.Name,
-		"spec":        m.Spec,
-		"unit":        m.Unit,
-		"category":    m.Category,
-		"supplierId":  m.SupplierID,
-		"price":       m.Price,
-		"status":      m.Status,
-		"description": m.Description,
-		"createdAt":   m.CreatedAt,
-		"updatedAt":   m.UpdatedAt,
+		"id":           m.ID,
+		"code":         m.Code,
+		"name":         m.Name,
+		"spec":         m.Spec,
+		"unit":         m.Unit,
+		"category":     m.Category,
+		"supplierId":   m.SupplierID,
+		"currentPrice": m.CurrentPrice,
+		"status":       m.Status,
+		"description":  m.Description,
+		"createdAt":    m.CreatedAt,
+		"updatedAt":    m.UpdatedAt,
 	}
 }
 

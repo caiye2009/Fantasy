@@ -1872,6 +1872,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/product/{id}/price": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "获取产品的当前价、历史最高价和历史最低价",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "产品管理"
+                ],
+                "summary": "获取产品价格",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "产品ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "价格信息",
+                        "schema": {
+                            "$ref": "#/definitions/application.ProductPriceResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "产品不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/return-analysis/analysis": {
             "post": {
                 "security": [
@@ -3536,6 +3591,21 @@ const docTemplate = `{
                 "name"
             ],
             "properties": {
+                "category": {
+                    "description": "分类",
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "code": {
+                    "description": "原料编号（可选，不填自动生成）",
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "currentPrice": {
+                    "description": "当前价格",
+                    "type": "number",
+                    "minimum": 0
+                },
                 "description": {
                     "type": "string"
                 },
@@ -3624,6 +3694,11 @@ const docTemplate = `{
                 "name"
             ],
             "properties": {
+                "currentPrice": {
+                    "description": "当前价格",
+                    "type": "number",
+                    "minimum": 0
+                },
                 "description": {
                     "type": "string"
                 },
@@ -3876,8 +3951,17 @@ const docTemplate = `{
         "application.MaterialResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "category": {
                     "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "currentPrice": {
+                    "type": "number"
                 },
                 "description": {
                     "type": "string"
@@ -3891,10 +3975,13 @@ const docTemplate = `{
                 "spec": {
                     "type": "string"
                 },
+                "status": {
+                    "type": "string"
+                },
                 "unit": {
                     "type": "string"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "type": "string"
                 }
             }
@@ -4044,8 +4131,11 @@ const docTemplate = `{
         "application.ProcessResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "createdAt": {
                     "type": "string"
+                },
+                "currentPrice": {
+                    "type": "number"
                 },
                 "description": {
                     "type": "string"
@@ -4056,8 +4146,22 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "type": "string"
+                }
+            }
+        },
+        "application.ProductPriceResponse": {
+            "type": "object",
+            "properties": {
+                "current_price": {
+                    "type": "number"
+                },
+                "historical_high": {
+                    "type": "number"
+                },
+                "historical_low": {
+                    "type": "number"
                 }
             }
         },
@@ -4483,6 +4587,18 @@ const docTemplate = `{
         "application.UpdateMaterialRequest": {
             "type": "object",
             "properties": {
+                "category": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "code": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "currentPrice": {
+                    "type": "number",
+                    "minimum": 0
+                },
                 "description": {
                     "type": "string"
                 },
@@ -4546,6 +4662,10 @@ const docTemplate = `{
         "application.UpdateProcessRequest": {
             "type": "object",
             "properties": {
+                "currentPrice": {
+                    "type": "number",
+                    "minimum": 0
+                },
                 "description": {
                     "type": "string"
                 },

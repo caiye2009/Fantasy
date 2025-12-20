@@ -29,12 +29,25 @@ func NewProcessService(repo *infra.ProcessRepo, esSync ESSync) *ProcessService {
 	}
 }
 
+// toProcessResponse 领域模型转DTO
+func toProcessResponse(p *domain.Process) *ProcessResponse {
+	return &ProcessResponse{
+		ID:           p.ID,
+		Name:         p.Name,
+		Description:  p.Description,
+		CurrentPrice: p.CurrentPrice,
+		CreatedAt:    p.CreatedAt,
+		UpdatedAt:    p.UpdatedAt,
+	}
+}
+
 // Create 创建工序
 func (s *ProcessService) Create(ctx context.Context, req *CreateProcessRequest) (*ProcessResponse, error) {
 	// 1. DTO → Domain Model
 	process := &domain.Process{
-		Name:        req.Name,
-		Description: req.Description,
+		Name:         req.Name,
+		Description:  req.Description,
+		CurrentPrice: req.CurrentPrice,
 	}
 
 	// 2. 领域验证
@@ -53,13 +66,7 @@ func (s *ProcessService) Create(ctx context.Context, req *CreateProcessRequest) 
 	}
 
 	// 5. Domain Model → DTO
-	return &ProcessResponse{
-		ID:          process.ID,
-		Name:        process.Name,
-		Description: process.Description,
-		CreatedAt:   process.CreatedAt,
-		UpdatedAt:   process.UpdatedAt,
-	}, nil
+	return toProcessResponse(process), nil
 }
 
 // Get 获取工序
@@ -69,13 +76,7 @@ func (s *ProcessService) Get(ctx context.Context, id uint) (*ProcessResponse, er
 		return nil, err
 	}
 
-	return &ProcessResponse{
-		ID:          process.ID,
-		Name:        process.Name,
-		Description: process.Description,
-		CreatedAt:   process.CreatedAt,
-		UpdatedAt:   process.UpdatedAt,
-	}, nil
+	return toProcessResponse(process), nil
 }
 
 // List 功能已移至 search 模块，通过 ES 实现
@@ -95,9 +96,13 @@ func (s *ProcessService) Update(ctx context.Context, id uint, req *UpdateProcess
 			return err
 		}
 	}
-	
+
 	if req.Description != "" {
 		process.Description = req.Description
+	}
+
+	if req.CurrentPrice > 0 {
+		process.CurrentPrice = req.CurrentPrice
 	}
 	
 	// 3. 验证

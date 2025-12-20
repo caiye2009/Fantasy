@@ -4,6 +4,8 @@ index: material
 queryFields:
   - field: name
     boost: 2.0
+  - field: code
+    boost: 1.8
   - field: description
     boost: 1.0
   - field: spec
@@ -12,6 +14,9 @@ queryFields:
 # Filter字段：结构化过滤，不算分
 filterFields:
   - field: id
+    type: keyword
+    operator: term
+  - field: code
     type: keyword
     operator: term
   - field: name
@@ -29,7 +34,7 @@ filterFields:
   - field: supplierId
     type: keyword
     operator: terms
-  - field: price
+  - field: currentPrice
     type: numeric
     operator: range
   - field: status
@@ -62,7 +67,7 @@ aggregationFields:
     size: 20
     supportSearch: false
     excludeSelf: true
-  - field: price
+  - field: currentPrice
     type: numeric
     aggType: stats
     excludeSelf: false

@@ -1,5 +1,18 @@
 <template>
   <div class="product-management">
+    <!-- 顶部操作栏 -->
+    <div class="top-bar">
+      <h2 class="page-title">产品管理</h2>
+      <div class="top-actions">
+        <el-button type="warning" @click="handleSeedData" :loading="seeding">
+          初始化数据
+        </el-button>
+        <el-button type="primary" @click="handleCreate">
+          新增产品
+        </el-button>
+      </div>
+    </div>
+
     <DataTable
       :config="pageConfig"
       :loading="searchLoading"
@@ -287,12 +300,13 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { useAccessStore } from '@vben/stores'
 import DataTable from '#/components/Table/index.vue'
 import { elasticsearchService } from '#/api/core/es'
 import { createProductApi, updateProductApi, getProductPriceApi, type ProductPriceResponse } from '#/api/core/product'
 import { useDataTable } from '#/composables/useDataTable'
+import { seedData } from '#/utils/seedData'
 
 /* ================= 基础 ================= */
 
@@ -304,6 +318,42 @@ const pageConfig = {
   title: '产品管理',
   index: 'product',
   rowKey: 'id',
+  pageSize: 20,
+  columns: [
+    { key: 'id', label: 'ID', width: 80 },
+    { key: 'name', label: '产品名称', width: 200 },
+    {
+      key: 'status',
+      label: '状态',
+      width: 100,
+      formatter: (val: string) => {
+        const textMap: Record<string, string> = {
+          draft: '草稿',
+          submitted: '已提交',
+          approved: '已审批',
+          rejected: '已拒绝'
+        }
+        return textMap[val] || val
+      }
+    },
+    {
+      key: 'created_at',
+      label: '创建时间',
+      width: 180,
+      formatter: (val: string) => val ? new Date(val).toLocaleString('zh-CN') : '-'
+    },
+    {
+      key: 'updated_at',
+      label: '更新时间',
+      width: 180,
+      formatter: (val: string) => val ? new Date(val).toLocaleString('zh-CN') : '-'
+    },
+  ],
+  filters: [],
+  bulkActions: [
+    { label: '新建产品', key: 'create', type: 'primary' as const },
+    { label: '批量删除', key: 'delete', type: 'danger' as const, confirm: true }
+  ],
   actions: ['view', 'edit', 'create'],
 }
 
@@ -360,6 +410,7 @@ const quoteForm = ref({
 })
 const clientsList = ref<any[]>([])
 const generatingQuote = ref(false)
+const seeding = ref(false)
 
 /* ================= 数据 ================= */
 
@@ -402,29 +453,39 @@ const processesLoaded = ref(false)
 
 const loadMaterials = async () => {
   if (materialsLoaded.value) return
-  const res = await elasticsearchService.search({
-    index: 'material',
-    pagination: { offset: 0, size: 1000 },
-  })
-  materialsList.value = res.items || []
-  materialsLoaded.value = true
+  try {
+    const res = await elasticsearchService.search({
+      index: 'material',
+      pagination: { offset: 0, size: 100 }, // 后端最大限制100
+    })
+    materialsList.value = res.items || []
+    materialsLoaded.value = true
+  } catch (error) {
+    console.error('加载原料列表失败:', error)
+    materialsList.value = []
+  }
 }
 
 const loadProcesses = async () => {
   if (processesLoaded.value) return
-  const res = await elasticsearchService.search({
-    index: 'process',
-    pagination: { offset: 0, size: 1000 },
-  })
-  processesList.value = res.items || []
-  processesLoaded.value = true
+  try {
+    const res = await elasticsearchService.search({
+      index: 'process',
+      pagination: { offset: 0, size: 100 }, // 后端最大限制100
+    })
+    processesList.value = res.items || []
+    processesLoaded.value = true
+  } catch (error) {
+    console.error('加载工艺列表失败:', error)
+    processesList.value = []
+  }
 }
 
 const loadClients = async () => {
   try {
     const res = await elasticsearchService.search({
       index: 'client',
-      pagination: { offset: 0, size: 1000 },
+      pagination: { offset: 0, size: 100 }, // 后端最大限制100
     })
     clientsList.value = res.items || []
   } catch (error) {
@@ -494,6 +555,36 @@ const handleCreate = async () => {
   dialogMode.value = 'create'
   dialogVisible.value = true
   await Promise.all([loadMaterials(), loadProcesses()])
+}
+
+const handleSeedData = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '将插入10条原料数据和10条工艺数据到数据库，确定继续吗？',
+      '初始化测试数据',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    seeding.value = true
+    const result = await seedData()
+
+    ElMessage.success(`数据初始化成功！原料: ${result.materials}条，工艺: ${result.processes}条`)
+
+    // 重置加载状态，重新加载数据
+    materialsLoaded.value = false
+    processesLoaded.value = false
+    await Promise.all([loadMaterials(), loadProcesses()])
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      console.error('初始化数据失败:', error)
+    }
+  } finally {
+    seeding.value = false
+  }
 }
 
 const handleEdit = async (row: any) => {
@@ -659,6 +750,29 @@ const handleQuoteDialogClose = () => {
 <style scoped>
 .product-management {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #fff;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.top-actions {
+  display: flex;
+  gap: 12px;
 }
 
 .ratio-summary {

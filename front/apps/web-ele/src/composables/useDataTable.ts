@@ -1,6 +1,5 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { elasticsearchService } from '#/api/core/es'
 import type { ESResponse } from '#/components/DataTable/types'
 
@@ -118,8 +117,12 @@ export function useDataTable(index: string, pageSize: number = 20) {
       cache.value.set(page, data)
       return data
     } catch (e: any) {
-      ElMessage.error(e.message || '加载失败')
-      return null
+      console.error('搜索失败:', e)
+      // 搜索失败时，设置空数据到缓存，显示无数据状态
+      cache.value.set(page, [])
+      totalCount.value = 0
+      // 不显示错误提示，让用户看到空表格
+      return []
     } finally {
       if (isSearch) searchLoading.value = false
       else loading.value = false
