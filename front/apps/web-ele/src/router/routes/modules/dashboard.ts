@@ -76,21 +76,30 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
-    name: 'Orders',
-    path: '/orders',
-    component: () => import('#/views/orders.vue'),
+    name: 'OrderManagement',
+    path: '/order-management',
+    component: () => import('#/views/order-management/index.vue'),
     meta: {
-      icon: 'lucide:users',
-      title: $t('page.dashboard.orders'),
+      icon: 'lucide:clipboard-list',
+      title: '订单管理',
     },
   },
   {
-    name: 'Test',
-    path: '/test',
-    component: () => import('#/views/test.vue'),
+    name: 'MaterialManagement',
+    path: '/material-management',
+    component: () => import('#/views/material-management/index.vue'),
     meta: {
-      icon: 'lucide:users',
-      title: $t('page.dashboard.orders'),
+      icon: 'lucide:package-search',
+      title: '原料管理',
+    },
+  },
+  {
+    name: 'InventoryManagement',
+    path: '/inventory-management',
+    component: () => import('#/views/inventory-management/index.vue'),
+    meta: {
+      icon: 'lucide:warehouse',
+      title: '库存管理',
     },
   },
 ];

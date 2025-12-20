@@ -8,6 +8,7 @@
       @bulkAction="handleBulkAction"
     />
 
+    <!-- 编辑/新建对话框 -->
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
@@ -119,20 +120,184 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 产品详情大弹窗 -->
+    <el-dialog
+      v-model="detailDialogVisible"
+      title="产品详情"
+      width="1000px"
+      @close="handleDetailClose"
+    >
+      <!-- 基本信息 -->
+      <div class="detail-section">
+        <h3 class="section-title">基本信息</h3>
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="产品ID">
+            {{ currentProduct.id }}
+          </el-descriptions-item>
+          <el-descriptions-item label="产品名称">
+            {{ currentProduct.name }}
+          </el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag :type="getStatusType(currentProduct.status)">
+              {{ getStatusText(currentProduct.status) }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="创建时间">
+            {{ formatDate(currentProduct.created_at) }}
+          </el-descriptions-item>
+        </el-descriptions>
+      </div>
+
+      <!-- 价格信息 -->
+      <div class="detail-section">
+        <h3 class="section-title">价格信息</h3>
+        <el-row :gutter="20" v-loading="loadingPrice">
+          <el-col :span="8">
+            <el-statistic title="当前价格" :value="priceInfo.current_price" :precision="2">
+              <template #prefix>¥</template>
+            </el-statistic>
+          </el-col>
+          <el-col :span="8">
+            <el-statistic title="历史最高" :value="priceInfo.historical_high" :precision="2">
+              <template #prefix>¥</template>
+            </el-statistic>
+          </el-col>
+          <el-col :span="8">
+            <el-statistic title="历史最低" :value="priceInfo.historical_low" :precision="2">
+              <template #prefix>¥</template>
+            </el-statistic>
+          </el-col>
+        </el-row>
+      </div>
+
+      <!-- 产品公式 -->
+      <div class="detail-section">
+        <div class="section-header">
+          <h3 class="section-title">产品公式</h3>
+          <el-button v-if="canEditFormula" type="primary" size="small" @click="handleEditFormula">
+            修改公式
+          </el-button>
+        </div>
+
+        <div class="formula-content">
+          <div class="formula-item">
+            <h4>原料配置</h4>
+            <el-table :data="currentProduct.materials" border>
+              <el-table-column label="原料名称" width="200">
+                <template #default="{ row }">
+                  {{ getMaterialName(row.material_id) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="占比" align="center">
+                <template #default="{ row }">
+                  {{ (row.ratio * 100).toFixed(2) }}%
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+          <div class="formula-item">
+            <h4>工艺配置</h4>
+            <el-table :data="currentProduct.processes" border>
+              <el-table-column label="工艺名称" width="200">
+                <template #default="{ row }">
+                  {{ getProcessName(row.process_id) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="数量" align="center">
+                <template #default="{ row }">
+                  {{ row.quantity || '-' }}
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <template #footer>
+        <el-button @click="detailDialogVisible = false">关闭</el-button>
+        <el-button type="success" @click="handleGenerateQuote">
+          生成报价单
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 生成报价单对话框 -->
+    <el-dialog
+      v-model="quoteDialogVisible"
+      title="生成报价单"
+      width="600px"
+      @close="handleQuoteDialogClose"
+    >
+      <el-form :model="quoteForm" label-width="120px">
+        <el-form-item label="产品">
+          <el-input :value="currentProduct.name" disabled />
+        </el-form-item>
+        <el-form-item label="客户" required>
+          <el-select
+            v-model="quoteForm.client_id"
+            placeholder="请选择客户"
+            filterable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="client in clientsList"
+              :key="client.id"
+              :label="client.name"
+              :value="client.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="数量" required>
+          <el-input-number
+            v-model="quoteForm.quantity"
+            :min="1"
+            :step="1"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="单价" required>
+          <el-input-number
+            v-model="quoteForm.unit_price"
+            :min="0"
+            :precision="2"
+            :step="0.01"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="总价">
+          <el-input
+            :value="`¥${(quoteForm.quantity * quoteForm.unit_price).toFixed(2)}`"
+            disabled
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="quoteDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="generatingQuote" @click="handleQuoteSubmit">
+          生成
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { useAccessStore } from '@vben/stores'
 import DataTable from '#/components/Table/index.vue'
 import { elasticsearchService } from '#/api/core/es'
-import { createProductApi, updateProductApi } from '#/api/core/product'
+import { createProductApi, updateProductApi, getProductPriceApi, type ProductPriceResponse } from '#/api/core/product'
 import { useDataTable } from '#/composables/useDataTable'
 
 /* ================= 基础 ================= */
 
 const { searchLoading } = useDataTable('product', 20)
+const accessStore = useAccessStore()
 
 const pageConfig = {
   pageType: 'product',
@@ -142,7 +307,7 @@ const pageConfig = {
   actions: ['view', 'edit', 'create'],
 }
 
-/* ================= Dialog ================= */
+/* ================= 编辑 Dialog ================= */
 
 const dialogVisible = ref(false)
 const dialogMode = ref<'create' | 'edit' | 'view'>('view')
@@ -156,6 +321,45 @@ const dialogTitle = computed(() =>
 
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
+
+/* ================= 详情 Dialog ================= */
+
+const detailDialogVisible = ref(false)
+const currentProduct = ref<any>({
+  id: 0,
+  name: '',
+  status: 'draft',
+  materials: [],
+  processes: [],
+  created_at: '',
+  updated_at: ''
+})
+
+const priceInfo = ref<ProductPriceResponse>({
+  current_price: 0,
+  historical_high: 0,
+  historical_low: 0
+})
+
+const loadingPrice = ref(false)
+
+// 权限判断：是否可以修改公式（简单判断，可根据实际需求修改）
+const canEditFormula = computed(() => {
+  // 这里可以根据用户角色判断，例如只有管理员或产品经理可以修改
+  const userRoles = accessStore.accessCodes || []
+  return userRoles.includes('admin') || userRoles.includes('product_manager')
+})
+
+/* ================= 报价单 Dialog ================= */
+
+const quoteDialogVisible = ref(false)
+const quoteForm = ref({
+  client_id: undefined as number | undefined,
+  quantity: 1,
+  unit_price: 0
+})
+const clientsList = ref<any[]>([])
+const generatingQuote = ref(false)
 
 /* ================= 数据 ================= */
 
@@ -188,7 +392,7 @@ const formRules: FormRules = {
   ],
 }
 
-/* ================= 懒加载（关键） ================= */
+/* ================= 懒加载 ================= */
 
 const materialsList = ref<any[]>([])
 const processesList = ref<any[]>([])
@@ -216,12 +420,60 @@ const loadProcesses = async () => {
   processesLoaded.value = true
 }
 
+const loadClients = async () => {
+  try {
+    const res = await elasticsearchService.search({
+      index: 'client',
+      pagination: { offset: 0, size: 1000 },
+    })
+    clientsList.value = res.items || []
+  } catch (error) {
+    console.error('加载客户列表失败:', error)
+  }
+}
+
 const onMaterialSelectVisible = (visible: boolean) => {
   if (visible) loadMaterials()
 }
 
 const onProcessSelectVisible = (visible: boolean) => {
   if (visible) loadProcesses()
+}
+
+/* ================= 辅助函数 ================= */
+
+const getMaterialName = (materialId: number) => {
+  const material = materialsList.value.find(m => m.id === materialId)
+  return material?.name || `原料ID: ${materialId}`
+}
+
+const getProcessName = (processId: number) => {
+  const process = processesList.value.find(p => p.id === processId)
+  return process?.name || `工艺ID: ${processId}`
+}
+
+const getStatusType = (status: string) => {
+  const typeMap: Record<string, any> = {
+    draft: 'info',
+    submitted: 'warning',
+    approved: 'success',
+    rejected: 'danger'
+  }
+  return typeMap[status] || 'info'
+}
+
+const getStatusText = (status: string) => {
+  const textMap: Record<string, string> = {
+    draft: '草稿',
+    submitted: '已提交',
+    approved: '已审批',
+    rejected: '已拒绝'
+  }
+  return textMap[status] || status
+}
+
+const formatDate = (date: string) => {
+  return date ? new Date(date).toLocaleString('zh-CN') : '-'
 }
 
 /* ================= 行为 ================= */
@@ -260,8 +512,80 @@ const handleEdit = async (row: any) => {
 }
 
 const handleView = async (row: any) => {
-  dialogMode.value = 'view'
-  await handleEdit(row)
+  currentProduct.value = { ...row }
+  detailDialogVisible.value = true
+
+  // 加载数据
+  await Promise.all([loadMaterials(), loadProcesses()])
+
+  // 加载价格信息
+  if (row.id) {
+    loadingPrice.value = true
+    try {
+      priceInfo.value = await getProductPriceApi(row.id)
+    } catch (error) {
+      console.error('加载价格信息失败:', error)
+      ElMessage.warning('加载价格信息失败')
+    } finally {
+      loadingPrice.value = false
+    }
+  }
+}
+
+const handleEditFormula = () => {
+  detailDialogVisible.value = false
+  handleEdit(currentProduct.value)
+}
+
+const handleGenerateQuote = async () => {
+  quoteForm.value = {
+    client_id: undefined,
+    quantity: 1,
+    unit_price: priceInfo.value.current_price || 0
+  }
+
+  await loadClients()
+  quoteDialogVisible.value = true
+}
+
+const handleQuoteSubmit = async () => {
+  if (!quoteForm.value.client_id) {
+    ElMessage.warning('请选择客户')
+    return
+  }
+
+  if (quoteForm.value.quantity <= 0) {
+    ElMessage.warning('请输入有效的数量')
+    return
+  }
+
+  if (quoteForm.value.unit_price <= 0) {
+    ElMessage.warning('请输入有效的单价')
+    return
+  }
+
+  generatingQuote.value = true
+  try {
+    // 这里调用生成报价单的API
+    // 目前先用ElMessage模拟
+    ElMessage.success('报价单生成成功！')
+    quoteDialogVisible.value = false
+
+    // 实际应该是：
+    // const quoteData = {
+    //   product_id: currentProduct.value.id,
+    //   client_id: quoteForm.value.client_id,
+    //   quantity: quoteForm.value.quantity,
+    //   unit_price: quoteForm.value.unit_price,
+    //   total_price: quoteForm.value.quantity * quoteForm.value.unit_price
+    // }
+    // await createQuoteApi(quoteData)
+  } catch (error: any) {
+    console.error('生成报价单失败:', error)
+    ElMessage.error(error.response?.data?.error || '生成报价单失败')
+  } finally {
+    generatingQuote.value = false
+  }
 }
 
 /* ================= 提交 ================= */
@@ -282,7 +606,7 @@ const handleSubmit = async () => {
   try {
     dialogMode.value === 'create'
       ? await createProductApi(payload)
-      : await updateProductApi(payload)
+      : await updateProductApi(currentProduct.value.id, payload)
 
     ElMessage.success('保存成功')
     dialogVisible.value = false
@@ -305,13 +629,95 @@ const handleDialogClose = () => {
   formData.value = { name: '', materials: [], processes: [] }
   selectedProcessIds.value = []
 }
+
+const handleDetailClose = () => {
+  currentProduct.value = {
+    id: 0,
+    name: '',
+    status: 'draft',
+    materials: [],
+    processes: [],
+    created_at: '',
+    updated_at: ''
+  }
+  priceInfo.value = {
+    current_price: 0,
+    historical_high: 0,
+    historical_low: 0
+  }
+}
+
+const handleQuoteDialogClose = () => {
+  quoteForm.value = {
+    client_id: undefined,
+    quantity: 1,
+    unit_price: 0
+  }
+}
 </script>
 
 <style scoped>
 .product-management {
   height: 100%;
 }
+
+.ratio-summary {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
 .ratio-summary.error {
   color: #f56c6c;
+}
+
+.detail-section {
+  margin-bottom: 24px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #303133;
+  }
+}
+
+.formula-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  .formula-item {
+    h4 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #606266;
+    }
+  }
+}
+
+:deep(.el-statistic) {
+  text-align: center;
+
+  .el-statistic__head {
+    color: #909399;
+    font-size: 14px;
+  }
+
+  .el-statistic__content {
+    font-size: 24px;
+    font-weight: 600;
+  }
 }
 </style>
