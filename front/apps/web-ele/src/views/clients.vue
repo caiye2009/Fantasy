@@ -11,10 +11,24 @@
     <!-- 详情/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="dialogTitle"
       width="800px"
       @close="handleDialogClose"
     >
+      <template #header>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span>{{ dialogTitle }}</span>
+          <el-button v-if="dialogMode === 'view'" type="primary" size="small" @click="dialogMode = 'edit'">
+            修改
+          </el-button>
+          <div v-else>
+            <el-button size="small" @click="dialogMode = 'view'">取消</el-button>
+            <el-button type="primary" size="small" :loading="saving" @click="handleSave">
+              保存
+            </el-button>
+          </div>
+        </div>
+      </template>
+
       <el-form :model="currentRow" label-width="100px" style="max-height: 70vh; overflow-y: auto;">
         <el-row :gutter="20">
           <el-col :span="12">
@@ -164,12 +178,6 @@
         </el-form-item>
       </el-form>
 
-      <template #footer v-if="dialogMode === 'edit'">
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave" :loading="saving">
-          保存
-        </el-button>
-      </template>
     </el-dialog>
   </div>
 </template>
@@ -196,25 +204,25 @@ const pageConfig: PageConfig = {
   index: 'client',
   pageSize: 20,
   columns: [
-    { key: 'id', label: 'ID', width: 80, sortable: true, visible: true, order: 0 },
-    { key: 'customNo', label: '客户代码', width: 120, sortable: true, visible: true, order: 1 },
-    { key: 'customerCode', label: '内部编码', width: 120, sortable: true, visible: true, order: 2 },
-    { key: 'customName', label: '客户名称', width: 200, sortable: true, visible: true, order: 3 },
-    { key: 'customNameEn', label: '英文名称', width: 200, visible: false, order: 4 },
-    { key: 'sales', label: '业务员', width: 120, visible: true, order: 5 },
-    { key: 'contactor', label: '联系人', width: 120, visible: true, order: 6 },
-    { key: 'unitPhone', label: '电话', width: 130, visible: true, order: 7 },
-    { key: 'mobile', label: '手机', width: 130, visible: true, order: 8 },
-    { key: 'email', label: '邮箱', width: 180, visible: false, order: 9 },
-    { key: 'stateChNm', label: '国家', width: 100, visible: true, order: 10 },
-    { key: 'country', label: '国家代码', width: 100, visible: false, order: 11 },
-    { key: 'address', label: '中文地址', width: 250, visible: true, order: 12 },
-    { key: 'addressEn', label: '英文地址', width: 250, visible: false, order: 13 },
-    { key: 'faxNum', label: '传真', width: 130, visible: false, order: 14 },
-    { key: 'pyCustomName', label: '所属客户', width: 150, visible: false, order: 15 },
-    { key: 'checkRequest', label: '检验要求', width: 200, visible: false, order: 16 },
-    { key: 'customStatus', label: '状态', width: 100, visible: true, order: 17 },
-    { key: 'docMan', label: '输入人', width: 100, visible: false, order: 18 },
+    { key: 'id', label: 'ID', width: 80, sortable: true, visible: true, order: 0, showOverflowTooltip: true },
+    { key: 'customNo', label: '客户代码', width: 120, sortable: true, visible: true, order: 1, showOverflowTooltip: true },
+    { key: 'customerCode', label: '内部编码', width: 120, sortable: true, visible: true, order: 2, showOverflowTooltip: true },
+    { key: 'customName', label: '客户名称', width: 200, sortable: true, visible: true, order: 3, showOverflowTooltip: true },
+    { key: 'customNameEn', label: '英文名称', width: 200, visible: false, order: 4, showOverflowTooltip: true },
+    { key: 'sales', label: '业务员', width: 120, visible: true, order: 5, showOverflowTooltip: true },
+    { key: 'contactor', label: '联系人', width: 120, visible: true, order: 6, showOverflowTooltip: true },
+    { key: 'unitPhone', label: '电话', width: 130, visible: true, order: 7, showOverflowTooltip: true },
+    { key: 'mobile', label: '手机', width: 130, visible: true, order: 8, showOverflowTooltip: true },
+    { key: 'email', label: '邮箱', width: 180, visible: false, order: 9, showOverflowTooltip: true },
+    { key: 'stateChNm', label: '国家', width: 100, visible: true, order: 10, showOverflowTooltip: true },
+    { key: 'country', label: '国家代码', width: 100, visible: false, order: 11, showOverflowTooltip: true },
+    { key: 'address', label: '中文地址', width: 250, visible: true, order: 12, showOverflowTooltip: true },
+    { key: 'addressEn', label: '英文地址', width: 250, visible: false, order: 13, showOverflowTooltip: true },
+    { key: 'faxNum', label: '传真', width: 130, visible: false, order: 14, showOverflowTooltip: true },
+    { key: 'pyCustomName', label: '所属客户', width: 150, visible: false, order: 15, showOverflowTooltip: true },
+    { key: 'checkRequest', label: '检验要求', width: 200, visible: false, order: 16, showOverflowTooltip: true },
+    { key: 'customStatus', label: '状态', width: 100, visible: true, order: 17, showOverflowTooltip: true },
+    { key: 'docMan', label: '输入人', width: 100, visible: false, order: 18, showOverflowTooltip: true },
     {
       key: 'inputDate',
       label: '添加时间',
@@ -222,6 +230,7 @@ const pageConfig: PageConfig = {
       sortable: true,
       visible: true,
       order: 19,
+      showOverflowTooltip: true,
       formatter: (v: string) => (v ? new Date(v).toLocaleDateString('zh-CN') : '-'),
     },
     {
@@ -231,6 +240,7 @@ const pageConfig: PageConfig = {
       sortable: true,
       visible: false,
       order: 20,
+      showOverflowTooltip: true,
       formatter: (v: string) => (v ? new Date(v).toLocaleString('zh-CN') : '-'),
     },
     {
@@ -240,6 +250,7 @@ const pageConfig: PageConfig = {
       sortable: true,
       visible: false,
       order: 21,
+      showOverflowTooltip: true,
       formatter: (v: string) => (v ? new Date(v).toLocaleString('zh-CN') : '-'),
     },
   ] as ColumnConfig[],

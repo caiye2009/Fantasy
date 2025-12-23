@@ -1,13 +1,16 @@
 // 原料类型
 export interface Material {
-  id: string
-  code: string // 原料编号（唯一）
+  id: string | number
+  _id?: string // ES document ID
+  code?: string // 原料编号（唯一）
   name: string // 原料名称
-  category: string // 分类（胚布、染料、助剂等）
+  category?: string // 分类（胚布、染料、助剂等）
+  spec?: string // 规格
   unit: string // 单位（米、kg）
-  currentPrice: number // 当前价格（最新供应商报价）
-  status: 'active' | 'inactive' // 状态
-  updatedBy: string // 最新更新人
+  description?: string // 描述
+  currentPrice?: number // 当前价格（最新供应商报价）
+  status?: 'active' | 'inactive' // 状态
+  updatedBy?: string // 最新更新人
   createdAt: string
   updatedAt: string
 }

@@ -188,8 +188,8 @@
       <div class="detail-section">
         <div class="section-header">
           <h3 class="section-title">产品公式</h3>
-          <el-button v-if="canEditFormula" type="primary" size="small" @click="handleEditFormula">
-            修改公式
+          <el-button type="primary" size="small" @click="handleEditFormula">
+            修改
           </el-button>
         </div>
 
@@ -320,8 +320,8 @@ const pageConfig = {
   rowKey: 'id',
   pageSize: 20,
   columns: [
-    { key: 'id', label: 'ID', width: 80 },
-    { key: 'name', label: '产品名称', width: 200 },
+    { key: 'id', label: 'ID', width: 80, showOverflowTooltip: true },
+    { key: 'name', label: '产品名称', width: 200, showOverflowTooltip: true },
     {
       key: 'status',
       label: '状态',
@@ -340,12 +340,14 @@ const pageConfig = {
       key: 'created_at',
       label: '创建时间',
       width: 180,
+      showOverflowTooltip: true,
       formatter: (val: string) => val ? new Date(val).toLocaleString('zh-CN') : '-'
     },
     {
       key: 'updated_at',
       label: '更新时间',
       width: 180,
+      showOverflowTooltip: true,
       formatter: (val: string) => val ? new Date(val).toLocaleString('zh-CN') : '-'
     },
   ],
@@ -354,7 +356,7 @@ const pageConfig = {
     { label: '新建产品', key: 'create', type: 'primary' as const },
     { label: '批量删除', key: 'delete', type: 'danger' as const, confirm: true }
   ],
-  actions: ['view', 'edit', 'create'],
+  actions: ['view'],
 }
 
 /* ================= 编辑 Dialog ================= */

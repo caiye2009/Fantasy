@@ -32,14 +32,20 @@ func Init() error {
 	db := InitDatabase(cfg)
 	rdb := InitRedis(cfg)
 	esClient := InitElasticsearch(cfg)
-	
+
 	// 创建 ES 同步服务（使用适配器）
 	logger := applog.NewLogger()
 	loggerAdapter := es.NewLoggerAdapter(logger)
 	esSync := es.NewESSync(esClient, loggerAdapter)
 	log.Println("✓ ES Sync initialized")
-	
-	jwtWang, authWang := InitAuth(db, rdb, cfg)
+
+	// 初始化 Casbin
+	enforcer := InitCasbin(cfg, db)
+	if err := InitCasbinPolicies(enforcer); err != nil {
+		log.Fatalf("Failed to initialize Casbin policies: %v", err)
+	}
+
+	jwtWang, authWang := InitAuth(db, rdb, cfg, enforcer)
 
 	log.Println("=== Database Migration ===")
 	if err := AutoMigrate(db); err != nil {

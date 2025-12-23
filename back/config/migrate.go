@@ -30,6 +30,9 @@ func AutoMigrate(db *gorm.DB) error {
 		&productDomain.Product{},
 		&planDomain.Plan{},
 		&orderDomain.Order{},
+		&orderDomain.OrderParticipant{},
+		&orderDomain.OrderProgress{},
+		&orderDomain.OrderEvent{},
 	)
 
 	if err != nil {

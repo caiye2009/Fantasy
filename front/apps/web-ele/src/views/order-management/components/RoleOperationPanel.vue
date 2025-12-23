@@ -258,6 +258,13 @@ import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ShoppingCart, Monitor, Box } from '@element-plus/icons-vue'
 import type { Order, RoleType } from '../types'
+import {
+  updateFabricInput,
+  updateProduction,
+  updateWarehouseCheck,
+  addDefect,
+  updateRework
+} from '#/api/core/order'
 
 interface Props {
   order: Order
@@ -266,6 +273,7 @@ interface Props {
 
 interface Emits {
   (e: 'update', order: Order): void
+  (e: 'refresh'): void
 }
 
 const props = defineProps<Props>()
@@ -327,13 +335,26 @@ const resetSalesForm = () => {
 }
 
 // 跟单操作 - 胚布
-const handleFabricUpdate = () => {
+const handleFabricUpdate = async () => {
   if (!followerFabricForm.quantity) {
     ElMessage.warning('请输入投入数量')
     return
   }
-  ElMessage.success(`更新胚布投入 ${followerFabricForm.quantity} 件（仅演示，未实际修改数据）`)
-  resetFollowerFabricForm()
+
+  try {
+    submitting.value = true
+    await updateFabricInput(Number(props.order.id), {
+      quantity: followerFabricForm.quantity,
+      remark: followerFabricForm.remark
+    })
+    ElMessage.success('更新胚布投入成功')
+    resetFollowerFabricForm()
+    emit('refresh')
+  } catch (error: any) {
+    ElMessage.error(error.message || '更新胚布投入失败')
+  } finally {
+    submitting.value = false
+  }
 }
 
 const resetFollowerFabricForm = () => {
@@ -342,13 +363,26 @@ const resetFollowerFabricForm = () => {
 }
 
 // 跟单操作 - 生产
-const handleProductionUpdate = () => {
+const handleProductionUpdate = async () => {
   if (!followerProductionForm.quantity) {
     ElMessage.warning('请输入生产数量')
     return
   }
-  ElMessage.success(`更新生产进度 ${followerProductionForm.quantity} 件（仅演示，未实际修改数据）`)
-  resetFollowerProductionForm()
+
+  try {
+    submitting.value = true
+    await updateProduction(Number(props.order.id), {
+      quantity: followerProductionForm.quantity,
+      remark: followerProductionForm.remark
+    })
+    ElMessage.success('更新生产进度成功')
+    resetFollowerProductionForm()
+    emit('refresh')
+  } catch (error: any) {
+    ElMessage.error(error.message || '更新生产进度失败')
+  } finally {
+    submitting.value = false
+  }
 }
 
 const resetFollowerProductionForm = () => {
@@ -357,13 +391,26 @@ const resetFollowerProductionForm = () => {
 }
 
 // 跟单操作 - 回修
-const handleReworkUpdate = () => {
+const handleReworkUpdate = async () => {
   if (!followerReworkForm.quantity) {
     ElMessage.warning('请输入回修数量')
     return
   }
-  ElMessage.success(`更新回修进度 ${followerReworkForm.quantity} 件（仅演示，未实际修改数据）`)
-  resetFollowerReworkForm()
+
+  try {
+    submitting.value = true
+    await updateRework(Number(props.order.id), {
+      quantity: followerReworkForm.quantity,
+      remark: followerReworkForm.remark
+    })
+    ElMessage.success('更新回修进度成功')
+    resetFollowerReworkForm()
+    emit('refresh')
+  } catch (error: any) {
+    ElMessage.error(error.message || '更新回修进度失败')
+  } finally {
+    submitting.value = false
+  }
 }
 
 const resetFollowerReworkForm = () => {
@@ -372,13 +419,26 @@ const resetFollowerReworkForm = () => {
 }
 
 // 仓库操作 - 验货
-const handleWarehouseCheckUpdate = () => {
+const handleWarehouseCheckUpdate = async () => {
   if (!warehouseCheckForm.quantity) {
     ElMessage.warning('请输入验收数量')
     return
   }
-  ElMessage.success(`更新验收进度 ${warehouseCheckForm.quantity} 件（仅演示，未实际修改数据）`)
-  resetWarehouseCheckForm()
+
+  try {
+    submitting.value = true
+    await updateWarehouseCheck(Number(props.order.id), {
+      quantity: warehouseCheckForm.quantity,
+      remark: warehouseCheckForm.remark
+    })
+    ElMessage.success('更新验收进度成功')
+    resetWarehouseCheckForm()
+    emit('refresh')
+  } catch (error: any) {
+    ElMessage.error(error.message || '更新验收进度失败')
+  } finally {
+    submitting.value = false
+  }
 }
 
 const resetWarehouseCheckForm = () => {
@@ -387,13 +447,26 @@ const resetWarehouseCheckForm = () => {
 }
 
 // 仓库操作 - 次品
-const handleDefectAdd = () => {
+const handleDefectAdd = async () => {
   if (!warehouseDefectForm.defectQuantity) {
     ElMessage.warning('请输入次品数量')
     return
   }
-  ElMessage.warning(`录入次品 ${warehouseDefectForm.defectQuantity} 件，将自动生成回修进度（仅演示，未实际修改数据）`)
-  resetWarehouseDefectForm()
+
+  try {
+    submitting.value = true
+    await addDefect(Number(props.order.id), {
+      quantity: warehouseDefectForm.defectQuantity,
+      remark: warehouseDefectForm.remark
+    })
+    ElMessage.success('录入次品成功，已自动生成回修进度')
+    resetWarehouseDefectForm()
+    emit('refresh')
+  } catch (error: any) {
+    ElMessage.error(error.message || '录入次品失败')
+  } finally {
+    submitting.value = false
+  }
 }
 
 const resetWarehouseDefectForm = () => {

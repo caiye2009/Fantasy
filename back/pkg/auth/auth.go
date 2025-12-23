@@ -2,7 +2,9 @@ package auth
 
 import (
 	"context"
+	"regexp"
 	"strings"
+	"github.com/casbin/casbin/v2"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,12 +23,14 @@ type RequestContext struct {
 }
 
 type AuthWang struct {
-	jwtWang *JWTWang
+	jwtWang  *JWTWang
+	enforcer *casbin.Enforcer
 }
 
-func NewAuthWang(jwtWang *JWTWang) *AuthWang {
+func NewAuthWang(jwtWang *JWTWang, enforcer *casbin.Enforcer) *AuthWang {
 	return &AuthWang{
-		jwtWang: jwtWang,
+		jwtWang:  jwtWang,
+		enforcer: enforcer,
 	}
 }
 
@@ -66,11 +70,50 @@ func (aw *AuthWang) AuthMiddleware() gin.HandlerFunc {
 		println("role:", claims.Role)
 		println("========================")
 
-		// 5. TODO: 权限校验将在此处添加
+		// 5. Casbin权限检查
+		if aw.enforcer != nil {
+			role := claims.Role
+			path := c.Request.URL.Path
+			method := c.Request.Method
+
+			// 标准化路径（将数字ID替换为:id）
+			normalizedPath := normalizePath(path)
+
+			println("===== Permission Check =====")
+			println("role:", role)
+			println("path:", path)
+			println("normalizedPath:", normalizedPath)
+			println("method:", method)
+
+			allowed, err := aw.enforcer.Enforce(role, normalizedPath, method)
+			if err != nil {
+				println("permission check error:", err.Error())
+				c.JSON(500, gin.H{"error": "权限检查失败"})
+				c.Abort()
+				return
+			}
+
+			println("allowed:", allowed)
+			println("===========================")
+
+			if !allowed {
+				c.JSON(403, gin.H{"error": "无权限访问该资源"})
+				c.Abort()
+				return
+			}
+		}
 
 		// 6. 放行
 		c.Next()
 	}
+}
+
+// normalizePath 路径标准化（将数字ID替换为:id）
+// 例如：/api/v1/order/123/detail -> /api/v1/order/:id/detail
+func normalizePath(path string) string {
+	// 使用正则表达式匹配路径中的数字ID
+	re := regexp.MustCompile(`/\d+(/|$)`)
+	return re.ReplaceAllString(path, "/:id$1")
 }
 
 func GetRequestContext(c *gin.Context) *RequestContext {

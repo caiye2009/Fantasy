@@ -193,6 +193,13 @@
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { Order, RoleType } from '../types'
+import {
+  updateFabricInput,
+  updateProduction,
+  updateWarehouseCheck,
+  addDefect,
+  updateRework
+} from '#/api/core/order'
 
 interface Props {
   visible: boolean
@@ -266,64 +273,91 @@ const getRoleName = (role: RoleType) => {
 }
 
 // 提交
-const handleSubmit = () => {
-  submitting.value = true
+const handleSubmit = async () => {
+  if (!props.order) return
 
-  setTimeout(() => {
+  try {
+    submitting.value = true
+    const orderId = Number(props.order.id)
+
     if (props.currentRole === 'sales') {
       if (!salesForm.additionalQuantity) {
         ElMessage.warning('请输入追加数量')
-        submitting.value = false
         return
       }
-      ElMessage.success(`追加需求数量 ${salesForm.additionalQuantity} 件（演示）`)
-      resetForms()
+      // TODO: 实现追加需求数量的 API
+      ElMessage.info('追加需求数量功能尚未实现')
+
     } else if (props.currentRole === 'follower') {
       if (followerActiveTab.value === 'fabric') {
         if (!followerFabricForm.quantity) {
           ElMessage.warning('请输入投入数量')
-          submitting.value = false
           return
         }
-        ElMessage.success(`更新胚布投入 ${followerFabricForm.quantity} 件（演示）`)
+        await updateFabricInput(orderId, {
+          quantity: followerFabricForm.quantity,
+          remark: followerFabricForm.remark
+        })
+        ElMessage.success('更新胚布投入成功')
+
       } else if (followerActiveTab.value === 'production') {
         if (!followerProductionForm.quantity) {
           ElMessage.warning('请输入生产数量')
-          submitting.value = false
           return
         }
-        ElMessage.success(`更新生产进度 ${followerProductionForm.quantity} 件（演示）`)
+        await updateProduction(orderId, {
+          quantity: followerProductionForm.quantity,
+          remark: followerProductionForm.remark
+        })
+        ElMessage.success('更新生产进度成功')
+
       } else if (followerActiveTab.value === 'rework') {
         if (!followerReworkForm.quantity) {
           ElMessage.warning('请输入回修数量')
-          submitting.value = false
           return
         }
-        ElMessage.success(`更新回修进度 ${followerReworkForm.quantity} 件（演示）`)
+        await updateRework(orderId, {
+          quantity: followerReworkForm.quantity,
+          remark: followerReworkForm.remark
+        })
+        ElMessage.success('更新回修进度成功')
       }
-      resetForms()
+
     } else if (props.currentRole === 'warehouse') {
       if (warehouseActiveTab.value === 'check') {
         if (!warehouseCheckForm.quantity) {
           ElMessage.warning('请输入验收数量')
-          submitting.value = false
           return
         }
-        ElMessage.success(`更新验收进度 ${warehouseCheckForm.quantity} 件（演示）`)
+        await updateWarehouseCheck(orderId, {
+          quantity: warehouseCheckForm.quantity,
+          remark: warehouseCheckForm.remark
+        })
+        ElMessage.success('更新验收进度成功')
+
       } else if (warehouseActiveTab.value === 'defect') {
         if (!warehouseDefectForm.defectQuantity) {
           ElMessage.warning('请输入次品数量')
-          submitting.value = false
           return
         }
-        ElMessage.warning(`录入次品 ${warehouseDefectForm.defectQuantity} 件（演示）`)
+        await addDefect(orderId, {
+          quantity: warehouseDefectForm.defectQuantity,
+          remark: warehouseDefectForm.remark
+        })
+        ElMessage.success('录入次品成功，已自动生成回修进度')
       }
-      resetForms()
     }
 
-    submitting.value = false
+    resetForms()
     dialogVisible.value = false
-  }, 500)
+    // 触发更新事件，让父组件刷新数据
+    emit('update', props.order)
+
+  } catch (error: any) {
+    ElMessage.error(error.message || '操作失败')
+  } finally {
+    submitting.value = false
+  }
 }
 
 // 取消

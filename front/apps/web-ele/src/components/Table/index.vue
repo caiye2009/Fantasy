@@ -162,7 +162,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessageBox } from 'element-plus'
 import { Search, Loading } from '@element-plus/icons-vue'
 import { useDataTable } from '#/composables/useDataTable'
 import { useTablePreference } from '#/composables/useTablePreference'
@@ -177,7 +177,7 @@ const props = withDefaults(defineProps<Props>(), { loading: false })
 const emit = defineEmits(['view', 'edit', 'bulkAction'])
 
 // 用户偏好
-const { columns, updateColumns } = useTablePreference(
+const { columns } = useTablePreference(
   props.config.pageType,
   props.config.columns
 )

@@ -1,11 +1,25 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { elasticsearchService } from '#/api/core/es'
-import type { ESResponse } from '#/components/DataTable/types'
+import type { ESResponse } from '#/components/Table/types'
 
-export function useDataTable(index: string, pageSize: number = 20) {
+export interface DataTableOptions {
+  index: string
+  pageSize?: number
+  defaultSort?: Array<{ field: string; order: string }>
+}
+
+export function useDataTable(indexOrOptions: string | DataTableOptions, pageSize: number = 20) {
   const router = useRouter()
   const route = useRoute()
+
+  // 支持两种调用方式：useDataTable('index', 20) 或 useDataTable({ index: 'index', pageSize: 20, defaultSort: [...] })
+  const options: DataTableOptions = typeof indexOrOptions === 'string'
+    ? { index: indexOrOptions, pageSize, defaultSort: [] }
+    : { pageSize: 20, defaultSort: [], ...indexOrOptions }
+
+  const index = options.index
+  const finalPageSize = options.pageSize || pageSize
 
   // 加载状态
   const loading = ref(false)          // 滚动加载
@@ -19,7 +33,7 @@ export function useDataTable(index: string, pageSize: number = 20) {
   // 搜索 / 筛选 / 排序
   const query = ref<string>('')
   const filters = ref<Record<string, any>>({})
-  const sort = ref<Array<{ field: string; order: string }>>([])
+  const sort = ref<Array<{ field: string; order: string }>>(options.defaultSort || [])
 
   // selection
   const selectedRows = ref<any[]>([])
@@ -41,7 +55,7 @@ export function useDataTable(index: string, pageSize: number = 20) {
     if (keys.length === 0) return false
     const maxPage = Math.max(...keys)
     const last = cache.value.get(maxPage)
-    return last && last.length === pageSize
+    return last && last.length === finalPageSize
   })
 
   const hasPrevious = computed(() => {
@@ -87,8 +101,8 @@ export function useDataTable(index: string, pageSize: number = 20) {
     filters: Object.keys(filters.value).length > 0 ? filters.value : undefined,
     sort: sort.value.length > 0 ? sort.value : undefined,
     pagination: {
-      offset: (page - 1) * pageSize,
-      size: pageSize,
+      offset: (page - 1) * finalPageSize,
+      size: finalPageSize,
     },
   })
 
@@ -185,7 +199,7 @@ export function useDataTable(index: string, pageSize: number = 20) {
     const visibleEnd = Math.floor((scrollTop + clientHeight) / itemHeight)
 
     const visibleIndex = Math.floor((visibleStart + visibleEnd) / 2)
-    const newPage = Math.floor(visibleIndex / pageSize) + 1
+    const newPage = Math.floor(visibleIndex / finalPageSize) + 1
 
     if (newPage !== currentPage.value && newPage > 0) {
       currentPage.value = newPage

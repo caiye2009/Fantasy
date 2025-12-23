@@ -13,8 +13,10 @@ const (
 	RoleFinanceDirector      = "financeDirector"      // 财务总监
 	RoleFinance              = "finance"              // 财务
 	RoleProductionDirector   = "productionDirector"   // 生产总监
+	RoleProductionAssistant  = "productionAssistant"  // 生产助理
 	RoleProductionSpecialist = "productionSpecialist" // 生产专员
 	RoleOrderCoordinator     = "orderCoordinator"     // 订单协调员
+	RoleWarehouse            = "warehouse"            // 仓管
 	RoleSalesManager         = "salesManager"         // 销售经理
 	RoleSalesAssistant       = "salesAssistant"       // 销售助理
 )
@@ -27,8 +29,10 @@ func GetAllRoles() []string {
 		RoleFinanceDirector,
 		RoleFinance,
 		RoleProductionDirector,
+		RoleProductionAssistant,
 		RoleProductionSpecialist,
 		RoleOrderCoordinator,
+		RoleWarehouse,
 		RoleSalesManager,
 		RoleSalesAssistant,
 	}

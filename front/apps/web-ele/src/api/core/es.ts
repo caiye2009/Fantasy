@@ -1,5 +1,5 @@
 import { requestClient } from '#/api/request'
-import type { ESRequest, ESResponse } from '#/components/DataTable/types'
+import type { ESRequest, ESResponse } from '#/components/Table/types'
 
 /**
  * 批量操作响应
