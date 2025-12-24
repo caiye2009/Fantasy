@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	
+
 	"github.com/gin-gonic/gin"
-	
+
+	"back/pkg/audit"
 	"back/internal/plan/application"
 	"back/internal/plan/domain"
 )
@@ -178,10 +179,10 @@ func (h *PlanHandler) Delete(c *gin.Context) {
 // RegisterPlanHandlers 注册路由
 func RegisterPlanHandlers(rg *gin.RouterGroup, service *application.PlanService) {
 	handler := NewPlanHandler(service)
-	
-	rg.POST("/plan", handler.Create)
+
+	rg.POST("/plan", audit.Mark("plan", "planCreation"), handler.Create)
 	rg.GET("/plan/:id", handler.Get)
 	rg.GET("/plan", handler.List)
-	rg.POST("/plan/:id", handler.Update)
-	rg.DELETE("/plan/:id", handler.Delete)
+	rg.POST("/plan/:id", audit.Mark("plan", "planUpdate"), handler.Update)
+	rg.DELETE("/plan/:id", audit.Mark("plan", "planDeletion"), handler.Delete)
 }

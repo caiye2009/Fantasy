@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	
+
 	"github.com/gin-gonic/gin"
-	
+
+	"back/pkg/audit"
 	"back/internal/process/application"
 	"back/internal/process/domain"
 )
@@ -143,9 +144,9 @@ func (h *ProcessHandler) Delete(c *gin.Context) {
 func RegisterProcessHandlers(rg *gin.RouterGroup, service *application.ProcessService) {
 	handler := NewProcessHandler(service)
 
-	rg.POST("/process", handler.Create)
+	rg.POST("/process", audit.Mark("process", "processCreation"), handler.Create)
 	rg.GET("/process/:id", handler.Get)
 	// List 接口已移除，使用 POST /search 替代
-	rg.POST("/process/:id", handler.Update)
-	rg.DELETE("/process/:id", handler.Delete)
+	rg.POST("/process/:id", audit.Mark("process", "processUpdate"), handler.Update)
+	rg.DELETE("/process/:id", audit.Mark("process", "processDeletion"), handler.Delete)
 }

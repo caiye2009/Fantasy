@@ -3,9 +3,10 @@ package interfaces
 import (
 	"net/http"
 	"strconv"
-	
+
 	"github.com/gin-gonic/gin"
-	
+
+	"back/pkg/audit"
 	"back/internal/pricing/application"
 )
 
@@ -106,8 +107,8 @@ func (h *ProcessPriceHandler) GetHistory(c *gin.Context) {
 // RegisterProcessPriceHandlers 注册路由
 func RegisterProcessPriceHandlers(rg *gin.RouterGroup, service *application.ProcessPriceService) {
 	handler := NewProcessPriceHandler(service)
-	
-	rg.POST("/process/price/quote", handler.Quote)
+
+	rg.POST("/process/price/quote", audit.Mark("pricing", "processPriceQuote"), handler.Quote)
 	rg.GET("/process/:id/price", handler.GetPrice)
 	rg.GET("/process/:id/price/history", handler.GetHistory)
 }

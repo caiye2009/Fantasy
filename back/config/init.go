@@ -66,7 +66,7 @@ func Init() error {
 	log.Println("✓ Services initialized")
 
 	log.Println("=== Initializing Router ===")
-	router := InitRoutes(authWang, services)
+	router := InitRoutes(authWang, services, db)
 	log.Println("✓ Router initialized")
 
 	server := &http.Server{

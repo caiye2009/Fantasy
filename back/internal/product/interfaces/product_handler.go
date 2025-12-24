@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	
+
 	"github.com/gin-gonic/gin"
-	
+
+	"back/pkg/audit"
 	"back/internal/product/application"
 	"back/internal/product/domain"
 )
@@ -223,11 +224,11 @@ func RegisterProductHandlers(
 ) {
 	handler := NewProductHandler(service, calculator, priceService)
 
-	rg.POST("/product", handler.Create)
+	rg.POST("/product", audit.Mark("product", "productCreation"), handler.Create)
 	rg.GET("/product/:id", handler.Get)
 	rg.GET("/product/:id/price", handler.GetPrice)
 	// List 接口已移除，使用 POST /search 替代
-	rg.POST("/product/:id", handler.Update)
-	rg.DELETE("/product/:id", handler.Delete)
-	rg.POST("/product/calculate-cost", handler.CalculateCost)
+	rg.POST("/product/:id", audit.Mark("product", "productUpdate"), handler.Update)
+	rg.DELETE("/product/:id", audit.Mark("product", "productDeletion"), handler.Delete)
+	rg.POST("/product/calculate-cost", audit.Mark("product", "costCalculation"), handler.CalculateCost)
 }

@@ -6,9 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"gorm.io/gorm"
 	_ "back/docs" // 导入生成的 docs
 
 	"back/pkg/auth"
+	"back/pkg/audit"
 	authInterfaces "back/internal/auth/interfaces"
 	supplierInterfaces "back/internal/supplier/interfaces"
 	clientInterfaces "back/internal/client/interfaces"
@@ -23,7 +25,7 @@ import (
 	analyticsInterfaces "back/internal/analytics/interfaces"
 )
 
-func InitRoutes(authWang *auth.AuthWang, services *Services) *gin.Engine {
+func InitRoutes(authWang *auth.AuthWang, services *Services, db *gorm.DB) *gin.Engine {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
@@ -48,7 +50,8 @@ func InitRoutes(authWang *auth.AuthWang, services *Services) *gin.Engine {
 
 	// 受保护路由
 	protected := api.Group("")
-	protected.Use(authWang.AuthMiddleware())
+	protected.Use(authWang.AuthMiddleware())  // 1. 先认证鉴权
+	protected.Use(audit.AuditMiddleware(db))  // 2. 再审计（auth > handler > audit）
 	{
 		userInterfaces.RegisterUserHandlers(protected, services.User)
 		userInterfaces.RegisterDepartmentHandlers(protected, services.Department)

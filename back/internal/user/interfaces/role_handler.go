@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"back/pkg/audit"
 	"back/internal/user/application"
 	"back/internal/user/domain"
 )
@@ -184,10 +185,10 @@ func (h *RoleHandler) Delete(c *gin.Context) {
 func RegisterRoleHandlers(rg *gin.RouterGroup, service *application.RoleService) {
 	handler := NewRoleHandler(service)
 
-	rg.POST("/user/roles", handler.Create)
+	rg.POST("/user/roles", audit.Mark("role", "roleCreation"), handler.Create)
 	rg.GET("/user/roles/:id", handler.Get)
 	rg.GET("/user/roles", handler.List)
-	rg.POST("/user/roles/:id", handler.Update)
-	rg.DELETE("/user/roles/:id", handler.Delete)
+	rg.POST("/user/roles/:id", audit.Mark("role", "roleUpdate"), handler.Update)
+	rg.DELETE("/user/roles/:id", audit.Mark("role", "roleDeletion"), handler.Delete)
 }
 

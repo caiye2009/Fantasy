@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"back/pkg/audit"
 	"back/internal/user/application"
 	"back/internal/user/domain"
 )
@@ -184,10 +185,10 @@ func (h *DepartmentHandler) Delete(c *gin.Context) {
 func RegisterDepartmentHandlers(rg *gin.RouterGroup, service *application.DepartmentService) {
 	handler := NewDepartmentHandler(service)
 
-	rg.POST("/user/departments", handler.Create)
+	rg.POST("/user/departments", audit.Mark("department", "departmentCreation"), handler.Create)
 	rg.GET("/user/departments/:id", handler.Get)
 	rg.GET("/user/departments", handler.List)
-	rg.POST("/user/departments/:id", handler.Update)
-	rg.DELETE("/user/departments/:id", handler.Delete)
+	rg.POST("/user/departments/:id", audit.Mark("department", "departmentUpdate"), handler.Update)
+	rg.DELETE("/user/departments/:id", audit.Mark("department", "departmentDeletion"), handler.Delete)
 }
 

@@ -3,9 +3,10 @@ package interfaces
 import (
 	"net/http"
 	"strconv"
-	
+
 	"github.com/gin-gonic/gin"
-	
+
+	"back/pkg/audit"
 	"back/internal/pricing/application"
 )
 
@@ -106,8 +107,8 @@ func (h *MaterialPriceHandler) GetHistory(c *gin.Context) {
 // RegisterMaterialPriceHandlers 注册路由
 func RegisterMaterialPriceHandlers(rg *gin.RouterGroup, service *application.MaterialPriceService) {
 	handler := NewMaterialPriceHandler(service)
-	
-	rg.POST("/material/price/quote", handler.Quote)
+
+	rg.POST("/material/price/quote", audit.Mark("pricing", "materialPriceQuote"), handler.Quote)
 	rg.GET("/material/:id/price", handler.GetPrice)
 	rg.GET("/material/:id/price/history", handler.GetHistory)
 }

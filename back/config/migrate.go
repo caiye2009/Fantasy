@@ -4,6 +4,7 @@ import (
 	"log"
 	"gorm.io/gorm"
 
+	"back/pkg/audit"
 	userDomain "back/internal/user/domain"
 	supplierDomain "back/internal/supplier/domain"
 	clientDomain "back/internal/client/domain"
@@ -19,6 +20,9 @@ func AutoMigrate(db *gorm.DB) error {
 	log.Println("=== Starting Database Migration ===")
 
 	err := db.AutoMigrate(
+		// 审计日志表
+		&audit.AuditLog{},
+		// 业务表
 		&userDomain.User{},
 		&userDomain.Department{},
 		&userDomain.Role{},

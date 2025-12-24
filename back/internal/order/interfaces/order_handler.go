@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	
+
 	"github.com/gin-gonic/gin"
-	
+
+	"back/pkg/audit"
 	"back/internal/order/application"
 	"back/internal/order/domain"
 )
@@ -240,6 +241,23 @@ func (h *OrderHandler) AssignDepartment(c *gin.Context) {
 		return
 	}
 
+	// ===== Audit: 记录旧值 =====
+	recorder := audit.Get(c)
+	if recorder != nil {
+		recorder.SetResourceID(id) // 设置被操作的资源ID
+
+		// 获取旧值（分配前的部门信息）
+		oldOrder, err := h.service.Get(c.Request.Context(), uint(id))
+		if err == nil {
+			recorder.SetOld(map[string]interface{}{
+				"order_id":            oldOrder.ID,
+				"order_no":            oldOrder.OrderNo,
+				"assigned_department": "", // 旧的部门为空
+			})
+		}
+	}
+	// ===== Audit End =====
+
 	// 从上下文获取用户信息
 	loginID, _ := c.Get("loginId")
 	role, _ := c.Get("role")
@@ -258,6 +276,15 @@ func (h *OrderHandler) AssignDepartment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// ===== Audit: 记录新值（分配后的部门信息） =====
+	if recorder != nil {
+		recorder.SetNew(map[string]interface{}{
+			"order_id":            id,
+			"assigned_department": req.Department,
+		})
+	}
+	// ===== Audit End =====
 
 	c.JSON(http.StatusOK, gin.H{"message": "分配部门成功"})
 }
@@ -587,23 +614,23 @@ func RegisterOrderHandlers(rg *gin.RouterGroup, service *application.OrderServic
 	handler := NewOrderHandler(service)
 
 	// 旧版端点（兼容）
-	rg.POST("/order", handler.Create)
+	rg.POST("/order", audit.Mark("order", "orderCreation"), handler.Create)
 	rg.GET("/order/:id", handler.Get)
 	rg.GET("/order", handler.List)
-	rg.POST("/order/:id", handler.Update)
-	rg.DELETE("/order/:id", handler.Delete)
+	rg.POST("/order/:id", audit.Mark("order", "orderUpdate"), handler.Update)
+	rg.DELETE("/order/:id", audit.Mark("order", "orderDeletion"), handler.Delete)
 
 	// 新版协作工作流端点
 	// rg.POST("/order", handler.CreateV2)  // 与旧版冲突，暂时保留旧版
-	rg.POST("/order/:id/assign-department", handler.AssignDepartment)
-	rg.POST("/order/:id/assign-personnel", handler.AssignPersonnel)
-	rg.POST("/order/:id/progress/fabric-input", handler.UpdateFabricInput)
-	rg.POST("/order/:id/progress/production", handler.UpdateProduction)
-	rg.POST("/order/:id/progress/warehouse-check", handler.UpdateWarehouseCheck)
-	rg.POST("/order/:id/progress/rework", handler.UpdateRework)
-	rg.POST("/order/:id/defect", handler.AddDefect)
+	rg.POST("/order/:id/assign-department", audit.Mark("order", "departmentAssignment"), handler.AssignDepartment)
+	rg.POST("/order/:id/assign-personnel", audit.Mark("order", "personnelAssignment"), handler.AssignPersonnel)
+	rg.POST("/order/:id/progress/fabric-input", audit.Mark("order", "fabricInputUpdate"), handler.UpdateFabricInput)
+	rg.POST("/order/:id/progress/production", audit.Mark("order", "productionUpdate"), handler.UpdateProduction)
+	rg.POST("/order/:id/progress/warehouse-check", audit.Mark("order", "warehouseCheckUpdate"), handler.UpdateWarehouseCheck)
+	rg.POST("/order/:id/progress/rework", audit.Mark("order", "reworkUpdate"), handler.UpdateRework)
+	rg.POST("/order/:id/defect", audit.Mark("order", "defectAddition"), handler.AddDefect)
 
-	// 详情端点
+	// 详情端点（GET 请求不需要 audit 标记，会自动跳过）
 	rg.GET("/order/list-detail", handler.ListWithDetail)
 	rg.GET("/order/:id/detail", handler.GetDetail)
 	rg.GET("/order/:id/events", handler.GetEvents)

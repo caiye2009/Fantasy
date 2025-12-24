@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	
+
 	"github.com/gin-gonic/gin"
-	
+
+	"back/pkg/audit"
 	"back/internal/user/application"
 	"back/internal/user/domain"
 )
@@ -229,10 +230,10 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 func RegisterUserHandlers(rg *gin.RouterGroup, service *application.UserService) {
 	handler := NewUserHandler(service)
 
-	rg.POST("/user", handler.Create)
+	rg.POST("/user", audit.Mark("user", "userCreation"), handler.Create)
 	rg.GET("/user/:id", handler.Get)
 	rg.GET("/user", handler.List)
-	rg.POST("/user/:id", handler.Update)
-	rg.DELETE("/user/:id", handler.Delete)
-	rg.POST("/user/change-password", handler.ChangePassword)
+	rg.POST("/user/:id", audit.Mark("user", "userUpdate"), handler.Update)
+	rg.DELETE("/user/:id", audit.Mark("user", "userDeletion"), handler.Delete)
+	rg.POST("/user/change-password", audit.Mark("user", "passwordChange"), handler.ChangePassword)
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"back/pkg/audit"
 	"back/internal/search/application"
 )
 
@@ -83,7 +84,8 @@ func RegisterSearchHandlers(router *gin.RouterGroup, service *application.Search
 
 	searchGroup := router.Group("/search")
 	{
-		searchGroup.POST("", handler.Search)
+		// 搜索是查询操作，跳过审计
+		searchGroup.POST("", audit.Skip(), handler.Search)
 		searchGroup.GET("/indices", handler.GetIndices)
 	}
 }

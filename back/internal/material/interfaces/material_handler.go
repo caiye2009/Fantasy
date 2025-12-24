@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	
+
 	"github.com/gin-gonic/gin"
-	
+
+	"back/pkg/audit"
 	"back/internal/material/application"
 	"back/internal/material/domain"
 )
@@ -140,9 +141,9 @@ func (h *MaterialHandler) Delete(c *gin.Context) {
 func RegisterMaterialHandlers(rg *gin.RouterGroup, service *application.MaterialService) {
 	handler := NewMaterialHandler(service)
 
-	rg.POST("/material", handler.Create)
+	rg.POST("/material", audit.Mark("material", "materialCreation"), handler.Create)
 	rg.GET("/material/:id", handler.Get)
 	// List 接口已移除，使用 POST /search 替代
-	rg.POST("/material/:id", handler.Update)
-	rg.DELETE("/material/:id", handler.Delete)
+	rg.POST("/material/:id", audit.Mark("material", "materialUpdate"), handler.Update)
+	rg.DELETE("/material/:id", audit.Mark("material", "materialDeletion"), handler.Delete)
 }

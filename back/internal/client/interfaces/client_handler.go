@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	
+
 	"github.com/gin-gonic/gin"
-	
+
+	"back/pkg/audit"
 	"back/internal/client/application"
 	"back/internal/client/domain"
 )
@@ -161,10 +162,10 @@ func (h *ClientHandler) Delete(c *gin.Context) {
 // RegisterClientHandlers 注册路由
 func RegisterClientHandlers(rg *gin.RouterGroup, service *application.ClientService) {
 	handler := NewClientHandler(service)
-	
-	rg.POST("/client", handler.Create)
+
+	rg.POST("/client", audit.Mark("client", "clientCreation"), handler.Create)
 	rg.GET("/client/:id", handler.Get)
 	//rg.GET("/client", handler.List)
-	rg.POST("/client/:id", handler.Update)
-	rg.DELETE("/client/:id", handler.Delete)
+	rg.POST("/client/:id", audit.Mark("client", "clientUpdate"), handler.Update)
+	rg.DELETE("/client/:id", audit.Mark("client", "clientDeletion"), handler.Delete)
 }

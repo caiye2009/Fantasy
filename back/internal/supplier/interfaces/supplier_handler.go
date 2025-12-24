@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"back/pkg/audit"
 	"back/internal/supplier/application"
 	"back/internal/supplier/domain"
 )
@@ -173,9 +174,9 @@ func (h *SupplierHandler) Delete(c *gin.Context) {
 func RegisterSupplierHandlers(rg *gin.RouterGroup, service *application.SupplierService) {
 	handler := NewSupplierHandler(service)
 
-	rg.POST("/supplier", handler.Create)
+	rg.POST("/supplier", audit.Mark("supplier", "supplierCreation"), handler.Create)
 	rg.GET("/supplier/:id", handler.Get)
 	rg.GET("/supplier", handler.List)
-	rg.POST("/supplier/:id", handler.Update)
-	rg.DELETE("/supplier/:id", handler.Delete)
+	rg.POST("/supplier/:id", audit.Mark("supplier", "supplierUpdate"), handler.Update)
+	rg.DELETE("/supplier/:id", audit.Mark("supplier", "supplierDeletion"), handler.Delete)
 }
