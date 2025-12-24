@@ -1,5 +1,15 @@
 basePath: /api/v1
 definitions:
+  application.AddDefectRequest:
+    properties:
+      defect_quantity:
+        type: number
+      remark:
+        type: string
+    required:
+    - defect_quantity
+    - remark
+    type: object
   application.AggRequest:
     properties:
       after:
@@ -45,6 +55,27 @@ definitions:
         description: 退款总金额（RMB，USD已按汇率8换算）
         example: 120000
         type: number
+    type: object
+  application.AssignDepartmentRequest:
+    properties:
+      department:
+        type: string
+    required:
+    - department
+    type: object
+  application.AssignPersonnelRequest:
+    properties:
+      fabric_target_quantity:
+        description: 胚布目标数量
+        type: number
+      order_coordinator_id:
+        type: integer
+      production_specialist_id:
+        type: integer
+    required:
+    - fabric_target_quantity
+    - order_coordinator_id
+    - production_specialist_id
     type: object
   application.Bucket:
     properties:
@@ -252,6 +283,32 @@ definitions:
     - quantity
     - unit_price
     type: object
+  application.CreateOrderRequestV2:
+    properties:
+      client_id:
+        type: integer
+      order_no:
+        maxLength: 50
+        type: string
+      product_history_shrinkage:
+        description: 历史缩率
+        minimum: 0
+        type: number
+      product_id:
+        type: integer
+      required_quantity:
+        description: 成品需求数量
+        type: number
+      unit_price:
+        minimum: 0
+        type: number
+    required:
+    - client_id
+    - order_no
+    - product_id
+    - required_quantity
+    - unit_price
+    type: object
   application.CreatePlanRequest:
     properties:
       created_by:
@@ -420,6 +477,29 @@ definitions:
       updated_at:
         type: string
     type: object
+  application.EventResponse:
+    properties:
+      after_data:
+        type: string
+      before_data:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      event_type:
+        type: string
+      id:
+        type: integer
+      operator_id:
+        type: integer
+      operator_name:
+        type: string
+      operator_role:
+        type: string
+      order_id:
+        type: integer
+    type: object
   application.IndexListResponse:
     properties:
       indices:
@@ -499,6 +579,58 @@ definitions:
         description: 订单总米数
         example: 50000
         type: number
+    type: object
+  application.OrderDetailResponse:
+    properties:
+      assigned_department:
+        type: string
+      client_id:
+        type: integer
+      client_name:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      operation_logs:
+        items:
+          $ref: '#/definitions/application.EventResponse'
+        type: array
+      order_no:
+        type: string
+      overall_progress:
+        type: integer
+      product_code:
+        type: string
+      product_history_shrinkage:
+        type: number
+      product_id:
+        type: integer
+      product_name:
+        type: string
+      progress_items:
+        items:
+          $ref: '#/definitions/application.ProgressResponse'
+        type: array
+      required_quantity:
+        type: number
+      status:
+        type: string
+      total_price:
+        type: number
+      unit_price:
+        type: number
+      updated_at:
+        type: string
+    type: object
+  application.OrderListDetailResponse:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/application.OrderDetailResponse'
+        type: array
+      total:
+        type: integer
     type: object
   application.OrderListResponse:
     properties:
@@ -618,6 +750,34 @@ definitions:
           $ref: '#/definitions/domain.ProcessConfig'
         type: array
       status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  application.ProgressResponse:
+    properties:
+      color:
+        type: string
+      completed_quantity:
+        type: number
+      created_at:
+        type: string
+      exists:
+        type: boolean
+      icon:
+        type: string
+      id:
+        type: integer
+      name:
+        description: 前端显示名称
+        type: string
+      order_id:
+        type: integer
+      progress:
+        type: integer
+      target_quantity:
+        type: number
+      type:
         type: string
       updated_at:
         type: string
@@ -968,6 +1128,15 @@ definitions:
         - approved
         - rejected
         type: string
+    type: object
+  application.UpdateProgressRequest:
+    properties:
+      quantity:
+        type: number
+      remark:
+        type: string
+    required:
+    - quantity
     type: object
   application.UpdateRoleRequest:
     properties:
@@ -1657,21 +1826,21 @@ paths:
     post:
       consumes:
       - application/json
-      description: 创建新的订单信息
+      description: 创建新订单，记录参与者、初始化进度、记录事件
       parameters:
       - description: 订单信息
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/application.CreateOrderRequest'
+          $ref: '#/definitions/application.CreateOrderRequestV2'
       produces:
       - application/json
       responses:
         "200":
           description: 创建成功
           schema:
-            $ref: '#/definitions/application.OrderResponse'
+            $ref: '#/definitions/application.OrderDetailResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1686,7 +1855,7 @@ paths:
             type: object
       security:
       - Bearer: []
-      summary: 创建订单
+      summary: 创建订单（新版）
       tags:
       - 订单管理
   /order/{id}:
@@ -1788,6 +1957,407 @@ paths:
       security:
       - Bearer: []
       summary: 更新订单
+      tags:
+      - 订单管理
+  /order/{id}/assign-department:
+    post:
+      consumes:
+      - application/json
+      description: 生产总监分配订单到部门
+      parameters:
+      - description: 订单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 部门信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.AssignDepartmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 分配成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 分配部门
+      tags:
+      - 订单管理
+  /order/{id}/assign-personnel:
+    post:
+      consumes:
+      - application/json
+      description: 生产助理分配生产专员和跟单，并设定胚布目标数量
+      parameters:
+      - description: 订单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 人员信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.AssignPersonnelRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 分配成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 分配人员
+      tags:
+      - 订单管理
+  /order/{id}/defect:
+    post:
+      consumes:
+      - application/json
+      description: 仓管录入次品数量
+      parameters:
+      - description: 订单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 次品信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.AddDefectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 录入成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 录入次品
+      tags:
+      - 订单管理
+  /order/{id}/detail:
+    get:
+      consumes:
+      - application/json
+      description: 获取订单详情，含参与者、进度、事件流
+      parameters:
+      - description: 订单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/application.OrderDetailResponse'
+        "404":
+          description: 订单不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取订单详情（完整）
+      tags:
+      - 订单管理
+  /order/{id}/events:
+    get:
+      consumes:
+      - application/json
+      description: 获取订单的完整操作历史事件流
+      parameters:
+      - description: 订单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            items:
+              $ref: '#/definitions/application.EventResponse'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取订单事件流
+      tags:
+      - 订单管理
+  /order/{id}/progress/fabric-input:
+    post:
+      consumes:
+      - application/json
+      description: 跟单更新胚布投入进度
+      parameters:
+      - description: 订单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 进度信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.UpdateProgressRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新胚布投入进度
+      tags:
+      - 订单管理
+  /order/{id}/progress/production:
+    post:
+      consumes:
+      - application/json
+      description: 跟单更新生产进度
+      parameters:
+      - description: 订单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 进度信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.UpdateProgressRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新生产进度
+      tags:
+      - 订单管理
+  /order/{id}/progress/rework:
+    post:
+      consumes:
+      - application/json
+      description: 跟单更新回修进度
+      parameters:
+      - description: 订单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 进度信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.UpdateProgressRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新回修进度
+      tags:
+      - 订单管理
+  /order/{id}/progress/warehouse-check:
+    post:
+      consumes:
+      - application/json
+      description: 仓管更新验货进度
+      parameters:
+      - description: 订单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 进度信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.UpdateProgressRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新验货进度
+      tags:
+      - 订单管理
+  /order/list-detail:
+    get:
+      consumes:
+      - application/json
+      description: 获取订单列表，包含客户名、产品名、进度项、操作日志等完整信息
+      parameters:
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: 偏移量
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/application.OrderListDetailResponse'
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取订单列表（含完整详情）
       tags:
       - 订单管理
   /plan:

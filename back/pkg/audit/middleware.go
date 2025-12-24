@@ -9,14 +9,8 @@ import (
 // 在 auth 中间件之后使用，自动记录所有非 GET 请求
 func AuditMiddleware(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 1. 跳过 GET 请求（只读操作不需要审计）
-		if c.Request.Method == "GET" {
-			c.Next()
-			return
-		}
 
-		// 2. 跳过 OPTIONS 请求（CORS 预检）
-		if c.Request.Method == "OPTIONS" {
+		if c.Request.Method == "GET" || c.Request.Method == "OPTIONS" {
 			c.Next()
 			return
 		}

@@ -748,7 +748,7 @@
                         "Bearer": []
                     }
                 ],
-                "description": "创建新的订单信息",
+                "description": "创建新订单，记录参与者、初始化进度、记录事件",
                 "consumes": [
                     "application/json"
                 ],
@@ -758,7 +758,7 @@
                 "tags": [
                     "订单管理"
                 ],
-                "summary": "创建订单",
+                "summary": "创建订单（新版）",
                 "parameters": [
                     {
                         "description": "订单信息",
@@ -766,7 +766,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/application.CreateOrderRequest"
+                            "$ref": "#/definitions/application.CreateOrderRequestV2"
                         }
                     }
                 ],
@@ -774,7 +774,7 @@
                     "200": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/application.OrderResponse"
+                            "$ref": "#/definitions/application.OrderDetailResponse"
                         }
                     },
                     "400": {
@@ -784,6 +784,59 @@
                             "additionalProperties": {
                                 "type": "string"
                             }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/order/list-detail": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "获取订单列表，包含客户名、产品名、进度项、操作日志等完整信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单管理"
+                ],
+                "summary": "获取订单列表（含完整详情）",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "偏移量",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.OrderListDetailResponse"
                         }
                     },
                     "500": {
@@ -937,6 +990,579 @@
                 "responses": {
                     "200": {
                         "description": "删除成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/order/{id}/assign-department": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "生产总监分配订单到部门",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单管理"
+                ],
+                "summary": "分配部门",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "订单ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "部门信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.AssignDepartmentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "分配成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/order/{id}/assign-personnel": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "生产助理分配生产专员和跟单，并设定胚布目标数量",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单管理"
+                ],
+                "summary": "分配人员",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "订单ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "人员信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.AssignPersonnelRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "分配成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/order/{id}/defect": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "仓管录入次品数量",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单管理"
+                ],
+                "summary": "录入次品",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "订单ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "次品信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.AddDefectRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "录入成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/order/{id}/detail": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "获取订单详情，含参与者、进度、事件流",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单管理"
+                ],
+                "summary": "获取订单详情（完整）",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "订单ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.OrderDetailResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "订单不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/order/{id}/events": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "获取订单的完整操作历史事件流",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单管理"
+                ],
+                "summary": "获取订单事件流",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "订单ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/application.EventResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/order/{id}/progress/fabric-input": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "跟单更新胚布投入进度",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单管理"
+                ],
+                "summary": "更新胚布投入进度",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "订单ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "进度信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.UpdateProgressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/order/{id}/progress/production": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "跟单更新生产进度",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单管理"
+                ],
+                "summary": "更新生产进度",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "订单ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "进度信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.UpdateProgressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/order/{id}/progress/rework": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "跟单更新回修进度",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单管理"
+                ],
+                "summary": "更新回修进度",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "订单ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "进度信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.UpdateProgressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/order/{id}/progress/warehouse-check": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "仓管更新验货进度",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单管理"
+                ],
+                "summary": "更新验货进度",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "订单ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "进度信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.UpdateProgressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -3294,6 +3920,21 @@
         }
     },
     "definitions": {
+        "application.AddDefectRequest": {
+            "type": "object",
+            "required": [
+                "defect_quantity",
+                "remark"
+            ],
+            "properties": {
+                "defect_quantity": {
+                    "type": "number"
+                },
+                "remark": {
+                    "type": "string"
+                }
+            }
+        },
         "application.AggRequest": {
             "type": "object",
             "properties": {
@@ -3355,6 +3996,37 @@
                     "description": "退款总金额（RMB，USD已按汇率8换算）",
                     "type": "number",
                     "example": 120000
+                }
+            }
+        },
+        "application.AssignDepartmentRequest": {
+            "type": "object",
+            "required": [
+                "department"
+            ],
+            "properties": {
+                "department": {
+                    "type": "string"
+                }
+            }
+        },
+        "application.AssignPersonnelRequest": {
+            "type": "object",
+            "required": [
+                "fabric_target_quantity",
+                "order_coordinator_id",
+                "production_specialist_id"
+            ],
+            "properties": {
+                "fabric_target_quantity": {
+                    "description": "胚布目标数量",
+                    "type": "number"
+                },
+                "order_coordinator_id": {
+                    "type": "integer"
+                },
+                "production_specialist_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -3650,6 +4322,41 @@
                 }
             }
         },
+        "application.CreateOrderRequestV2": {
+            "type": "object",
+            "required": [
+                "client_id",
+                "order_no",
+                "product_id",
+                "required_quantity",
+                "unit_price"
+            ],
+            "properties": {
+                "client_id": {
+                    "type": "integer"
+                },
+                "order_no": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "product_history_shrinkage": {
+                    "description": "历史缩率",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "required_quantity": {
+                    "description": "成品需求数量",
+                    "type": "number"
+                },
+                "unit_price": {
+                    "type": "number",
+                    "minimum": 0
+                }
+            }
+        },
         "application.CreatePlanRequest": {
             "type": "object",
             "required": [
@@ -3889,6 +4596,41 @@
                 }
             }
         },
+        "application.EventResponse": {
+            "type": "object",
+            "properties": {
+                "after_data": {
+                    "type": "string"
+                },
+                "before_data": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "event_type": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "operator_id": {
+                    "type": "integer"
+                },
+                "operator_name": {
+                    "type": "string"
+                },
+                "operator_role": {
+                    "type": "string"
+                },
+                "order_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "application.IndexListResponse": {
             "type": "object",
             "properties": {
@@ -4001,6 +4743,85 @@
                     "description": "订单总米数",
                     "type": "number",
                     "example": 50000
+                }
+            }
+        },
+        "application.OrderDetailResponse": {
+            "type": "object",
+            "properties": {
+                "assigned_department": {
+                    "type": "string"
+                },
+                "client_id": {
+                    "type": "integer"
+                },
+                "client_name": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "operation_logs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.EventResponse"
+                    }
+                },
+                "order_no": {
+                    "type": "string"
+                },
+                "overall_progress": {
+                    "type": "integer"
+                },
+                "product_code": {
+                    "type": "string"
+                },
+                "product_history_shrinkage": {
+                    "type": "number"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "product_name": {
+                    "type": "string"
+                },
+                "progress_items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.ProgressResponse"
+                    }
+                },
+                "required_quantity": {
+                    "type": "number"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "total_price": {
+                    "type": "number"
+                },
+                "unit_price": {
+                    "type": "number"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "application.OrderListDetailResponse": {
+            "type": "object",
+            "properties": {
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.OrderDetailResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
@@ -4183,6 +5004,48 @@
                     }
                 },
                 "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "application.ProgressResponse": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "completed_quantity": {
+                    "type": "number"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "exists": {
+                    "type": "boolean"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "前端显示名称",
+                    "type": "string"
+                },
+                "order_id": {
+                    "type": "integer"
+                },
+                "progress": {
+                    "type": "integer"
+                },
+                "target_quantity": {
+                    "type": "number"
+                },
+                "type": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -4697,6 +5560,20 @@
                         "approved",
                         "rejected"
                     ]
+                }
+            }
+        },
+        "application.UpdateProgressRequest": {
+            "type": "object",
+            "required": [
+                "quantity"
+            ],
+            "properties": {
+                "quantity": {
+                    "type": "number"
+                },
+                "remark": {
+                    "type": "string"
                 }
             }
         },
