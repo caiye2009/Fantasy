@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"back/pkg/audit"
+	"back/pkg/endpoint"
 	"back/internal/order/application"
 	"back/internal/order/domain"
 )
@@ -609,29 +610,111 @@ func (h *OrderHandler) ListWithDetail(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// RegisterOrderHandlers 注册路由
-func RegisterOrderHandlers(rg *gin.RouterGroup, service *application.OrderService) {
-	handler := NewOrderHandler(service)
-
-	// 旧版端点（兼容）
-	rg.POST("/order", audit.Mark("order", "orderCreation"), handler.Create)
-	rg.GET("/order/:id", handler.Get)
-	rg.GET("/order", handler.List)
-	rg.POST("/order/:id", audit.Mark("order", "orderUpdate"), handler.Update)
-	rg.DELETE("/order/:id", audit.Mark("order", "orderDeletion"), handler.Delete)
-
-	// 新版协作工作流端点
-	// rg.POST("/order", handler.CreateV2)  // 与旧版冲突，暂时保留旧版
-	rg.POST("/order/:id/assign-department", audit.Mark("order", "departmentAssignment"), handler.AssignDepartment)
-	rg.POST("/order/:id/assign-personnel", audit.Mark("order", "personnelAssignment"), handler.AssignPersonnel)
-	rg.POST("/order/:id/progress/fabric-input", audit.Mark("order", "fabricInputUpdate"), handler.UpdateFabricInput)
-	rg.POST("/order/:id/progress/production", audit.Mark("order", "productionUpdate"), handler.UpdateProduction)
-	rg.POST("/order/:id/progress/warehouse-check", audit.Mark("order", "warehouseCheckUpdate"), handler.UpdateWarehouseCheck)
-	rg.POST("/order/:id/progress/rework", audit.Mark("order", "reworkUpdate"), handler.UpdateRework)
-	rg.POST("/order/:id/defect", audit.Mark("order", "defectAddition"), handler.AddDefect)
-
-	// 详情端点（GET 请求不需要 audit 标记，会自动跳过）
-	rg.GET("/order/list-detail", handler.ListWithDetail)
-	rg.GET("/order/:id/detail", handler.GetDetail)
-	rg.GET("/order/:id/events", handler.GetEvents)
+// GetRoutes 返回路由定义
+func (h *OrderHandler) GetRoutes() []endpoint.RouteDefinition {
+	return []endpoint.RouteDefinition{
+		// 基本CRUD
+		{
+			Method:      "POST",
+			Path:        "/order",
+			Handler:     h.Create,
+			Middlewares: []gin.HandlerFunc{audit.Mark("order", "create")},
+			Name:        "创建订单",
+		},
+		{
+			Method:  "GET",
+			Path:    "/order/:id",
+			Handler: h.Get,
+			Name:    "获取订单详情",
+		},
+		{
+			Method:  "GET",
+			Path:    "/order",
+			Handler: h.List,
+			Name:    "获取订单列表",
+		},
+		{
+			Method:      "PUT",
+			Path:        "/order/:id",
+			Handler:     h.Update,
+			Middlewares: []gin.HandlerFunc{audit.Mark("order", "update")},
+			Name:        "更新订单",
+		},
+		{
+			Method:      "DELETE",
+			Path:        "/order/:id",
+			Handler:     h.Delete,
+			Middlewares: []gin.HandlerFunc{audit.Mark("order", "delete")},
+			Name:        "删除订单",
+		},
+		// 工作流端点
+		{
+			Method:      "POST",
+			Path:        "/order/:id/assign-department",
+			Handler:     h.AssignDepartment,
+			Middlewares: []gin.HandlerFunc{audit.Mark("order", "assignDepartment")},
+			Name:        "分配部门",
+		},
+		{
+			Method:      "POST",
+			Path:        "/order/:id/assign-personnel",
+			Handler:     h.AssignPersonnel,
+			Middlewares: []gin.HandlerFunc{audit.Mark("order", "assignPersonnel")},
+			Name:        "分配人员",
+		},
+		{
+			Method:      "POST",
+			Path:        "/order/:id/progress/fabric-input",
+			Handler:     h.UpdateFabricInput,
+			Middlewares: []gin.HandlerFunc{audit.Mark("order", "fabricInput")},
+			Name:        "更新胚布投入进度",
+		},
+		{
+			Method:      "POST",
+			Path:        "/order/:id/progress/production",
+			Handler:     h.UpdateProduction,
+			Middlewares: []gin.HandlerFunc{audit.Mark("order", "production")},
+			Name:        "更新生产进度",
+		},
+		{
+			Method:      "POST",
+			Path:        "/order/:id/progress/warehouse-check",
+			Handler:     h.UpdateWarehouseCheck,
+			Middlewares: []gin.HandlerFunc{audit.Mark("order", "warehouseCheck")},
+			Name:        "更新验货进度",
+		},
+		{
+			Method:      "POST",
+			Path:        "/order/:id/progress/rework",
+			Handler:     h.UpdateRework,
+			Middlewares: []gin.HandlerFunc{audit.Mark("order", "rework")},
+			Name:        "更新回修进度",
+		},
+		{
+			Method:      "POST",
+			Path:        "/order/:id/defect",
+			Handler:     h.AddDefect,
+			Middlewares: []gin.HandlerFunc{audit.Mark("order", "defect")},
+			Name:        "录入次品",
+		},
+		// 详情端点
+		{
+			Method:  "GET",
+			Path:    "/order/list-detail",
+			Handler: h.ListWithDetail,
+			Name:    "获取订单列表（含详情）",
+		},
+		{
+			Method:  "GET",
+			Path:    "/order/:id/detail",
+			Handler: h.GetDetail,
+			Name:    "获取订单完整详情",
+		},
+		{
+			Method:  "GET",
+			Path:    "/order/:id/events",
+			Handler: h.GetEvents,
+			Name:    "获取订单事件流",
+		},
+	}
 }

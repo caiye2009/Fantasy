@@ -4,8 +4,10 @@ import (
 	"errors"
 	"net/http"
 
-	"back/internal/auth/application"
 	"github.com/gin-gonic/gin"
+
+	"back/pkg/endpoint"
+	"back/internal/auth/application"
 )
 
 // AuthHandler 认证 Handler
@@ -25,8 +27,8 @@ func NewAuthHandler(service *application.AuthService) *AuthHandler {
 // @Accept       json
 // @Produce      json
 // @Param        request body application.LoginRequest true "登录请求参数"
-// @Success      200 {object} fields.Response{data=application.LoginResponse} "登录成功"
-// @Failure      200 {object} fields.Response "请求参数错误"
+// @Success      200 {object} application.LoginResponse "登录成功"
+// @Failure      200 {object} map[string]string "请求参数错误"
 // @Router       /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req application.LoginRequest
@@ -35,7 +37,13 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.service.Login(c.Request.Context(), &req)
+	// 从 header 获取 source（h5 或 mobile）
+	source := c.GetHeader("Source")
+	if source == "" {
+		source = "h5" // 默认值
+	}
+
+	resp, err := h.service.Login(c.Request.Context(), &req, source)
 	if err != nil {
 		if errors.Is(err, application.ErrInvalidCredentials) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -54,14 +62,33 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 // Logout 用户登出
 // @Summary      用户登出
-// @Description  用户登出（前端清除 Token）
+// @Description  用户登出（清除 JWT 白名单）
 // @Tags         认证
 // @Accept       json
 // @Produce      json
-// @Success      200 {object} fields.Response "登出成功"
+// @Success      200 {object} map[string]string "登出成功"
 // @Security     Bearer
 // @Router       /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
+	// 从 context 获取 loginId（auth 中间件已设置）
+	loginID, exists := c.Get("loginId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		return
+	}
+
+	// 从 header 获取 source
+	source := c.GetHeader("Source")
+	if source == "" {
+		source = "h5" // 默认值
+	}
+
+	// 调用服务清除白名单
+	if err := h.service.Logout(loginID.(string), source); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "登出失败"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "登出成功"})
 }
 
@@ -72,8 +99,8 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        request body application.RefreshTokenRequest true "Refresh Token"
-// @Success      200 {object} fields.Response{data=application.RefreshTokenResponse} "刷新成功"
-// @Failure      200 {object} fields.Response "Token 无效"
+// @Success      200 {object} application.RefreshTokenResponse "刷新成功"
+// @Failure      200 {object} map[string]string "Token 无效"
 // @Router       /auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req application.RefreshTokenRequest
@@ -83,7 +110,13 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.service.RefreshToken(c.Request.Context(), req.RefreshToken)
+	// 从 header 获取 source（h5 或 mobile）
+	source := c.GetHeader("Source")
+	if source == "" {
+		source = "h5" // 默认值
+	}
+
+	resp, err := h.service.RefreshToken(c.Request.Context(), req.RefreshToken, source)
 	if err != nil {
 		if errors.Is(err, application.ErrInvalidToken) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token 无效或已过期"})
@@ -96,11 +129,35 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// RegisterAuthHandlers 注册路由
-func RegisterAuthHandlers(rg *gin.RouterGroup, service *application.AuthService) {
-	handler := NewAuthHandler(service)
-	
-	rg.POST("/auth/login", handler.Login)
-	rg.POST("/auth/logout", handler.Logout)
-	rg.POST("/auth/refresh", handler.RefreshToken)
+// GetPublicRoutes 获取公开路由定义（不需要认证）
+func (h *AuthHandler) GetPublicRoutes() []endpoint.RouteDefinition {
+	return []endpoint.RouteDefinition{
+		{
+			Method:      "POST",
+			Path:        "/auth/login",
+			Handler:     h.Login,
+			Middlewares: nil,
+			Name:        "用户登录",
+		},
+		{
+			Method:      "POST",
+			Path:        "/auth/refresh",
+			Handler:     h.RefreshToken,
+			Middlewares: nil,
+			Name:        "刷新令牌",
+		},
+	}
+}
+
+// GetProtectedRoutes 获取受保护路由定义（需要认证）
+func (h *AuthHandler) GetProtectedRoutes() []endpoint.RouteDefinition {
+	return []endpoint.RouteDefinition{
+		{
+			Method:      "POST",
+			Path:        "/auth/logout",
+			Handler:     h.Logout,
+			Middlewares: nil,
+			Name:        "用户登出",
+		},
+	}
 }

@@ -4,6 +4,7 @@ import (
 	"time"
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type JWTWang struct {
@@ -11,9 +12,10 @@ type JWTWang struct {
 }
 
 type AccessTokenClaims struct {
-	LoginID string `json:"loginId"`
-	UserName string `json:"userName"`
-	Role    string `json:"role"`
+	LoginID    string `json:"loginId"`
+	UserName   string `json:"userName"`
+	Role       string `json:"role"`
+	Department string `json:"department"`
 	jwt.RegisteredClaims
 }
 
@@ -26,19 +28,24 @@ func NewJWTWang(secretKey string) *JWTWang {
 	return &JWTWang{secretKey: secretKey}
 }
 
-func (j *JWTWang) GenerateAccessToken(loginID string, userName string, role string) (string, error) {
+func (j *JWTWang) GenerateAccessToken(loginID string, userName string, role string, department string) (tokenString string, jti string, err error) {
+	jti = uuid.New().String()
+
 	claims := &AccessTokenClaims{
-		LoginID: loginID,
-		UserName: userName,
-		Role:    role,
+		LoginID:    loginID,
+		UserName:   userName,
+		Role:       role,
+		Department: department,
 		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        jti, // JTI for whitelist tracking
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(j.secretKey))
+	tokenString, err = token.SignedString([]byte(j.secretKey))
+	return
 }
 
 func (j *JWTWang) GenerateRefreshToken(loginID string) (string, error) {

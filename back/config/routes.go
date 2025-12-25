@@ -11,6 +11,7 @@ import (
 
 	"back/pkg/auth"
 	"back/pkg/audit"
+	"back/pkg/endpoint"
 	authInterfaces "back/internal/auth/interfaces"
 	supplierInterfaces "back/internal/supplier/interfaces"
 	clientInterfaces "back/internal/client/interfaces"
@@ -23,6 +24,7 @@ import (
 	orderInterfaces "back/internal/order/interfaces"
 	searchInterfaces "back/internal/search/interfaces"
 	analyticsInterfaces "back/internal/analytics/interfaces"
+	permissionInterfaces "back/internal/permission/interfaces"
 )
 
 func InitRoutes(authWang *auth.AuthWang, services *Services, db *gorm.DB) *gin.Engine {
@@ -42,10 +44,13 @@ func InitRoutes(authWang *auth.AuthWang, services *Services, db *gorm.DB) *gin.E
 
 	api := router.Group("/api/v1")
 
-	// 公开路由
+	// 公开路由（不需要认证）
 	public := api.Group("")
 	{
-		authInterfaces.RegisterAuthHandlers(public, services.Auth)
+		// 登录和刷新token不需要认证
+		authHandler := authInterfaces.NewAuthHandler(services.Auth)
+		public.POST("/auth/login", authHandler.Login)
+		public.POST("/auth/refresh", authHandler.RefreshToken)
 	}
 
 	// 受保护路由
@@ -53,23 +58,69 @@ func InitRoutes(authWang *auth.AuthWang, services *Services, db *gorm.DB) *gin.E
 	protected.Use(authWang.AuthMiddleware())  // 1. 先认证鉴权
 	protected.Use(audit.AuditMiddleware(db))  // 2. 再审计（auth > handler > audit）
 	{
-		userInterfaces.RegisterUserHandlers(protected, services.User)
-		userInterfaces.RegisterDepartmentHandlers(protected, services.Department)
-		userInterfaces.RegisterRoleHandlers(protected, services.Role)
-		supplierInterfaces.RegisterSupplierHandlers(protected, services.Supplier)
-		clientInterfaces.RegisterClientHandlers(protected, services.Client)
-		materialInterfaces.RegisterMaterialHandlers(protected, services.Material)
-		processInterfaces.RegisterProcessHandlers(protected, services.Process)
-		pricingInterfaces.RegisterMaterialPriceHandlers(protected, services.MaterialPrice)
-		pricingInterfaces.RegisterProcessPriceHandlers(protected, services.ProcessPrice)
-		productInterfaces.RegisterProductHandlers(protected, services.Product, services.ProductCostCalculator, services.ProductPrice)
-		planInterfaces.RegisterPlanHandlers(protected, services.Plan)
-		orderInterfaces.RegisterOrderHandlers(protected, services.Order)
-		searchInterfaces.RegisterSearchHandlers(protected, services.Search)
+		// 登出需要认证
+		authHandler := authInterfaces.NewAuthHandler(services.Auth)
+		protected.POST("/auth/logout", authHandler.Logout)
+
+		// User
+		userHandler := userInterfaces.NewUserHandler(services.User)
+		endpoint.RegisterRoutes(protected, userHandler.GetRoutes())
+
+		// Department
+		departmentHandler := userInterfaces.NewDepartmentHandler(services.Department)
+		endpoint.RegisterRoutes(protected, departmentHandler.GetRoutes())
+
+		// Role
+		roleHandler := userInterfaces.NewRoleHandler(services.Role)
+		endpoint.RegisterRoutes(protected, roleHandler.GetRoutes())
+
+		// Supplier
+		supplierHandler := supplierInterfaces.NewSupplierHandler(services.Supplier)
+		endpoint.RegisterRoutes(protected, supplierHandler.GetRoutes())
+
+		// Client
+		clientHandler := clientInterfaces.NewClientHandler(services.Client)
+		endpoint.RegisterRoutes(protected, clientHandler.GetRoutes())
+
+		// Material
+		materialHandler := materialInterfaces.NewMaterialHandler(services.Material)
+		endpoint.RegisterRoutes(protected, materialHandler.GetRoutes())
+
+		// Process
+		processHandler := processInterfaces.NewProcessHandler(services.Process)
+		endpoint.RegisterRoutes(protected, processHandler.GetRoutes())
+
+		// Material Price
+		materialPriceHandler := pricingInterfaces.NewMaterialPriceHandler(services.MaterialPrice)
+		endpoint.RegisterRoutes(protected, materialPriceHandler.GetRoutes())
+
+		// Process Price
+		processPriceHandler := pricingInterfaces.NewProcessPriceHandler(services.ProcessPrice)
+		endpoint.RegisterRoutes(protected, processPriceHandler.GetRoutes())
+
+		// Product
+		productHandler := productInterfaces.NewProductHandler(services.Product, services.ProductCostCalculator, services.ProductPrice)
+		endpoint.RegisterRoutes(protected, productHandler.GetRoutes())
+
+		// Plan
+		planHandler := planInterfaces.NewPlanHandler(services.Plan)
+		endpoint.RegisterRoutes(protected, planHandler.GetRoutes())
+
+		// Order
+		orderHandler := orderInterfaces.NewOrderHandler(services.Order)
+		endpoint.RegisterRoutes(protected, orderHandler.GetRoutes())
+
+		// Search
+		searchHandler := searchInterfaces.NewSearchHandler(services.Search)
+		endpoint.RegisterRoutes(protected, searchHandler.GetRoutes())
 
 		// Analytics
 		returnAnalysisHandler := analyticsInterfaces.NewReturnAnalysisHandler(services.ReturnAnalysis)
-		returnAnalysisHandler.RegisterRoutes(protected)
+		endpoint.RegisterRoutes(protected, returnAnalysisHandler.GetRoutes())
+
+		// Permission
+		permissionHandler := permissionInterfaces.NewPermissionHandler(services.Permission)
+		endpoint.RegisterRoutes(protected, permissionHandler.GetRoutes())
 	}
 
 	return router

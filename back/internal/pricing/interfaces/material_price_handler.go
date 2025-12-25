@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"back/pkg/audit"
+	"back/pkg/endpoint"
 	"back/internal/pricing/application"
 )
 
@@ -104,11 +105,29 @@ func (h *MaterialPriceHandler) GetHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, history)
 }
 
-// RegisterMaterialPriceHandlers 注册路由
-func RegisterMaterialPriceHandlers(rg *gin.RouterGroup, service *application.MaterialPriceService) {
-	handler := NewMaterialPriceHandler(service)
-
-	rg.POST("/material/price/quote", audit.Mark("pricing", "materialPriceQuote"), handler.Quote)
-	rg.GET("/material/:id/price", handler.GetPrice)
-	rg.GET("/material/:id/price/history", handler.GetHistory)
+// GetRoutes 获取路由定义
+func (h *MaterialPriceHandler) GetRoutes() []endpoint.RouteDefinition {
+	return []endpoint.RouteDefinition{
+		{
+			Method:      "POST",
+			Path:        "/pricing/material",
+			Handler:     h.Quote,
+			Middlewares: []gin.HandlerFunc{audit.Mark("pricing", "materialUpsert")},
+			Name:        "材料报价",
+		},
+		{
+			Method:      "GET",
+			Path:        "/pricing/material/:id",
+			Handler:     h.GetPrice,
+			Middlewares: nil,
+			Name:        "获取材料价格",
+		},
+		{
+			Method:      "GET",
+			Path:        "/pricing/material/:id/history",
+			Handler:     h.GetHistory,
+			Middlewares: nil,
+			Name:        "获取材料价格历史",
+		},
+	}
 }

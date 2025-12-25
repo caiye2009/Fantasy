@@ -10,6 +10,16 @@ definitions:
     - defect_quantity
     - remark
     type: object
+  application.AddUserPermissionRequest:
+    properties:
+      loginId:
+        type: string
+      permission:
+        type: string
+    required:
+    - loginId
+    - permission
+    type: object
   application.AggRequest:
     properties:
       after:
@@ -523,6 +533,9 @@ definitions:
       accessToken:
         description: 改为小驼峰
         type: string
+      department:
+        description: 部门信息
+        type: string
       refreshToken:
         description: 新增
         type: string
@@ -675,6 +688,39 @@ definitions:
         maximum: 100
         type: integer
     type: object
+  application.PermissionItem:
+    properties:
+      action:
+        description: create
+        type: string
+      desc:
+        description: 创建用户
+        type: string
+      domain:
+        description: user
+        type: string
+      name:
+        description: user.create
+        type: string
+    type: object
+  application.PermissionsByDomainResponse:
+    properties:
+      domains:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/application.PermissionItem'
+          type: array
+        type: object
+    type: object
+  application.PermissionsListResponse:
+    properties:
+      permissions:
+        items:
+          $ref: '#/definitions/application.PermissionItem'
+        type: array
+      total:
+        type: integer
+    type: object
   application.PlanListResponse:
     properties:
       plans:
@@ -821,6 +867,16 @@ definitions:
     properties:
       accessToken:
         type: string
+    type: object
+  application.RemoveUserPermissionRequest:
+    properties:
+      loginId:
+        type: string
+      permission:
+        type: string
+    required:
+    - loginId
+    - permission
     type: object
   application.ReturnAnalysisRequest:
     properties:
@@ -1201,6 +1257,15 @@ definitions:
           $ref: '#/definitions/application.UserResponse'
         type: array
     type: object
+  application.UserPermissionsResponse:
+    properties:
+      loginId:
+        type: string
+      permissions:
+        items:
+          type: string
+        type: array
+    type: object
   application.UserResponse:
     properties:
       created_at:
@@ -1341,14 +1406,6 @@ definitions:
       target_type:
         type: string
     type: object
-  fields.Response:
-    properties:
-      code:
-        type: integer
-      data: {}
-      msg:
-        type: string
-    type: object
 info:
   contact: {}
   description: 后台管理系统的API文档
@@ -1373,7 +1430,9 @@ paths:
         "200":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/fields.Response'
+            additionalProperties:
+              type: string
+            type: object
       summary: 用户登录
       tags:
       - 认证
@@ -1381,14 +1440,16 @@ paths:
     post:
       consumes:
       - application/json
-      description: 用户登出（前端清除 Token）
+      description: 用户登出（清除 JWT 白名单）
       produces:
       - application/json
       responses:
         "200":
           description: 登出成功
           schema:
-            $ref: '#/definitions/fields.Response'
+            additionalProperties:
+              type: string
+            type: object
       security:
       - Bearer: []
       summary: 用户登出
@@ -1412,7 +1473,9 @@ paths:
         "200":
           description: Token 无效
           schema:
-            $ref: '#/definitions/fields.Response'
+            additionalProperties:
+              type: string
+            type: object
       summary: 刷新访问令牌
       tags:
       - 认证
@@ -2360,6 +2423,128 @@ paths:
       summary: 获取订单列表（含完整详情）
       tags:
       - 订单管理
+  /permission/list:
+    get:
+      consumes:
+      - application/json
+      description: 列出系统中所有可分配的权限
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 权限列表
+          schema:
+            $ref: '#/definitions/application.PermissionsListResponse'
+      security:
+      - Bearer: []
+      summary: 列出所有可用权限
+      tags:
+      - 权限管理
+  /permission/list-by-domain:
+    get:
+      consumes:
+      - application/json
+      description: 列出系统中所有权限，按业务域分组
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 权限列表
+          schema:
+            $ref: '#/definitions/application.PermissionsByDomainResponse'
+      security:
+      - Bearer: []
+      summary: 按域分组列出权限
+      tags:
+      - 权限管理
+  /permission/user:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定用户的所有个性化权限
+      parameters:
+      - description: 用户 LoginID
+        in: query
+        name: loginId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 权限列表
+          schema:
+            $ref: '#/definitions/application.UserPermissionsResponse'
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取用户权限列表
+      tags:
+      - 权限管理
+  /permission/user/add:
+    post:
+      consumes:
+      - application/json
+      description: 给指定用户添加个性化权限
+      parameters:
+      - description: 请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.AddUserPermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 添加成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 给用户添加权限
+      tags:
+      - 权限管理
+  /permission/user/remove:
+    post:
+      consumes:
+      - application/json
+      description: 删除指定用户的个性化权限
+      parameters:
+      - description: 请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.RemoveUserPermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 删除用户权限
+      tags:
+      - 权限管理
   /plan:
     get:
       consumes:
@@ -2993,20 +3178,19 @@ paths:
         "200":
           description: 退货分析结果
           schema:
-            allOf:
-            - $ref: '#/definitions/fields.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/application.ReturnAnalysisResponse'
-              type: object
+            $ref: '#/definitions/application.ReturnAnalysisResponse'
         "400":
           description: 参数错误
           schema:
-            $ref: '#/definitions/fields.Response'
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: 服务器错误
           schema:
-            $ref: '#/definitions/fields.Response'
+            additionalProperties:
+              type: string
+            type: object
       security:
       - Bearer: []
       summary: 获取退货分析数据
@@ -3023,18 +3207,15 @@ paths:
         "200":
           description: 客户列表
           schema:
-            allOf:
-            - $ref: '#/definitions/fields.Response'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/application.CustomerOptionResponse'
-                  type: array
-              type: object
+            items:
+              $ref: '#/definitions/application.CustomerOptionResponse'
+            type: array
         "500":
           description: 服务器错误
           schema:
-            $ref: '#/definitions/fields.Response'
+            additionalProperties:
+              type: string
+            type: object
       security:
       - Bearer: []
       summary: 获取客户下拉列表

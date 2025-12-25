@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"back/pkg/audit"
+	"back/pkg/endpoint"
 	"back/internal/supplier/application"
 	"back/internal/supplier/domain"
 )
@@ -170,13 +171,43 @@ func (h *SupplierHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }
 
-// RegisterSupplierHandlers 注册路由
-func RegisterSupplierHandlers(rg *gin.RouterGroup, service *application.SupplierService) {
-	handler := NewSupplierHandler(service)
-
-	rg.POST("/supplier", audit.Mark("supplier", "supplierCreation"), handler.Create)
-	rg.GET("/supplier/:id", handler.Get)
-	rg.GET("/supplier", handler.List)
-	rg.POST("/supplier/:id", audit.Mark("supplier", "supplierUpdate"), handler.Update)
-	rg.DELETE("/supplier/:id", audit.Mark("supplier", "supplierDeletion"), handler.Delete)
+// GetRoutes 获取路由定义
+func (h *SupplierHandler) GetRoutes() []endpoint.RouteDefinition {
+	return []endpoint.RouteDefinition{
+		{
+			Method:      "POST",
+			Path:        "/supplier",
+			Handler:     h.Create,
+			Middlewares: []gin.HandlerFunc{audit.Mark("supplier", "create")},
+			Name:        "创建供应商",
+		},
+		{
+			Method:      "GET",
+			Path:        "/supplier/:id",
+			Handler:     h.Get,
+			Middlewares: nil,
+			Name:        "获取供应商详情",
+		},
+		{
+			Method:      "GET",
+			Path:        "/supplier",
+			Handler:     h.List,
+			Middlewares: nil,
+			Name:        "获取供应商列表",
+		},
+		{
+			Method:      "PUT",
+			Path:        "/supplier/:id",
+			Handler:     h.Update,
+			Middlewares: []gin.HandlerFunc{audit.Mark("supplier", "update")},
+			Name:        "更新供应商信息",
+		},
+		{
+			Method:      "DELETE",
+			Path:        "/supplier/:id",
+			Handler:     h.Delete,
+			Middlewares: []gin.HandlerFunc{audit.Mark("supplier", "delete")},
+			Name:        "删除供应商",
+		},
+	}
 }

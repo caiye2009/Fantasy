@@ -144,12 +144,12 @@ export interface OrderListDetailResponse {
 
 // 获取订单详情（含完整信息）
 export async function getOrderDetail(orderId: number) {
-  return requestClient.get<OrderDetailResponse>(`/api/v1/order/${orderId}/detail`)
+  return requestClient.get<OrderDetailResponse>(`/order/${orderId}/detail`)
 }
 
 // 获取订单列表（含完整信息）
 export async function getOrderList(params?: { limit?: number; offset?: number }) {
-  return requestClient.get<OrderListDetailResponse>('/api/v1/order/list-detail', {
+  return requestClient.get<OrderListDetailResponse>('/order/list-detail', {
     params: {
       limit: params?.limit || 100,
       offset: params?.offset || 0

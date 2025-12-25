@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"reflect"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
@@ -41,16 +40,18 @@ func (s *ESSync) Index(doc interface{}) error {
 	// 获取文档数据
 	docData := indexable.ToDocument()
 
-	// 尝试计算 priorityScore（通过反射调用 CalculatePriorityScore 方法）
-	if priorityScore := CalculatePriorityScoreIfExists(doc); priorityScore > 0 {
-		docData["priorityScore"] = priorityScore
+	// 尝试计算 priorityScore（通过接口类型断言）
+	if scorer, ok := doc.(PriorityScorer); ok {
+		if priorityScore := scorer.CalculatePriorityScore(); priorityScore > 0 {
+			docData["priorityScore"] = priorityScore
 
-		if s.logger != nil {
-			s.logger.Info("calculated priority score",
-				"index", indexable.GetIndexName(),
-				"docId", indexable.GetDocumentID(),
-				"score", priorityScore,
-			)
+			if s.logger != nil {
+				s.logger.Info("calculated priority score",
+					"index", indexable.GetIndexName(),
+					"docId", indexable.GetDocumentID(),
+					"score", priorityScore,
+				)
+			}
 		}
 	}
 
@@ -99,16 +100,18 @@ func (s *ESSync) Update(doc interface{}) error {
 	// 获取文档数据
 	docData := indexable.ToDocument()
 
-	// 尝试计算 priorityScore（通过反射调用 CalculatePriorityScore 方法）
-	if priorityScore := CalculatePriorityScoreIfExists(doc); priorityScore > 0 {
-		docData["priorityScore"] = priorityScore
+	// 尝试计算 priorityScore（通过接口类型断言）
+	if scorer, ok := doc.(PriorityScorer); ok {
+		if priorityScore := scorer.CalculatePriorityScore(); priorityScore > 0 {
+			docData["priorityScore"] = priorityScore
 
-		if s.logger != nil {
-			s.logger.Info("calculated priority score",
-				"index", indexable.GetIndexName(),
-				"docId", indexable.GetDocumentID(),
-				"score", priorityScore,
-			)
+			if s.logger != nil {
+				s.logger.Info("calculated priority score",
+					"index", indexable.GetIndexName(),
+					"docId", indexable.GetDocumentID(),
+					"score", priorityScore,
+				)
+			}
 		}
 	}
 
@@ -148,37 +151,6 @@ func (s *ESSync) Update(doc interface{}) error {
 	return nil
 }
 
-// CalculatePriorityScoreIfExists 尝试调用 CalculatePriorityScore 方法（如果存在）
-// 通过反射检查对象是否有 CalculatePriorityScore() int 方法
-// 如果有则调用，如果没有或返回 0 则忽略
-func CalculatePriorityScoreIfExists(doc interface{}) int {
-	// 获取对象的反射值
-	v := reflect.ValueOf(doc)
-
-	// 查找 CalculatePriorityScore 方法
-	method := v.MethodByName("CalculatePriorityScore")
-
-	// 如果方法不存在，返回 0
-	if !method.IsValid() {
-		return 0
-	}
-
-	// 调用方法（无参数）
-	result := method.Call(nil)
-
-	// 如果返回值为空或类型不对，返回 0
-	if len(result) == 0 {
-		return 0
-	}
-
-	// 尝试转换为 int
-	if score, ok := result[0].Interface().(int); ok {
-		return score
-	}
-
-	return 0
-}
-
 // BulkIndex 批量索引文档（更高效，适合大批量操作）
 // batchSize 指定每批处理的文档数量（建议 100-500）
 // refresh 控制是否在批次完成后刷新索引（reindex 时建议 false，只在最后刷新）
@@ -202,9 +174,11 @@ func (s *ESSync) BulkIndex(docs []interface{}, refresh bool) (success, failed in
 		// 获取文档数据
 		docData := indexable.ToDocument()
 
-		// 尝试计算 priorityScore
-		if priorityScore := CalculatePriorityScoreIfExists(doc); priorityScore > 0 {
-			docData["priorityScore"] = priorityScore
+		// 尝试计算 priorityScore（通过接口类型断言）
+		if scorer, ok := doc.(PriorityScorer); ok {
+			if priorityScore := scorer.CalculatePriorityScore(); priorityScore > 0 {
+				docData["priorityScore"] = priorityScore
+			}
 		}
 
 		// Bulk API 格式：action_and_meta_data\n + optional_source\n

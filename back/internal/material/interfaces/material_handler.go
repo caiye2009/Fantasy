@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"back/pkg/audit"
+	"back/pkg/endpoint"
 	"back/internal/material/application"
 	"back/internal/material/domain"
 )
@@ -137,13 +138,36 @@ func (h *MaterialHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }
 
-// RegisterMaterialHandlers 注册路由
-func RegisterMaterialHandlers(rg *gin.RouterGroup, service *application.MaterialService) {
-	handler := NewMaterialHandler(service)
-
-	rg.POST("/material", audit.Mark("material", "materialCreation"), handler.Create)
-	rg.GET("/material/:id", handler.Get)
-	// List 接口已移除，使用 POST /search 替代
-	rg.POST("/material/:id", audit.Mark("material", "materialUpdate"), handler.Update)
-	rg.DELETE("/material/:id", audit.Mark("material", "materialDeletion"), handler.Delete)
+// GetRoutes 获取路由定义
+func (h *MaterialHandler) GetRoutes() []endpoint.RouteDefinition {
+	return []endpoint.RouteDefinition{
+		{
+			Method:      "POST",
+			Path:        "/material",
+			Handler:     h.Create,
+			Middlewares: []gin.HandlerFunc{audit.Mark("material", "create")},
+			Name:        "创建材料",
+		},
+		{
+			Method:      "GET",
+			Path:        "/material/:id",
+			Handler:     h.Get,
+			Middlewares: nil,
+			Name:        "获取材料详情",
+		},
+		{
+			Method:      "PUT",
+			Path:        "/material/:id",
+			Handler:     h.Update,
+			Middlewares: []gin.HandlerFunc{audit.Mark("material", "update")},
+			Name:        "更新材料信息",
+		},
+		{
+			Method:      "DELETE",
+			Path:        "/material/:id",
+			Handler:     h.Delete,
+			Middlewares: []gin.HandlerFunc{audit.Mark("material", "delete")},
+			Name:        "删除材料",
+		},
+	}
 }

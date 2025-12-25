@@ -8,10 +8,11 @@ import (
 	"back/pkg/auth"
 )
 
-func InitAuth(db *gorm.DB, rdb *redis.Client, cfg *Config, enforcer *casbin.Enforcer) (*auth.JWTWang, *auth.AuthWang) {
+func InitAuth(db *gorm.DB, rdb *redis.Client, cfg *Config, enforcer *casbin.Enforcer) (*auth.JWTWang, *auth.AuthWang, *auth.WhitelistManager) {
 	jwtWang := auth.NewJWTWang(cfg.JWTSecret)
-	authWang := auth.NewAuthWang(jwtWang, enforcer)
+	whitelistManager := auth.NewWhitelistManager(rdb)
+	authWang := auth.NewAuthWang(jwtWang, enforcer, whitelistManager)
 
-	log.Println("✓ Auth initialized with Casbin")
-	return jwtWang, authWang
+	log.Println("✓ Auth initialized with Casbin and JWT whitelist")
+	return jwtWang, authWang, whitelistManager
 }

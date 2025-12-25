@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"back/pkg/audit"
+	"back/pkg/endpoint"
 	"back/internal/client/application"
 	"back/internal/client/domain"
 )
@@ -81,20 +82,6 @@ func (h *ClientHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-
-// func (h *ClientHandler) List(c *gin.Context) {
-// 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-// 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
-	
-// 	resp, err := h.service.List(c.Request.Context(), limit, offset)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-	
-// 	c.JSON(http.StatusOK, resp)
-// }
-
 // Update 更新客户信息
 // @Summary      更新客户信息
 // @Description  根据客户ID更新客户信息
@@ -159,13 +146,36 @@ func (h *ClientHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }
 
-// RegisterClientHandlers 注册路由
-func RegisterClientHandlers(rg *gin.RouterGroup, service *application.ClientService) {
-	handler := NewClientHandler(service)
-
-	rg.POST("/client", audit.Mark("client", "clientCreation"), handler.Create)
-	rg.GET("/client/:id", handler.Get)
-	//rg.GET("/client", handler.List)
-	rg.POST("/client/:id", audit.Mark("client", "clientUpdate"), handler.Update)
-	rg.DELETE("/client/:id", audit.Mark("client", "clientDeletion"), handler.Delete)
+// GetRoutes 获取路由定义
+func (h *ClientHandler) GetRoutes() []endpoint.RouteDefinition {
+	return []endpoint.RouteDefinition{
+		{
+			Method:      "POST",
+			Path:        "/client",
+			Handler:     h.Create,
+			Middlewares: []gin.HandlerFunc{audit.Mark("client", "create")},
+			Name:        "创建客户",
+		},
+		{
+			Method:      "GET",
+			Path:        "/client/:id",
+			Handler:     h.Get,
+			Middlewares: nil,
+			Name:        "获取客户详情",
+		},
+		{
+			Method:      "PUT",
+			Path:        "/client/:id",
+			Handler:     h.Update,
+			Middlewares: []gin.HandlerFunc{audit.Mark("client", "update")},
+			Name:        "更新客户信息",
+		},
+		{
+			Method:      "DELETE",
+			Path:        "/client/:id",
+			Handler:     h.Delete,
+			Middlewares: []gin.HandlerFunc{audit.Mark("client", "delete")},
+			Name:        "删除客户",
+		},
+	}
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"back/pkg/audit"
+	"back/pkg/endpoint"
 	"back/internal/pricing/application"
 )
 
@@ -104,11 +105,29 @@ func (h *ProcessPriceHandler) GetHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, history)
 }
 
-// RegisterProcessPriceHandlers 注册路由
-func RegisterProcessPriceHandlers(rg *gin.RouterGroup, service *application.ProcessPriceService) {
-	handler := NewProcessPriceHandler(service)
-
-	rg.POST("/process/price/quote", audit.Mark("pricing", "processPriceQuote"), handler.Quote)
-	rg.GET("/process/:id/price", handler.GetPrice)
-	rg.GET("/process/:id/price/history", handler.GetHistory)
+// GetRoutes 获取路由定义
+func (h *ProcessPriceHandler) GetRoutes() []endpoint.RouteDefinition {
+	return []endpoint.RouteDefinition{
+		{
+			Method:      "POST",
+			Path:        "/pricing/process",
+			Handler:     h.Quote,
+			Middlewares: []gin.HandlerFunc{audit.Mark("pricing", "processUpsert")},
+			Name:        "工序报价",
+		},
+		{
+			Method:      "GET",
+			Path:        "/pricing/process/:id",
+			Handler:     h.GetPrice,
+			Middlewares: nil,
+			Name:        "获取工序价格",
+		},
+		{
+			Method:      "GET",
+			Path:        "/pricing/process/:id/history",
+			Handler:     h.GetHistory,
+			Middlewares: nil,
+			Name:        "获取工序价格历史",
+		},
+	}
 }

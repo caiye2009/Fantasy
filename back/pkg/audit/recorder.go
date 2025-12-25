@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"back/pkg/endpoint"
 )
 
 const (
@@ -41,16 +42,9 @@ type Recorder struct {
 
 // NewRecorder 创建新的审计记录器
 func NewRecorder(c *gin.Context, db *gorm.DB) *Recorder {
-	// 从 auth context 提取用户信息
+	// 从 auth context 提取用户信息（auth 中间件已设置）
 	loginID, _ := c.Get("loginId")
-	username, exists := c.Get("username")
-
-	// 如果没有 username，尝试构造一个（兼容当前代码）
-	if !exists || username == "" {
-		if loginIDStr, ok := loginID.(string); ok {
-			username = "User" + loginIDStr
-		}
-	}
+	username, _ := c.Get("username")
 
 	// 转换 loginID
 	var loginIDUint uint
@@ -64,6 +58,12 @@ func NewRecorder(c *gin.Context, db *gorm.DB) *Recorder {
 		loginIDUint = uint(v)
 	}
 
+	// 转换 username
+	var usernameStr string
+	if username != nil {
+		usernameStr = username.(string)
+	}
+
 	// 提取请求ID（如果有的话，可以从 header 中获取）
 	requestID := c.GetHeader("X-Request-ID")
 	if requestID == "" {
@@ -71,17 +71,27 @@ func NewRecorder(c *gin.Context, db *gorm.DB) *Recorder {
 		requestID = strconv.FormatInt(time.Now().UnixNano(), 36)
 	}
 
+	// 从 Auth 中间件设置的 endpoint 获取 domain 和 action
+	var domain, action string
+	if ep, exists := c.Get("endpoint"); exists {
+		endpoint := ep.(*endpoint.Endpoint)
+		domain = endpoint.Domain
+		action = endpoint.Action
+	}
+
 	return &Recorder{
 		c:           c,
 		db:          db,
 		startTime:   time.Now(),
 		loginID:     loginIDUint,
-		username:    username.(string),
+		username:    usernameStr,
 		httpMethod:  c.Request.Method,
 		requestPath: c.Request.URL.Path,
 		ipAddress:   c.ClientIP(),
 		userAgent:   c.Request.UserAgent(),
 		requestID:   requestID,
+		domain:      domain,  // 从 endpoint 获取
+		action:      action,  // 从 endpoint 获取
 	}
 }
 

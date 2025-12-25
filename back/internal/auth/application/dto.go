@@ -12,6 +12,7 @@ type LoginResponse struct {
 	RefreshToken          string `json:"refreshToken"`          // 新增
 	Username              string `json:"username"`              // 扁平化，直接返回用户名
 	Role                  string `json:"role"`                  // 扁平化，直接返回角色
+	Department            string `json:"department"`            // 部门信息
 	RequirePasswordChange bool   `json:"requirePasswordChange"` // 改为小驼峰
 }
 

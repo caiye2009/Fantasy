@@ -39,13 +39,15 @@ func Init() error {
 	esSync := es.NewESSync(esClient, loggerAdapter)
 	log.Println("✓ ES Sync initialized")
 
-	// 初始化 Casbin
-	enforcer := InitCasbin(cfg, db)
-	if err := InitCasbinPolicies(enforcer); err != nil {
-		log.Fatalf("Failed to initialize Casbin policies: %v", err)
-	}
+	// 初始化 Casbin（文件存储）
+	enforcer := InitCasbin(cfg)
 
-	jwtWang, authWang := InitAuth(db, rdb, cfg, enforcer)
+	// 初始化 Auth（JWT + 白名单）
+	jwtWang, authWang, whitelistManager := InitAuth(db, rdb, cfg, enforcer)
+
+	// 初始化 Casbin 管理器（权限管理）
+	casbinManager := InitCasbinManager(enforcer, whitelistManager)
+	log.Println("✓ Casbin manager initialized")
 
 	log.Println("=== Database Migration ===")
 	if err := AutoMigrate(db); err != nil {
@@ -62,7 +64,7 @@ func Init() error {
 	log.Printf("✓ Search registry initialized with indices: %v", searchRegistry.ListIndices())
 
 	log.Println("=== Initializing Services ===")
-	services := InitServices(db, rdb, esClient, jwtWang, esSync, searchRegistry)
+	services := InitServices(db, rdb, esClient, jwtWang, whitelistManager, casbinManager, esSync, searchRegistry)
 	log.Println("✓ Services initialized")
 
 	log.Println("=== Initializing Router ===")

@@ -1,0 +1,82 @@
+# Casbin 权限策略文件
+# 格式：ptype, subject, object, action
+#
+# ptype:
+#   - p: 权限策略
+#
+# subject: 用户 loginID 或角色
+# object: 权限名称（如 user.create, order.*）
+# action: 通常为 * (通配)
+#
+# 示例：
+# p, admin, *, *
+# p, hr, user.create, *
+# p, 8001, order.delete, *
+#
+# 此文件由系统自动管理，也可以手动编辑
+# 修改后重启服务或调用 reload API 生效
+
+# ==================== Admin 全部权限 ====================
+p, admin, *, *
+
+# ==================== HR 用户管理 ====================
+p, hr, user.create, *
+p, hr, user.list, *
+p, hr, user.detail, *
+p, hr, user.update, *
+p, hr, user.changePassword, *
+p, hr, department.*, *
+p, hr, role.*, *
+
+# ==================== Finance 财务 ====================
+p, financeDirector, order.*, *
+p, financeDirector, client.*, *
+p, financeDirector, supplier.*, *
+p, financeDirector, pricing.*, *
+
+p, finance, order.list, *
+p, finance, order.detail, *
+p, finance, pricing.*, *
+
+# ==================== Production 生产 ====================
+p, productionDirector, order.*, *
+p, productionDirector, plan.*, *
+p, productionDirector, product.*, *
+
+p, productionAssistant, order.list, *
+p, productionAssistant, order.detail, *
+p, productionAssistant, order.assignPersonnel, *
+p, productionAssistant, plan.*, *
+
+p, productionSpecialist, order.list, *
+p, productionSpecialist, order.detail, *
+p, productionSpecialist, order.fabricInput, *
+p, productionSpecialist, order.production, *
+p, productionSpecialist, order.rework, *
+
+p, orderCoordinator, order.list, *
+p, orderCoordinator, order.detail, *
+p, orderCoordinator, order.fabricInput, *
+p, orderCoordinator, order.production, *
+p, orderCoordinator, order.rework, *
+
+# ==================== Warehouse 仓管 ====================
+p, warehouse, order.list, *
+p, warehouse, order.detail, *
+p, warehouse, order.warehouseCheck, *
+p, warehouse, order.defect, *
+
+# ==================== Sales 销售 ====================
+p, salesManager, order.*, *
+p, salesManager, client.*, *
+p, salesManager, product.*, *
+p, salesManager, material.list, *
+p, salesManager, process.list, *
+
+p, salesAssistant, order.create, *
+p, salesAssistant, order.list, *
+p, salesAssistant, order.detail, *
+p, salesAssistant, client.*, *
+p, salesAssistant, product.list, *
+p, salesAssistant, product.detail, *
+p, salesAssistant, product.cost, *

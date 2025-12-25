@@ -2,19 +2,24 @@ package application
 
 import (
 	"context"
-	
+
 	"back/internal/user/domain"
 	"back/internal/user/infra"
+	"back/pkg/auth"
 )
 
 // UserService 用户应用服务
 type UserService struct {
-	repo *infra.UserRepo
+	repo             *infra.UserRepo
+	whitelistManager *auth.WhitelistManager
 }
 
 // NewUserService 创建用户服务
-func NewUserService(repo *infra.UserRepo) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(repo *infra.UserRepo, whitelistManager *auth.WhitelistManager) *UserService {
+	return &UserService{
+		repo:             repo,
+		whitelistManager: whitelistManager,
+	}
 }
 
 // Create 创建用户
@@ -127,7 +132,10 @@ func (s *UserService) Update(ctx context.Context, id uint, req *UpdateUserReques
 	if err != nil {
 		return err
 	}
-	
+
+	// 记录是否需要清空 JWT（Role 或 Department 变化）
+	needInvalidateJWT := false
+
 	// 2. 更新字段（通过领域方法）
 	if req.Username != "" {
 		if err := user.UpdateUsername(req.Username); err != nil {
@@ -135,10 +143,11 @@ func (s *UserService) Update(ctx context.Context, id uint, req *UpdateUserReques
 		}
 	}
 
-	if req.Department != "" {
+	if req.Department != "" && req.Department != user.Department {
 		if err := user.UpdateDepartment(req.Department); err != nil {
 			return err
 		}
+		needInvalidateJWT = true // Department 变化，需要清空 JWT
 	}
 
 	if req.Email != "" {
@@ -147,7 +156,7 @@ func (s *UserService) Update(ctx context.Context, id uint, req *UpdateUserReques
 		}
 	}
 
-	if req.Role != "" {
+	if req.Role != "" && req.Role != user.Role {
 		// 验证角色是否有效
 		if !domain.IsValidRole(req.Role) {
 			return domain.ErrInvalidRole
@@ -155,8 +164,9 @@ func (s *UserService) Update(ctx context.Context, id uint, req *UpdateUserReques
 		if err := user.UpdateRole(req.Role); err != nil {
 			return err
 		}
+		needInvalidateJWT = true // Role 变化，需要清空 JWT
 	}
-	
+
 	// 状态更新
 	if req.Status != "" {
 		switch req.Status {
@@ -170,14 +180,28 @@ func (s *UserService) Update(ctx context.Context, id uint, req *UpdateUserReques
 			}
 		}
 	}
-	
+
 	// 3. 验证
 	if err := user.Validate(); err != nil {
 		return err
 	}
-	
+
 	// 4. 保存
-	return s.repo.Update(ctx, user)
+	if err := s.repo.Update(ctx, user); err != nil {
+		return err
+	}
+
+	// 5. 如果 Role 或 Department 变化，清空所有端的 JWT 白名单
+	if needInvalidateJWT && s.whitelistManager != nil {
+		if err := s.whitelistManager.RemoveAllForUser(user.LoginID); err != nil {
+			// 清空白名单失败，记录日志但不影响更新流程
+			println("Failed to invalidate JWT for user", user.LoginID, ":", err.Error())
+		} else {
+			println("JWT invalidated for user", user.LoginID, "due to role/department change")
+		}
+	}
+
+	return nil
 }
 
 // Delete 删除用户

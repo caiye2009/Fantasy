@@ -23,7 +23,7 @@ export interface PriceData {
  * 材料报价
  */
 export async function quoteMaterialPriceApi(data: QuoteRequest): Promise<any> {
-  const response = await requestClient.post('/material/price/quote', data);
+  const response = await requestClient.post('/pricing/material', data);
   return response.data;
 }
 
@@ -32,7 +32,7 @@ export async function quoteMaterialPriceApi(data: QuoteRequest): Promise<any> {
  */
 export async function getMaterialPriceApi(materialId: number): Promise<{ min: number; max: number }> {
   const response = await requestClient.get<{ min: number; max: number }>(
-    `/material/${materialId}/price`
+    `/pricing/material/${materialId}`
   );
   return response.data;
 }
@@ -41,7 +41,7 @@ export async function getMaterialPriceApi(materialId: number): Promise<{ min: nu
  * 获取材料价格历史
  */
 export async function getMaterialPriceHistoryApi(materialId: number): Promise<PriceData[]> {
-  const response = await requestClient.get<PriceData[]>(`/material/${materialId}/price/history`);
+  const response = await requestClient.get<PriceData[]>(`/pricing/material/${materialId}/history`);
   return response.data;
 }
 
@@ -49,7 +49,7 @@ export async function getMaterialPriceHistoryApi(materialId: number): Promise<Pr
  * 工艺报价
  */
 export async function quoteProcessPriceApi(data: QuoteRequest): Promise<any> {
-  const response = await requestClient.post('/process/price/quote', data);
+  const response = await requestClient.post('/pricing/process', data);
   return response.data;
 }
 
@@ -58,7 +58,7 @@ export async function quoteProcessPriceApi(data: QuoteRequest): Promise<any> {
  */
 export async function getProcessPriceApi(processId: number): Promise<{ min: number; max: number }> {
   const response = await requestClient.get<{ min: number; max: number }>(
-    `/process/${processId}/price`
+    `/pricing/process/${processId}`
   );
   return response.data;
 }
@@ -67,6 +67,6 @@ export async function getProcessPriceApi(processId: number): Promise<{ min: numb
  * 获取工艺价格历史
  */
 export async function getProcessPriceHistoryApi(processId: number): Promise<PriceData[]> {
-  const response = await requestClient.get<PriceData[]>(`/process/${processId}/price/history`);
+  const response = await requestClient.get<PriceData[]>(`/pricing/process/${processId}/history`);
   return response.data;
 }

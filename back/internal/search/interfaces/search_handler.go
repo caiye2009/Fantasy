@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"back/pkg/audit"
+	"back/pkg/endpoint"
 	"back/internal/search/application"
 )
 
@@ -78,14 +79,21 @@ func isClientError(err error) bool {
 		strings.Contains(errMsg, "required")
 }
 
-// RegisterSearchHandlers 注册搜索路由
-func RegisterSearchHandlers(router *gin.RouterGroup, service *application.SearchService) {
-	handler := NewSearchHandler(service)
-
-	searchGroup := router.Group("/search")
-	{
-		// 搜索是查询操作，跳过审计
-		searchGroup.POST("", audit.Skip(), handler.Search)
-		searchGroup.GET("/indices", handler.GetIndices)
+// GetRoutes 返回路由定义
+func (h *SearchHandler) GetRoutes() []endpoint.RouteDefinition {
+	return []endpoint.RouteDefinition{
+		{
+			Method:      "POST",
+			Path:        "/search",
+			Handler:     h.Search,
+			Middlewares: []gin.HandlerFunc{audit.Skip()},
+			Name:        "搜索",
+		},
+		{
+			Method:  "GET",
+			Path:    "/search/indices",
+			Handler: h.GetIndices,
+			Name:    "获取索引列表",
+		},
 	}
 }

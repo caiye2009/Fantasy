@@ -43,7 +43,10 @@ const docTemplate = `{
                     "200": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/fields.Response"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -56,7 +59,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "用户登出（前端清除 Token）",
+                "description": "用户登出（清除 JWT 白名单）",
                 "consumes": [
                     "application/json"
                 ],
@@ -71,7 +74,10 @@ const docTemplate = `{
                     "200": {
                         "description": "登出成功",
                         "schema": {
-                            "$ref": "#/definitions/fields.Response"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -105,7 +111,10 @@ const docTemplate = `{
                     "200": {
                         "description": "Token 无效",
                         "schema": {
-                            "$ref": "#/definitions/fields.Response"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -1589,6 +1598,200 @@ const docTemplate = `{
                 }
             }
         },
+        "/permission/list": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "列出系统中所有可分配的权限",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "权限管理"
+                ],
+                "summary": "列出所有可用权限",
+                "responses": {
+                    "200": {
+                        "description": "权限列表",
+                        "schema": {
+                            "$ref": "#/definitions/application.PermissionsListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/permission/list-by-domain": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "列出系统中所有权限，按业务域分组",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "权限管理"
+                ],
+                "summary": "按域分组列出权限",
+                "responses": {
+                    "200": {
+                        "description": "权限列表",
+                        "schema": {
+                            "$ref": "#/definitions/application.PermissionsByDomainResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/permission/user": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "获取指定用户的所有个性化权限",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "权限管理"
+                ],
+                "summary": "获取用户权限列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户 LoginID",
+                        "name": "loginId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "权限列表",
+                        "schema": {
+                            "$ref": "#/definitions/application.UserPermissionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/permission/user/add": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "给指定用户添加个性化权限",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "权限管理"
+                ],
+                "summary": "给用户添加权限",
+                "parameters": [
+                    {
+                        "description": "请求参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.AddUserPermissionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "添加成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/permission/user/remove": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "删除指定用户的个性化权限",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "权限管理"
+                ],
+                "summary": "删除用户权限",
+                "parameters": [
+                    {
+                        "description": "请求参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.RemoveUserPermissionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/plan": {
             "get": {
                 "security": [
@@ -2586,31 +2789,25 @@ const docTemplate = `{
                     "200": {
                         "description": "退货分析结果",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/fields.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/application.ReturnAnalysisResponse"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/application.ReturnAnalysisResponse"
                         }
                     },
                     "400": {
                         "description": "参数错误",
                         "schema": {
-                            "$ref": "#/definitions/fields.Response"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "500": {
                         "description": "服务器错误",
                         "schema": {
-                            "$ref": "#/definitions/fields.Response"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -2638,28 +2835,19 @@ const docTemplate = `{
                     "200": {
                         "description": "客户列表",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/fields.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/application.CustomerOptionResponse"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/application.CustomerOptionResponse"
+                            }
                         }
                     },
                     "500": {
                         "description": "服务器错误",
                         "schema": {
-                            "$ref": "#/definitions/fields.Response"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -3942,6 +4130,21 @@ const docTemplate = `{
                 }
             }
         },
+        "application.AddUserPermissionRequest": {
+            "type": "object",
+            "required": [
+                "loginId",
+                "permission"
+            ],
+            "properties": {
+                "loginId": {
+                    "type": "string"
+                },
+                "permission": {
+                    "type": "string"
+                }
+            }
+        },
         "application.AggRequest": {
             "type": "object",
             "properties": {
@@ -4672,6 +4875,10 @@ const docTemplate = `{
                     "description": "改为小驼峰",
                     "type": "string"
                 },
+                "department": {
+                    "description": "部门信息",
+                    "type": "string"
+                },
                 "refreshToken": {
                     "description": "新增",
                     "type": "string"
@@ -4897,6 +5104,55 @@ const docTemplate = `{
                 }
             }
         },
+        "application.PermissionItem": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "create",
+                    "type": "string"
+                },
+                "desc": {
+                    "description": "创建用户",
+                    "type": "string"
+                },
+                "domain": {
+                    "description": "user",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "user.create",
+                    "type": "string"
+                }
+            }
+        },
+        "application.PermissionsByDomainResponse": {
+            "type": "object",
+            "properties": {
+                "domains": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/application.PermissionItem"
+                        }
+                    }
+                }
+            }
+        },
+        "application.PermissionsListResponse": {
+            "type": "object",
+            "properties": {
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.PermissionItem"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "application.PlanListResponse": {
             "type": "object",
             "properties": {
@@ -5117,6 +5373,21 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "accessToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "application.RemoveUserPermissionRequest": {
+            "type": "object",
+            "required": [
+                "loginId",
+                "permission"
+            ],
+            "properties": {
+                "loginId": {
+                    "type": "string"
+                },
+                "permission": {
                     "type": "string"
                 }
             }
@@ -5673,6 +5944,20 @@ const docTemplate = `{
                 }
             }
         },
+        "application.UserPermissionsResponse": {
+            "type": "object",
+            "properties": {
+                "loginId": {
+                    "type": "string"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "application.UserResponse": {
             "type": "object",
             "properties": {
@@ -5879,18 +6164,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "target_type": {
-                    "type": "string"
-                }
-            }
-        },
-        "fields.Response": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {},
-                "msg": {
                     "type": "string"
                 }
             }

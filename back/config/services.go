@@ -55,6 +55,12 @@ import (
 	// Analytics
 	analyticsApp "back/internal/analytics/application"
 	analyticsInfra "back/internal/analytics/infra"
+
+	// Permission
+	permissionApp "back/internal/permission/application"
+
+	// Casbin
+	casbinPkg "back/pkg/casbin"
 )
 
 type Services struct {
@@ -88,9 +94,12 @@ type Services struct {
 
 	// Analytics
 	ReturnAnalysis *analyticsApp.ReturnAnalysisService
+
+	// Permission
+	Permission *permissionApp.PermissionService
 }
 
-func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client, jwtWang *auth.JWTWang, esSync *es.ESSync, searchRegistry *searchInfra.DomainAwareRegistry) *Services {
+func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client, jwtWang *auth.JWTWang, whitelistManager *auth.WhitelistManager, casbinManager *casbinPkg.Manager, esSync *es.ESSync, searchRegistry *searchInfra.DomainAwareRegistry) *Services {
 	// ========== Supplier ==========
 	supplierRepo := supplierInfra.NewSupplierRepo(db)
 	supplierService := supplierApp.NewSupplierService(supplierRepo, esSync)
@@ -101,7 +110,7 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 
 	// ========== User ==========
 	userRepo := userInfra.NewUserRepo(db)
-	userService := userApp.NewUserService(userRepo)
+	userService := userApp.NewUserService(userRepo, whitelistManager)
 
 	// ========== Department ==========
 	departmentRepo := userInfra.NewDepartmentRepo(db)
@@ -112,7 +121,7 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 	roleService := userApp.NewRoleService(roleRepo)
 
 	// ========== Auth ==========
-	authService := authApp.NewAuthService(userService, jwtWang)
+	authService := authApp.NewAuthService(userService, jwtWang, whitelistManager)
 
 	// ========== Material ==========
 	materialRepo := materialInfra.NewMaterialRepo(db)
@@ -173,7 +182,10 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 	// ========== Analytics ==========
 	returnAnalysisRepo := analyticsInfra.NewReturnAnalysisRepository(db)
 	returnAnalysisService := analyticsApp.NewReturnAnalysisService(returnAnalysisRepo)
-	
+
+	// ========== Permission ==========
+	permissionService := permissionApp.NewPermissionService(casbinManager)
+
 	return &Services{
 		Auth:                  authService,
 		Supplier:              supplierService,
@@ -192,5 +204,6 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 		Order:                 orderService,
 		Search:                searchService,
 		ReturnAnalysis:        returnAnalysisService,
+		Permission:            permissionService,
 	}
 }

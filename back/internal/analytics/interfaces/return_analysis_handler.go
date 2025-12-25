@@ -4,6 +4,7 @@ package interfaces
 import (
 	"net/http"
 
+	"back/pkg/endpoint"
 	"back/internal/analytics/application"
 	"github.com/gin-gonic/gin"
 )
@@ -20,12 +21,21 @@ func NewReturnAnalysisHandler(service *application.ReturnAnalysisService) *Retur
 	}
 }
 
-// RegisterRoutes 注册路由
-func (h *ReturnAnalysisHandler) RegisterRoutes(router *gin.RouterGroup) {
-	returnAnalysis := router.Group("/return-analysis")
-	{
-		returnAnalysis.GET("/customers", h.GetCustomerList)
-		returnAnalysis.POST("/analysis", h.GetReturnAnalysis)
+// GetRoutes 返回路由定义
+func (h *ReturnAnalysisHandler) GetRoutes() []endpoint.RouteDefinition {
+	return []endpoint.RouteDefinition{
+		{
+			Method:  "GET",
+			Path:    "/return-analysis/customers",
+			Handler: h.GetCustomerList,
+			Name:    "获取客户列表",
+		},
+		{
+			Method:  "POST",
+			Path:    "/return-analysis/analysis",
+			Handler: h.GetReturnAnalysis,
+			Name:    "获取退货分析",
+		},
 	}
 }
 
@@ -35,8 +45,8 @@ func (h *ReturnAnalysisHandler) RegisterRoutes(router *gin.RouterGroup) {
 // @Tags 退货分析
 // @Accept json
 // @Produce json
-// @Success 200 {object} fields.Response{data=[]application.CustomerOptionResponse} "客户列表"
-// @Failure 500 {object} fields.Response "服务器错误"
+// @Success 200 {array} application.CustomerOptionResponse "客户列表"
+// @Failure 500 {object} map[string]string "服务器错误"
 // @Router /return-analysis/customers [get]
 // @Security Bearer
 func (h *ReturnAnalysisHandler) GetCustomerList(c *gin.Context) {
@@ -56,9 +66,9 @@ func (h *ReturnAnalysisHandler) GetCustomerList(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body application.ReturnAnalysisRequest true "查询参数"
-// @Success 200 {object} fields.Response{data=application.ReturnAnalysisResponse} "退货分析结果"
-// @Failure 400 {object} fields.Response "参数错误"
-// @Failure 500 {object} fields.Response "服务器错误"
+// @Success 200 {object} application.ReturnAnalysisResponse "退货分析结果"
+// @Failure 400 {object} map[string]string "参数错误"
+// @Failure 500 {object} map[string]string "服务器错误"
 // @Router /return-analysis/analysis [post]
 // @Security Bearer
 func (h *ReturnAnalysisHandler) GetReturnAnalysis(c *gin.Context) {
