@@ -1,7 +1,7 @@
 <template>
   <div class="data-table-container">
-    <!-- 筛选栏 -->
-    <div class="filter-bar" v-if="config.filters && config.filters.length > 0">
+    <!-- 筛选栏和顶部操作 -->
+    <div class="filter-bar">
       <el-form :inline="true" :model="filterForm" class="filter-form">
         <el-form-item label="搜索">
           <el-input
@@ -18,7 +18,7 @@
           </el-input>
         </el-form-item>
 
-        <div class="other-filters">
+        <div class="other-filters" v-if="config.filters && config.filters.length > 0">
           <el-form-item
             v-for="filter in config.filters"
             :key="filter.key"
@@ -37,6 +37,8 @@
               :placeholder="filter.placeholder"
               clearable
               filterable
+              :loading="filterLoadingStates[filter.key]"
+              @visible-change="(visible) => handleFilterVisibleChange(visible, filter)"
               style="width: 200px"
             >
               <el-option
@@ -65,10 +67,22 @@
           </el-form-item>
         </div>
 
-        <el-form-item class="filter-buttons">
+        <el-form-item class="filter-buttons" v-if="config.filters && config.filters.length > 0">
           <el-button type="primary" @click="handleFilter">查询</el-button>
           <el-button @click="handleResetFilter">重置</el-button>
         </el-form-item>
+
+        <div class="top-actions" v-if="config.topActions && config.topActions.length > 0">
+          <el-button
+            v-for="action in config.topActions"
+            :key="action.key"
+            :type="action.type || 'default'"
+            @click="handleTopAction(action)"
+          >
+            <el-icon v-if="action.icon"><component :is="action.icon" /></el-icon>
+            {{ action.label }}
+          </el-button>
+        </div>
       </el-form>
     </div>
 
@@ -137,12 +151,11 @@
         <!-- 操作列固定右边 -->
         <el-table-column
           label="操作"
-          width="150"
+          width="100"
           fixed="right"
         >
           <template #default="scope">
             <el-button link type="primary" @click="handleView(scope.row)">查看</el-button>
-            <el-button link type="primary" @click="handleEdit(scope.row)">编辑</el-button>
           </template>
         </el-table-column>
 
@@ -153,6 +166,13 @@
           </div>
           <div v-else-if="!hasMore && tableData.length > 0" class="no-more-tip">
             没有更多数据了
+          </div>
+        </template>
+
+        <!-- 空状态 -->
+        <template #empty>
+          <div class="empty-state">
+            <el-empty :description="getEmptyDescription()" />
           </div>
         </template>
       </el-table>
@@ -166,6 +186,7 @@ import { ElMessageBox } from 'element-plus'
 import { Search, Loading } from '@element-plus/icons-vue'
 import { useDataTable } from '#/composables/useDataTable'
 import { useTablePreference } from '#/composables/useTablePreference'
+import { elasticsearchService } from '#/api/core/es'
 import type { PageConfig, BulkAction } from './types'
 
 interface Props {
@@ -174,7 +195,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), { loading: false })
-const emit = defineEmits(['view', 'edit', 'bulkAction'])
+const emit = defineEmits(['view', 'bulkAction', 'topAction'])
 
 // 用户偏好
 const { columns } = useTablePreference(
@@ -204,6 +225,8 @@ const tableWrapperRef = ref<HTMLElement>()
 const searchQuery = ref('')
 const filterForm = ref<Record<string, any>>({})
 const filterOptions = ref<Record<string, Array<{ label: string; value: any }>>>({})
+const filterLoadingStates = ref<Record<string, boolean>>({}) // 加载状态
+const filterLoadedFlags = ref<Record<string, boolean>>({}) // 是否已加载
 
 // 可见列
 const visibleColumns = computed(() => columns.value.filter((col) => col.visible !== false))
@@ -258,39 +281,137 @@ const handleBulkAction = async (action: BulkAction) => {
   emit('bulkAction', { action: action.key, rows: selectedRows.value })
 }
 
-// 刷新 & 查看/编辑
+// 刷新 & 查看
 const handleRefresh = () => reload()
 const handleView = (row: any) => emit('view', row)
-const handleEdit = (row: any) => emit('edit', row)
 
-// 加载 filter 选项
-const loadFilterOptions = async () => {
+// 顶部操作
+const handleTopAction = (action: any) => {
+  emit('topAction', { action: action.key })
+}
+
+// 获取空状态描述
+const getEmptyDescription = () => {
+  const pageTypeMap: Record<string, string> = {
+    material: '原料',
+    client: '客户',
+    order: '订单',
+    process: '工序',
+    product: '产品',
+    inventory: '库存'
+  }
+
+  const pageName = pageTypeMap[props.config.pageType || ''] || '数据'
+  return `请新增${pageName}`
+}
+
+// 一次性获取所有 filter 选项（优化：合并聚合请求）
+const loadAllFilterOptions = async () => {
   if (!props.config.filters) return
 
+  // 收集所有需要聚合的 filter
+  const aggRequests: Record<string, any> = {}
+  const filtersNeedAgg: any[] = []
+
   for (const filter of props.config.filters) {
-    // 如果有 fetchOptions 函数，调用它获取选项
-    if (filter.fetchOptions) {
-      try {
-        filterOptions.value[filter.key] = await filter.fetchOptions()
-      } catch (error) {
-        console.error(`Failed to load options for filter ${filter.key}:`, error)
+    // 跳过静态选项
+    if (filter.options) {
+      filterOptions.value[filter.key] = filter.options
+      filterLoadedFlags.value[filter.key] = true
+      continue
+    }
+
+    // 收集需要聚合的字段
+    if (filter.fetchOptions && filter.key) {
+      filtersNeedAgg.push(filter)
+      // 假设 fetchOptions 内部使用聚合请求
+      aggRequests[filter.key] = {
+        type: 'terms',
+        field: filter.key,
+        size: 100, // 一次性获取更多数据
+      }
+    }
+  }
+
+  // 如果有需要聚合的字段，一次性请求
+  if (Object.keys(aggRequests).length > 0) {
+    try {
+      const response = await elasticsearchService.search({
+        index: props.config.index,
+        pagination: { offset: 0, size: 0 },
+        aggRequests,
+      })
+
+      // 处理聚合结果
+      for (const filter of filtersNeedAgg) {
+        const buckets = response.aggregations?.[filter.key]?.buckets || []
+        filterOptions.value[filter.key] = buckets.map((bucket: any) => ({
+          label: String(bucket.key),
+          value: bucket.key,
+        }))
+        filterLoadedFlags.value[filter.key] = true
+      }
+    } catch (error) {
+      console.error('Failed to load filter options:', error)
+      // 失败时回退到逐个加载
+      for (const filter of filtersNeedAgg) {
         filterOptions.value[filter.key] = []
       }
     }
-    // 如果有静态 options，直接使用
-    else if (filter.options) {
-      filterOptions.value[filter.key] = filter.options
-    }
-    // 默认为空数组
-    else {
+  }
+}
+
+// 加载单个 filter 的选项（懒加载备用）
+const loadFilterOption = async (filter: any) => {
+  // 如果已经加载过，不重复加载
+  if (filterLoadedFlags.value[filter.key]) {
+    return
+  }
+
+  // 如果有静态 options，直接使用
+  if (filter.options) {
+    filterOptions.value[filter.key] = filter.options
+    filterLoadedFlags.value[filter.key] = true
+    return
+  }
+
+  // 如果有 fetchOptions 函数，调用它获取选项
+  if (filter.fetchOptions) {
+    filterLoadingStates.value[filter.key] = true
+    try {
+      filterOptions.value[filter.key] = await filter.fetchOptions()
+      filterLoadedFlags.value[filter.key] = true
+    } catch (error) {
+      console.error(`Failed to load options for filter ${filter.key}:`, error)
       filterOptions.value[filter.key] = []
+    } finally {
+      filterLoadingStates.value[filter.key] = false
+    }
+  } else {
+    // 默认为空数组
+    filterOptions.value[filter.key] = []
+    filterLoadedFlags.value[filter.key] = true
+  }
+}
+
+// 处理下拉框显示/隐藏
+const handleFilterVisibleChange = (visible: boolean, filter: any) => {
+  if (visible && !filterLoadedFlags.value[filter.key]) {
+    // 如果使用懒加载模式，才在这里加载
+    if (!props.config.eagerLoadFilters) {
+      loadFilterOption(filter)
     }
   }
 }
 
 // 初始化
 onMounted(async () => {
-  await loadFilterOptions()
+  // 如果配置了 eagerLoadFilters，一次性加载所有 filter 选项
+  if (props.config.eagerLoadFilters) {
+    await loadAllFilterOptions()
+  }
+  // 否则使用懒加载，在用户点击下拉框时才加载
+
   initialize()
   const tableBody = tableWrapperRef.value?.querySelector('.el-table__body-wrapper')
   if (tableBody) tableBody.addEventListener('scroll', handleTableScroll)
@@ -323,10 +444,16 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
+  gap: 12px;
 
   .search-input { width: 300px; }
   .other-filters { display: flex; gap: 12px; flex-wrap: wrap; }
   .filter-buttons { display: flex; gap: 8px; }
+  .top-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
 }
 
 /* 悬浮批量操作栏靠右，不超过表格一半宽度 */

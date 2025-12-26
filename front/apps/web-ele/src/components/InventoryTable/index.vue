@@ -51,6 +51,11 @@
           </span>
         </template>
       </el-table-column>
+
+      <!-- 空状态 -->
+      <template #empty>
+        <el-empty :description="`请新增${title}`" />
+      </template>
     </el-table>
 
     <div class="table-footer">

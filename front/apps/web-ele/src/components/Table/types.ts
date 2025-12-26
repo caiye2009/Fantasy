@@ -33,13 +33,22 @@ export interface BulkAction {
   confirmMessage?: string
 }
 
+export interface TopAction {
+  label: string
+  key: string
+  type?: 'primary' | 'success' | 'warning' | 'danger'
+  icon?: string
+}
+
 export interface PageConfig {
   pageType: string
-  title: string
+  title?: string
   index: string // 单个实体类型，如 'material', 'order', 'client'
   columns: ColumnConfig[]
-  filters: FilterConfig[]
-  bulkActions: BulkAction[]
+  filters?: FilterConfig[]
+  bulkActions?: BulkAction[]
+  topActions?: TopAction[]
+  eagerLoadFilters?: boolean // 是否在页面加载时一次性获取所有 filter 选项（默认 false，使用懒加载）
   pageSize: number
   actions?: any[] // 可选的自定义操作
 }

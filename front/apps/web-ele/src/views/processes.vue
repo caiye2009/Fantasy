@@ -7,6 +7,7 @@
       @edit="handleEdit"
       @quote="handleQuote"
       @bulkAction="handleBulkAction"
+      @topAction="handleTopAction"
     />
 
     <!-- 编辑对话框 -->
@@ -172,6 +173,34 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 新增工序对话框 -->
+    <el-dialog
+      v-model="createDialogVisible"
+      title="新增工序"
+      width="600px"
+      @close="handleCreateClose"
+    >
+      <el-form :model="createForm" label-width="100px">
+        <el-form-item label="工序名称" required>
+          <el-input v-model="createForm.name" placeholder="请输入工序名称" />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input
+            v-model="createForm.description"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入工序描述"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="creating" @click="handleCreateSubmit">
+          确定
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -202,7 +231,6 @@ const { searchLoading } = useDataTable('process', 20)
 // 配置
 const pageConfig: PageConfig = {
   pageType: 'process',
-  title: '工序管理',
   index: 'process',
   pageSize: 20,
   columns: [
@@ -244,6 +272,9 @@ const pageConfig: PageConfig = {
       options: [],
     },
   ] as FilterConfig[],
+  topActions: [
+    { key: 'create', label: '新增工序', type: 'primary' },
+  ],
   bulkActions: [
     { key: 'delete', label: '批量删除', type: 'danger', confirm: true, confirmMessage: '确定要删除选中的工序吗？此操作不可恢复！' },
     { key: 'export', label: '导出数据', type: 'primary' },
@@ -491,6 +522,13 @@ const handleQuoteSubmit = async () => {
   }
 }
 
+// 顶部操作
+const handleTopAction = ({ action }: { action: string }) => {
+  if (action === 'create') {
+    handleCreate()
+  }
+}
+
 // 批量操作入口
 const handleBulkAction = async ({
   action,
@@ -513,6 +551,45 @@ const handleBulkAction = async ({
       break
     default:
       ElMessage.warning(`未知操作：${action}`)
+  }
+}
+
+// 新增工序
+const createDialogVisible = ref(false)
+const createForm = ref({
+  name: '',
+  description: '',
+})
+const creating = ref(false)
+
+const handleCreate = () => {
+  createDialogVisible.value = true
+}
+
+const handleCreateSubmit = async () => {
+  if (!createForm.value.name) {
+    ElMessage.error('请输入工序名称')
+    return
+  }
+
+  creating.value = true
+  try {
+    await elasticsearchService.create('process', createForm.value)
+    ElMessage.success('新增成功')
+    createDialogVisible.value = false
+    setTimeout(() => window.location.reload(), 500)
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('新增失败')
+  } finally {
+    creating.value = false
+  }
+}
+
+const handleCreateClose = () => {
+  createForm.value = {
+    name: '',
+    description: '',
   }
 }
 

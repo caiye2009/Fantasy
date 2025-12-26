@@ -6,6 +6,7 @@
       @view="openDetail"
       @edit="openDetail"
       @bulkAction="handleBulkAction"
+      @topAction="handleTopAction"
     />
 
     <!-- 新增原料对话框 -->
@@ -27,11 +28,12 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import DataTable from '#/components/Table/index.vue'
-import AddMaterialDialog from './components/AddMaterialDialog.vue'
-import MaterialDetail from './components/MaterialDetail.vue'
-import type { Material } from './types'
+import AddMaterialDialog from '#/components/Material/AddMaterialDialog.vue'
+import MaterialDetail from '#/components/Material/MaterialDetail.vue'
+import type { Material } from '#/components/Material/types'
 import type { PageConfig, BulkAction } from '#/components/Table/types'
 import { useDataTable } from '#/composables/useDataTable'
+import { elasticsearchService } from '#/api/core/es'
 
 // 数据表格配置
 const { searchLoading } = useDataTable({
@@ -45,21 +47,9 @@ const addDialogVisible = ref(false)
 const detailVisible = ref(false)
 const selectedMaterial = ref<Material | null>(null)
 
-// 获取分类标签类型
-const getCategoryTagType = (category?: string) => {
-  if (!category) return 'info'
-  const typeMap: Record<string, any> = {
-    '胚布': 'primary',
-    '染料': 'warning',
-    '助剂': 'success'
-  }
-  return typeMap[category] || 'info'
-}
-
 // 页面配置
 const pageConfig: PageConfig = {
   pageType: 'material',
-  title: '原料管理',
   index: 'material',
   pageSize: 20,
   columns: [
@@ -117,16 +107,94 @@ const pageConfig: PageConfig = {
       label: '分类',
       type: 'select',
       placeholder: '请选择分类',
-      options: [
-        { label: '胚布', value: '胚布' },
-        { label: '染料', value: '染料' },
-        { label: '助剂', value: '助剂' }
-      ]
-    }
+      fetchOptions: async () => {
+        try {
+          const response = await elasticsearchService.search({
+            index: 'material',
+            pagination: { offset: 0, size: 0 },
+            aggRequests: {
+              category: {
+                type: 'terms',
+                field: 'category',
+                size: 20,
+              },
+            },
+          })
+          const buckets = response.aggregations?.category?.buckets || []
+          return buckets.map((bucket: any) => ({
+            label: String(bucket.key),
+            value: bucket.key,
+          }))
+        } catch (error) {
+          console.error('加载分类选项失败:', error)
+          return []
+        }
+      },
+    },
+    {
+      key: 'status',
+      label: '状态',
+      type: 'select',
+      placeholder: '请选择状态',
+      fetchOptions: async () => {
+        try {
+          const response = await elasticsearchService.search({
+            index: 'material',
+            pagination: { offset: 0, size: 0 },
+            aggRequests: {
+              status: {
+                type: 'terms',
+                field: 'status',
+                size: 20,
+              },
+            },
+          })
+          const buckets = response.aggregations?.status?.buckets || []
+          return buckets.map((bucket: any) => ({
+            label: String(bucket.key),
+            value: bucket.key,
+          }))
+        } catch (error) {
+          console.error('加载状态选项失败:', error)
+          return []
+        }
+      },
+    },
+    {
+      key: 'unit',
+      label: '单位',
+      type: 'select',
+      placeholder: '请选择单位',
+      fetchOptions: async () => {
+        try {
+          const response = await elasticsearchService.search({
+            index: 'material',
+            pagination: { offset: 0, size: 0 },
+            aggRequests: {
+              unit: {
+                type: 'terms',
+                field: 'unit',
+                size: 20,
+              },
+            },
+          })
+          const buckets = response.aggregations?.unit?.buckets || []
+          return buckets.map((bucket: any) => ({
+            label: String(bucket.key),
+            value: bucket.key,
+          }))
+        } catch (error) {
+          console.error('加载单位选项失败:', error)
+          return []
+        }
+      },
+    },
+  ],
+  topActions: [
+    { key: 'create', label: '新增原料', type: 'primary' },
   ],
   bulkActions: [
-    { key: 'create', label: '新增原料', type: 'primary' },
-    { key: 'delete', label: '批量删除', type: 'danger', confirm: true, confirmMessage: '确定要删除选中的原料吗？' }
+    { key: 'delete', label: '批量删除', type: 'danger', confirm: true, confirmMessage: '确定要删除选中的原料吗?' }
   ]
 }
 
@@ -149,11 +217,15 @@ const handleMaterialUpdate = (updatedMaterial: Material) => {
   window.location.reload()
 }
 
-// 批量操作
-const handleBulkAction = ({ action }: { action: string; rows: any[] }) => {
+// 顶部操作
+const handleTopAction = ({ action }: { action: string }) => {
   if (action === 'create') {
     addDialogVisible.value = true
   }
+}
+
+// 批量操作
+const handleBulkAction = ({ action }: { action: string; rows: any[] }) => {
   // TODO: 实现批量删除功能
 }
 </script>

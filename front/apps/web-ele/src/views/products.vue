@@ -1,24 +1,12 @@
 <template>
   <div class="product-management">
-    <!-- 顶部操作栏 -->
-    <div class="top-bar">
-      <h2 class="page-title">产品管理</h2>
-      <div class="top-actions">
-        <el-button type="warning" @click="handleSeedData" :loading="seeding">
-          初始化数据
-        </el-button>
-        <el-button type="primary" @click="handleCreate">
-          新增产品
-        </el-button>
-      </div>
-    </div>
 
     <DataTable
       :config="pageConfig"
       :loading="searchLoading"
       @view="handleView"
-      @edit="handleEdit"
       @bulkAction="handleBulkAction"
+      @topAction="handleTopAction"
     />
 
     <!-- 编辑/新建对话框 -->
@@ -134,108 +122,229 @@
       </template>
     </el-dialog>
 
-    <!-- 产品详情大弹窗 -->
-    <el-dialog
+    <!-- 产品详情抽屉 -->
+    <el-drawer
       v-model="detailDialogVisible"
       title="产品详情"
-      width="1000px"
+      size="60%"
       @close="handleDetailClose"
     >
-      <!-- 基本信息 -->
-      <div class="detail-section">
-        <h3 class="section-title">基本信息</h3>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="产品ID">
-            {{ currentProduct.id }}
-          </el-descriptions-item>
-          <el-descriptions-item label="产品名称">
-            {{ currentProduct.name }}
-          </el-descriptions-item>
-          <el-descriptions-item label="状态">
-            <el-tag :type="getStatusType(currentProduct.status)">
-              {{ getStatusText(currentProduct.status) }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="创建时间">
-            {{ formatDate(currentProduct.created_at) }}
-          </el-descriptions-item>
-        </el-descriptions>
-      </div>
+      <div v-if="currentProduct.id" class="product-detail">
+        <!-- 基本信息 -->
+        <el-card class="detail-card" shadow="never">
+          <template #header>
+            <div class="card-header">
+              <span>基本信息</span>
+              <el-button v-if="!isEditing" type="primary" size="small" @click="startEdit">
+                修改
+              </el-button>
+              <div v-else>
+                <el-button size="small" @click="cancelEdit">取消</el-button>
+                <el-button type="primary" size="small" :loading="saving" @click="saveEdit">
+                  保存
+                </el-button>
+              </div>
+            </div>
+          </template>
 
-      <!-- 价格信息 -->
-      <div class="detail-section">
-        <h3 class="section-title">价格信息</h3>
-        <el-row :gutter="20" v-loading="loadingPrice">
-          <el-col :span="8">
-            <el-statistic title="当前价格" :value="priceInfo.current_price" :precision="2">
-              <template #prefix>¥</template>
-            </el-statistic>
-          </el-col>
-          <el-col :span="8">
-            <el-statistic title="历史最高" :value="priceInfo.historical_high" :precision="2">
-              <template #prefix>¥</template>
-            </el-statistic>
-          </el-col>
-          <el-col :span="8">
-            <el-statistic title="历史最低" :value="priceInfo.historical_low" :precision="2">
-              <template #prefix>¥</template>
-            </el-statistic>
-          </el-col>
-        </el-row>
-      </div>
+          <el-form v-if="isEditing" :model="editForm" label-width="100px">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="产品名称">
+                  <el-input v-model="editForm.name" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="状态">
+                  <el-select v-model="editForm.status" placeholder="请选择状态" style="width: 100%">
+                    <el-option label="草稿" value="draft" />
+                    <el-option label="已提交" value="submitted" />
+                    <el-option label="已审批" value="approved" />
+                    <el-option label="已拒绝" value="rejected" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
 
-      <!-- 产品公式 -->
-      <div class="detail-section">
-        <div class="section-header">
-          <h3 class="section-title">产品公式</h3>
-          <el-button type="primary" size="small" @click="handleEditFormula">
-            修改
+            <!-- 原料配置 -->
+            <el-form-item label="原料配置">
+              <el-button
+                size="small"
+                type="primary"
+                @click="addMaterial"
+                style="margin-bottom: 8px"
+              >
+                添加原料
+              </el-button>
+
+              <el-table :data="editForm.materials" border>
+                <el-table-column label="原料">
+                  <template #default="{ row }">
+                    <el-select
+                      v-model="row.material_id"
+                      filterable
+                      placeholder="选择原料"
+                      @visible-change="onMaterialSelectVisible"
+                    >
+                      <el-option
+                        v-for="m in materialsList"
+                        :key="m.id"
+                        :label="m.name"
+                        :value="m.id"
+                      />
+                    </el-select>
+                  </template>
+                </el-table-column>
+
+                <el-table-column label="占比 %">
+                  <template #default="{ row }">
+                    <el-input-number
+                      v-model="row.ratioPercent"
+                      :min="0"
+                      :max="100"
+                    />
+                  </template>
+                </el-table-column>
+
+                <el-table-column label="操作">
+                  <template #default="{ $index }">
+                    <el-button
+                      type="danger"
+                      size="small"
+                      @click="removeMaterial($index)"
+                    >
+                      删除
+                    </el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+
+              <div
+                class="ratio-summary"
+                :class="{ error: totalRatioEdit !== 100 && editForm.materials.length }"
+              >
+                总占比：{{ totalRatioEdit }}%
+              </div>
+            </el-form-item>
+
+            <!-- 工艺配置 -->
+            <el-form-item label="工艺配置">
+              <el-select
+                v-model="selectedProcessIdsEdit"
+                multiple
+                filterable
+                placeholder="选择工艺"
+                @visible-change="onProcessSelectVisible"
+                @change="onProcessChangeEdit"
+              >
+                <el-option
+                  v-for="p in processesList"
+                  :key="p.id"
+                  :label="p.name"
+                  :value="p.id"
+                />
+              </el-select>
+            </el-form-item>
+          </el-form>
+
+          <el-descriptions v-else :column="2" border>
+            <el-descriptions-item label="产品ID">
+              {{ currentProduct.id }}
+            </el-descriptions-item>
+            <el-descriptions-item label="产品名称">
+              {{ currentProduct.name }}
+            </el-descriptions-item>
+            <el-descriptions-item label="状态">
+              <el-tag :type="getStatusType(currentProduct.status)">
+                {{ getStatusText(currentProduct.status) }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="创建时间">
+              {{ formatDate(currentProduct.created_at) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="更新时间" :span="2">
+              {{ formatDate(currentProduct.updated_at) }}
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-card>
+
+        <!-- 价格信息 -->
+        <el-card class="detail-card" shadow="never">
+          <template #header>
+            <div class="card-header">
+              <span>价格信息</span>
+            </div>
+          </template>
+          <el-row :gutter="20" v-loading="loadingPrice">
+            <el-col :span="8">
+              <el-statistic title="当前价格" :value="priceInfo.current_price" :precision="2">
+                <template #prefix>¥</template>
+              </el-statistic>
+            </el-col>
+            <el-col :span="8">
+              <el-statistic title="历史最高" :value="priceInfo.historical_high" :precision="2">
+                <template #prefix>¥</template>
+              </el-statistic>
+            </el-col>
+            <el-col :span="8">
+              <el-statistic title="历史最低" :value="priceInfo.historical_low" :precision="2">
+                <template #prefix>¥</template>
+              </el-statistic>
+            </el-col>
+          </el-row>
+        </el-card>
+
+        <!-- 产品公式 -->
+        <el-card class="detail-card" shadow="never">
+          <template #header>
+            <div class="card-header">
+              <span>产品公式</span>
+            </div>
+          </template>
+
+          <div class="formula-content">
+            <div class="formula-item">
+              <h4>原料配置</h4>
+              <el-table :data="currentProduct.materials" border>
+                <el-table-column label="原料名称" width="200">
+                  <template #default="{ row }">
+                    {{ getMaterialName(row.material_id) }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="占比" align="center">
+                  <template #default="{ row }">
+                    {{ (row.ratio * 100).toFixed(2) }}%
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+
+            <div class="formula-item">
+              <h4>工艺配置</h4>
+              <el-table :data="currentProduct.processes" border>
+                <el-table-column label="工艺名称" width="200">
+                  <template #default="{ row }">
+                    {{ getProcessName(row.process_id) }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="数量" align="center">
+                  <template #default="{ row }">
+                    {{ row.quantity || '-' }}
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
+        </el-card>
+
+        <!-- 操作区域 -->
+        <div class="action-area">
+          <el-button type="success" @click="handleGenerateQuote" size="large">
+            生成报价单
           </el-button>
         </div>
-
-        <div class="formula-content">
-          <div class="formula-item">
-            <h4>原料配置</h4>
-            <el-table :data="currentProduct.materials" border>
-              <el-table-column label="原料名称" width="200">
-                <template #default="{ row }">
-                  {{ getMaterialName(row.material_id) }}
-                </template>
-              </el-table-column>
-              <el-table-column label="占比" align="center">
-                <template #default="{ row }">
-                  {{ (row.ratio * 100).toFixed(2) }}%
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-
-          <div class="formula-item">
-            <h4>工艺配置</h4>
-            <el-table :data="currentProduct.processes" border>
-              <el-table-column label="工艺名称" width="200">
-                <template #default="{ row }">
-                  {{ getProcessName(row.process_id) }}
-                </template>
-              </el-table-column>
-              <el-table-column label="数量" align="center">
-                <template #default="{ row }">
-                  {{ row.quantity || '-' }}
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-        </div>
       </div>
-
-      <!-- 操作按钮 -->
-      <template #footer>
-        <el-button @click="detailDialogVisible = false">关闭</el-button>
-        <el-button type="success" @click="handleGenerateQuote">
-          生成报价单
-        </el-button>
-      </template>
-    </el-dialog>
+    </el-drawer>
 
     <!-- 生成报价单对话框 -->
     <el-dialog
@@ -301,21 +410,17 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { useAccessStore } from '@vben/stores'
 import DataTable from '#/components/Table/index.vue'
 import { elasticsearchService } from '#/api/core/es'
 import { createProductApi, updateProductApi, getProductPriceApi, type ProductPriceResponse } from '#/api/core/product'
 import { useDataTable } from '#/composables/useDataTable'
-import { seedData } from '#/utils/seedData'
 
 /* ================= 基础 ================= */
 
 const { searchLoading } = useDataTable('product', 20)
-const accessStore = useAccessStore()
 
 const pageConfig = {
   pageType: 'product',
-  title: '产品管理',
   index: 'product',
   rowKey: 'id',
   pageSize: 20,
@@ -351,9 +456,41 @@ const pageConfig = {
       formatter: (val: string) => val ? new Date(val).toLocaleString('zh-CN') : '-'
     },
   ],
-  filters: [],
-  bulkActions: [
+  filters: [
+    {
+      key: 'status',
+      label: '状态',
+      type: 'select',
+      placeholder: '请选择状态',
+      fetchOptions: async () => {
+        try {
+          const res = await elasticsearchService.search({
+            index: 'product',
+            pagination: { offset: 0, size: 0 },
+            aggRequests: {
+              status: {
+                type: 'terms',
+                field: 'status',
+                size: 20,
+              },
+            },
+          })
+          const buckets = res.aggregations?.status?.buckets || []
+          return buckets.map((bucket: any) => ({
+            label: String(bucket.key),
+            value: bucket.key,
+          }))
+        } catch (error) {
+          console.error('加载状态选项失败:', error)
+          return []
+        }
+      },
+    },
+  ],
+  topActions: [
     { label: '新建产品', key: 'create', type: 'primary' as const },
+  ],
+  bulkActions: [
     { label: '批量删除', key: 'delete', type: 'danger' as const, confirm: true }
   ],
   actions: ['view'],
@@ -374,7 +511,7 @@ const dialogTitle = computed(() =>
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
 
-/* ================= 详情 Dialog ================= */
+/* ================= 详情 Drawer ================= */
 
 const detailDialogVisible = ref(false)
 const currentProduct = ref<any>({
@@ -395,12 +532,108 @@ const priceInfo = ref<ProductPriceResponse>({
 
 const loadingPrice = ref(false)
 
-// 权限判断：是否可以修改公式（简单判断，可根据实际需求修改）
-const canEditFormula = computed(() => {
-  // 这里可以根据用户角色判断，例如只有管理员或产品经理可以修改
-  const userRoles = accessStore.accessCodes || []
-  return userRoles.includes('admin') || userRoles.includes('product_manager')
+// 编辑模式
+const isEditing = ref(false)
+const saving = ref(false)
+const editForm = ref<any>({
+  name: '',
+  status: 'draft',
+  materials: [],
+  processes: []
 })
+const selectedProcessIdsEdit = ref<number[]>([])
+
+// 编辑时的总占比
+const totalRatioEdit = computed(() =>
+  editForm.value.materials.reduce((s: number, m: any) => s + (m.ratioPercent || 0), 0)
+)
+
+// 开始编辑
+const startEdit = () => {
+  if (currentProduct.value.id) {
+    editForm.value = {
+      name: currentProduct.value.name,
+      status: currentProduct.value.status,
+      materials: currentProduct.value.materials.map((m: any) => ({
+        material_id: m.material_id,
+        ratioPercent: m.ratio * 100,
+      })),
+      processes: currentProduct.value.processes,
+    }
+    selectedProcessIdsEdit.value = currentProduct.value.processes.map((p: any) => p.process_id)
+    isEditing.value = true
+  }
+}
+
+// 取消编辑
+const cancelEdit = () => {
+  isEditing.value = false
+  editForm.value = {
+    name: '',
+    status: 'draft',
+    materials: [],
+    processes: []
+  }
+  selectedProcessIdsEdit.value = []
+}
+
+// 工艺变更（编辑模式）
+const onProcessChangeEdit = (ids: number[]) => {
+  editForm.value.processes = ids.map(id => ({ process_id: id }))
+}
+
+// 保存编辑
+const saveEdit = async () => {
+  if (!currentProduct.value.id) {
+    ElMessage.error('缺少必要的ID信息')
+    return
+  }
+
+  // 验证总占比
+  if (editForm.value.materials.length > 0 && totalRatioEdit.value !== 100) {
+    ElMessage.error('原料占比必须等于100%')
+    return
+  }
+
+  if (!editForm.value.name) {
+    ElMessage.error('请输入产品名称')
+    return
+  }
+
+  saving.value = true
+  try {
+    const payload = {
+      name: editForm.value.name,
+      status: editForm.value.status,
+      materials: editForm.value.materials.map((m: any) => ({
+        material_id: m.material_id,
+        ratio: m.ratioPercent / 100,
+      })),
+      processes: editForm.value.processes,
+    }
+
+    await updateProductApi(currentProduct.value.id, payload)
+
+    ElMessage.success('保存成功')
+    isEditing.value = false
+
+    // 更新当前产品信息
+    currentProduct.value = {
+      ...currentProduct.value,
+      ...payload,
+      materials: payload.materials,
+      processes: payload.processes
+    }
+
+    // 重新加载页面
+    setTimeout(() => window.location.reload(), 500)
+  } catch (error) {
+    console.error('保存失败:', error)
+    ElMessage.error('保存失败')
+  } finally {
+    saving.value = false
+  }
+}
 
 /* ================= 报价单 Dialog ================= */
 
@@ -412,7 +645,6 @@ const quoteForm = ref({
 })
 const clientsList = ref<any[]>([])
 const generatingQuote = ref(false)
-const seeding = ref(false)
 
 /* ================= 数据 ================= */
 
@@ -559,53 +791,9 @@ const handleCreate = async () => {
   await Promise.all([loadMaterials(), loadProcesses()])
 }
 
-const handleSeedData = async () => {
-  try {
-    await ElMessageBox.confirm(
-      '将插入10条原料数据和10条工艺数据到数据库，确定继续吗？',
-      '初始化测试数据',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-
-    seeding.value = true
-    const result = await seedData()
-
-    ElMessage.success(`数据初始化成功！原料: ${result.materials}条，工艺: ${result.processes}条`)
-
-    // 重置加载状态，重新加载数据
-    materialsLoaded.value = false
-    processesLoaded.value = false
-    await Promise.all([loadMaterials(), loadProcesses()])
-  } catch (error: any) {
-    if (error !== 'cancel') {
-      console.error('初始化数据失败:', error)
-    }
-  } finally {
-    seeding.value = false
-  }
-}
-
-const handleEdit = async (row: any) => {
-  dialogMode.value = 'edit'
-  formData.value = {
-    name: row.name,
-    materials: row.materials.map((m: any) => ({
-      material_id: m.material_id,
-      ratioPercent: m.ratio * 100,
-    })),
-    processes: row.processes,
-  }
-  selectedProcessIds.value = row.processes.map((p: any) => p.process_id)
-  dialogVisible.value = true
-  await Promise.all([loadMaterials(), loadProcesses()])
-}
-
 const handleView = async (row: any) => {
   currentProduct.value = { ...row }
+  isEditing.value = false
   detailDialogVisible.value = true
 
   // 加载数据
@@ -623,11 +811,6 @@ const handleView = async (row: any) => {
       loadingPrice.value = false
     }
   }
-}
-
-const handleEditFormula = () => {
-  detailDialogVisible.value = false
-  handleEdit(currentProduct.value)
 }
 
 const handleGenerateQuote = async () => {
@@ -709,10 +892,14 @@ const handleSubmit = async () => {
   }
 }
 
-/* ================= 批量 ================= */
+/* ================= 顶部操作 & 批量 ================= */
+
+const handleTopAction = ({ action }: any) => {
+  if (action === 'create') handleCreate()
+}
 
 const handleBulkAction = ({ action }: any) => {
-  if (action === 'create') handleCreate()
+  // TODO: 实现批量删除
 }
 
 /* ================= reset ================= */
@@ -724,6 +911,14 @@ const handleDialogClose = () => {
 }
 
 const handleDetailClose = () => {
+  isEditing.value = false
+  editForm.value = {
+    name: '',
+    status: 'draft',
+    materials: [],
+    processes: []
+  }
+  selectedProcessIdsEdit.value = []
   currentProduct.value = {
     id: 0,
     name: '',
@@ -751,30 +946,17 @@ const handleQuoteDialogClose = () => {
 
 <style scoped>
 .product-management {
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-}
+  background: #f5f7fa;
+  overflow: hidden;
 
-.top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: #fff;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.top-actions {
-  display: flex;
-  gap: 12px;
+  :deep(.data-table-container) {
+    flex: 1;
+    margin: 20px;
+    overflow: hidden;
+  }
 }
 
 .ratio-summary {
@@ -786,54 +968,56 @@ const handleQuoteDialogClose = () => {
   color: #f56c6c;
 }
 
-.detail-section {
-  margin-bottom: 24px;
+.product-detail {
+  .detail-card {
+    margin-bottom: 20px;
 
-  &:last-child {
-    margin-bottom: 0;
-  }
+    &:last-child {
+      margin-bottom: 0;
+    }
 
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-  }
-
-  .section-title {
-    margin: 0 0 16px 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #303133;
-  }
-}
-
-.formula-content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-
-  .formula-item {
-    h4 {
-      margin: 0 0 12px 0;
-      font-size: 14px;
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-weight: 600;
-      color: #606266;
+      font-size: 16px;
     }
   }
-}
 
-:deep(.el-statistic) {
-  text-align: center;
+  .formula-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 
-  .el-statistic__head {
-    color: #909399;
-    font-size: 14px;
+    .formula-item {
+      h4 {
+        margin: 0 0 12px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #606266;
+      }
+    }
   }
 
-  .el-statistic__content {
-    font-size: 24px;
-    font-weight: 600;
+  .action-area {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+  }
+
+  :deep(.el-statistic) {
+    text-align: center;
+
+    .el-statistic__head {
+      color: #909399;
+      font-size: 14px;
+    }
+
+    .el-statistic__content {
+      font-size: 24px;
+      font-weight: 600;
+    }
   }
 }
 </style>

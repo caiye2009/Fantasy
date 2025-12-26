@@ -1,7 +1,6 @@
 <template>
   <div class="inventory-management">
     <div class="page-header">
-      <h2>库存管理</h2>
       <el-space>
         <el-button type="primary" @click="handleRefresh">
           <el-icon><Refresh /></el-icon>
@@ -95,35 +94,28 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
-import InventoryTable from './components/InventoryTable.vue'
-import {
-  generateOrderInventory,
-  generatePublicInventory,
-  generateMaterialInventory,
-  generateSemifinishedInventory,
-  generateFinishedInventory
-} from './mockData'
+import InventoryTable from '#/components/InventoryTable/index.vue'
 
 // Tab状态
 const activeTab = ref('order')
 
-// 模拟数据
-const orderInventory = ref(generateOrderInventory())
-const publicInventory = ref(generatePublicInventory())
-const materialInventory = ref(generateMaterialInventory())
-const semifinishedInventory = ref(generateSemifinishedInventory())
-const finishedInventory = ref(generateFinishedInventory())
+// 库存数据（从后台获取）
+const orderInventory = ref<any[]>([])
+const publicInventory = ref<any[]>([])
+const materialInventory = ref<any[]>([])
+const semifinishedInventory = ref<any[]>([])
+const finishedInventory = ref<any[]>([])
 
 // 表格列配置
 const orderColumns = [
   { prop: 'orderNo', label: '订单编号', width: 150 },
   { prop: 'clientName', label: '客户名称', width: 150 },
   { prop: 'productName', label: '产品名称', width: 180 },
-  { prop: 'quantity', label: '数量', width: 100, align: 'right' },
+  { prop: 'quantity', label: '数量', width: 100, align: 'right' as const },
   { prop: 'unit', label: '单位', width: 80 },
-  { prop: 'inboundValue', label: '入库价值', width: 120, align: 'right', type: 'currency' },
-  { prop: 'currentMarketValue', label: '现在市价', width: 120, align: 'right', type: 'currency' },
-  { prop: 'difference', label: '差价', width: 120, align: 'right', type: 'difference' },
+  { prop: 'inboundValue', label: '入库价值', width: 120, align: 'right' as const, type: 'currency' as const },
+  { prop: 'currentMarketValue', label: '现在市价', width: 120, align: 'right' as const, type: 'currency' as const },
+  { prop: 'difference', label: '差价', width: 120, align: 'right' as const, type: 'difference' as const },
   { prop: 'warehouseName', label: '仓库', width: 120 },
   { prop: 'location', label: '货位', width: 120 },
   { prop: 'inboundDate', label: '入库时间', width: 180 }
@@ -133,11 +125,11 @@ const publicColumns = [
   { prop: 'itemCode', label: '物料编码', width: 150 },
   { prop: 'itemName', label: '物料名称', width: 180 },
   { prop: 'itemType', label: '类型', width: 100 },
-  { prop: 'quantity', label: '数量', width: 100, align: 'right' },
+  { prop: 'quantity', label: '数量', width: 100, align: 'right' as const },
   { prop: 'unit', label: '单位', width: 80 },
-  { prop: 'inboundValue', label: '入库价值', width: 120, align: 'right', type: 'currency' },
-  { prop: 'currentMarketValue', label: '现在市价', width: 120, align: 'right', type: 'currency' },
-  { prop: 'difference', label: '差价', width: 120, align: 'right', type: 'difference' },
+  { prop: 'inboundValue', label: '入库价值', width: 120, align: 'right' as const, type: 'currency' as const },
+  { prop: 'currentMarketValue', label: '现在市价', width: 120, align: 'right' as const, type: 'currency' as const },
+  { prop: 'difference', label: '差价', width: 120, align: 'right' as const, type: 'difference' as const },
   { prop: 'warehouseName', label: '仓库', width: 120 },
   { prop: 'location', label: '货位', width: 120 },
   { prop: 'inboundDate', label: '入库时间', width: 180 }
@@ -147,11 +139,11 @@ const materialColumns = [
   { prop: 'materialCode', label: '原料编码', width: 150 },
   { prop: 'materialName', label: '原料名称', width: 180 },
   { prop: 'specification', label: '规格', width: 120 },
-  { prop: 'quantity', label: '数量', width: 100, align: 'right' },
+  { prop: 'quantity', label: '数量', width: 100, align: 'right' as const },
   { prop: 'unit', label: '单位', width: 80 },
-  { prop: 'inboundValue', label: '入库价值', width: 120, align: 'right', type: 'currency' },
-  { prop: 'currentMarketValue', label: '现在市价', width: 120, align: 'right', type: 'currency' },
-  { prop: 'difference', label: '差价', width: 120, align: 'right', type: 'difference' },
+  { prop: 'inboundValue', label: '入库价值', width: 120, align: 'right' as const, type: 'currency' as const },
+  { prop: 'currentMarketValue', label: '现在市价', width: 120, align: 'right' as const, type: 'currency' as const },
+  { prop: 'difference', label: '差价', width: 120, align: 'right' as const, type: 'difference' as const },
   { prop: 'supplierName', label: '供应商', width: 150 },
   { prop: 'warehouseName', label: '仓库', width: 120 },
   { prop: 'inboundDate', label: '入库时间', width: 180 }
@@ -161,11 +153,11 @@ const semifinishedColumns = [
   { prop: 'itemCode', label: '半成品编码', width: 150 },
   { prop: 'itemName', label: '半成品名称', width: 180 },
   { prop: 'specification', label: '规格', width: 120 },
-  { prop: 'quantity', label: '数量', width: 100, align: 'right' },
+  { prop: 'quantity', label: '数量', width: 100, align: 'right' as const },
   { prop: 'unit', label: '单位', width: 80 },
-  { prop: 'inboundValue', label: '入库价值', width: 120, align: 'right', type: 'currency' },
-  { prop: 'currentMarketValue', label: '现在市价', width: 120, align: 'right', type: 'currency' },
-  { prop: 'difference', label: '差价', width: 120, align: 'right', type: 'difference' },
+  { prop: 'inboundValue', label: '入库价值', width: 120, align: 'right' as const, type: 'currency' as const },
+  { prop: 'currentMarketValue', label: '现在市价', width: 120, align: 'right' as const, type: 'currency' as const },
+  { prop: 'difference', label: '差价', width: 120, align: 'right' as const, type: 'difference' as const },
   { prop: 'warehouseName', label: '仓库', width: 120 },
   { prop: 'location', label: '货位', width: 120 },
   { prop: 'inboundDate', label: '入库时间', width: 180 }
@@ -175,11 +167,11 @@ const finishedColumns = [
   { prop: 'productCode', label: '产品编码', width: 150 },
   { prop: 'productName', label: '产品名称', width: 180 },
   { prop: 'specification', label: '规格', width: 120 },
-  { prop: 'quantity', label: '数量', width: 100, align: 'right' },
+  { prop: 'quantity', label: '数量', width: 100, align: 'right' as const },
   { prop: 'unit', label: '单位', width: 80 },
-  { prop: 'inboundValue', label: '入库价值', width: 120, align: 'right', type: 'currency' },
-  { prop: 'currentMarketValue', label: '现在市价', width: 120, align: 'right', type: 'currency' },
-  { prop: 'difference', label: '差价', width: 120, align: 'right', type: 'difference' },
+  { prop: 'inboundValue', label: '入库价值', width: 120, align: 'right' as const, type: 'currency' as const },
+  { prop: 'currentMarketValue', label: '现在市价', width: 120, align: 'right' as const, type: 'currency' as const },
+  { prop: 'difference', label: '差价', width: 120, align: 'right' as const, type: 'difference' as const },
   { prop: 'warehouseName', label: '仓库', width: 120 },
   { prop: 'location', label: '货位', width: 120 },
   { prop: 'inboundDate', label: '入库时间', width: 180 }
@@ -200,7 +192,7 @@ const publicInventoryValue = computed(() => {
   return publicInventory.value.reduce((sum, item) => sum + item.currentMarketValue, 0)
 })
 
-// 库存差价（现在市价 - 入库价值）
+// 库存差价(现在市价 - 入库价值)
 const inventoryDifference = computed(() => {
   const allItems = [
     ...orderInventory.value,
@@ -218,12 +210,14 @@ const differenceStyle = computed(() => {
 })
 
 // 刷新数据
-const handleRefresh = () => {
-  orderInventory.value = generateOrderInventory()
-  publicInventory.value = generatePublicInventory()
-  materialInventory.value = generateMaterialInventory()
-  semifinishedInventory.value = generateSemifinishedInventory()
-  finishedInventory.value = generateFinishedInventory()
+const handleRefresh = async () => {
+  // TODO: 从后台API获取库存数据
+  // 目前暂时清空数据
+  orderInventory.value = []
+  publicInventory.value = []
+  materialInventory.value = []
+  semifinishedInventory.value = []
+  finishedInventory.value = []
 }
 </script>
 
@@ -236,20 +230,13 @@ const handleRefresh = () => {
 
 .page-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 20px;
   padding: 20px 24px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-
-  h2 {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 600;
-    color: #303133;
-  }
 }
 
 .stats-cards {

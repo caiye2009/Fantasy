@@ -165,8 +165,7 @@ import { ref, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 import type { EChartsOption } from 'echarts'
-import type { Material, SupplierQuote } from '../types'
-import { mockSupplierQuotes } from '../mockData'
+import type { Material, SupplierQuote } from './types'
 import AddQuoteDialog from './AddQuoteDialog.vue'
 import { getMaterialPriceHistoryApi, type PriceData } from '#/api/core/pricing'
 import { elasticsearchService } from '#/api/core/es'
@@ -325,8 +324,9 @@ const renderPriceChart = () => {
 // 监听 material 变化，加载报价数据
 watch(() => props.material, async (newMaterial) => {
   if (newMaterial) {
-    // 加载 mock 报价数据
-    supplierQuotes.value = mockSupplierQuotes[newMaterial.id] || []
+    // 从后台加载供应商报价数据
+    // TODO: 调用API获取报价数据
+    supplierQuotes.value = []
 
     // 如果有 ID，加载实际价格历史
     if (typeof newMaterial.id === 'number') {

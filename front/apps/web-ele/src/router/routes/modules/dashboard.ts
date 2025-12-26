@@ -14,9 +14,9 @@ const routes: RouteRecordRaw[] = [
   },
   // 管理模块
   {
-    name: 'MaterialManagement',
-    path: '/material-management',
-    component: () => import('#/views/material-management/index.vue'),
+    name: 'Materials',
+    path: '/materials',
+    component: () => import('#/views/materials.vue'),
     meta: {
       icon: 'lucide:circle-pile',
       title: '原料管理',
@@ -25,7 +25,7 @@ const routes: RouteRecordRaw[] = [
   {
     name: 'Processes',
     path: '/processes',
-    component: () => import('#/views/process-management/index.vue'),
+    component: () => import('#/views/processes.vue'),
     meta: {
       icon: 'lucide:spool',
       title: '工艺管理',
@@ -51,18 +51,18 @@ const routes: RouteRecordRaw[] = [
   },
   // 其他模块
   {
-    name: 'OrderManagement',
-    path: '/order-management',
-    component: () => import('#/views/order-management/index.vue'),
+    name: 'Orders',
+    path: '/orders',
+    component: () => import('#/views/orders.vue'),
     meta: {
       icon: 'lucide:clipboard-list',
       title: '订单管理',
     },
   },
   {
-    name: 'InventoryManagement',
-    path: '/inventory-management',
-    component: () => import('#/views/inventory-management/index.vue'),
+    name: 'Inventory',
+    path: '/inventory',
+    component: () => import('#/views/inventory.vue'),
     meta: {
       icon: 'lucide:warehouse',
       title: '库存管理',
@@ -93,6 +93,15 @@ const routes: RouteRecordRaw[] = [
     meta: {
       icon: 'lucide:area-chart',
       title: $t('page.dashboard.demo'),
+    },
+  },
+  {
+    name: 'Tt',
+    path: '/tt',
+    component: () => import('#/views/tt.vue'),
+    meta: {
+      icon: 'lucide:area-chart',
+      title: $t('page.dashboard.tt'),
     },
   },
 ];

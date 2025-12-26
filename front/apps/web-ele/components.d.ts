@@ -12,9 +12,13 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AddMaterialDialog: typeof import('./src/components/Material/AddMaterialDialog.vue')['default']
+    AddQuoteDialog: typeof import('./src/components/Material/AddQuoteDialog.vue')['default']
     Button: typeof import('./src/components/Button/index.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
+    ElAutocomplete: typeof import('element-plus/es')['ElAutocomplete']
     ElButton: typeof import('element-plus/es')['ElButton']
+    ElCard: typeof import('element-plus/es')['ElCard']
     ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
     ElCheckboxGroup: typeof import('element-plus/es')['ElCheckboxGroup']
     ElCol: typeof import('element-plus/es')['ElCol']
@@ -36,6 +40,7 @@ declare module 'vue' {
     ElRow: typeof import('element-plus/es')['ElRow']
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
     ElSelect: typeof import('element-plus/es')['ElSelect']
+    ElSpace: typeof import('element-plus/es')['ElSpace']
     ElStatistic: typeof import('element-plus/es')['ElStatistic']
     ElStep: typeof import('element-plus/es')['ElStep']
     ElSteps: typeof import('element-plus/es')['ElSteps']
@@ -44,12 +49,16 @@ declare module 'vue' {
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
     ElTag: typeof import('element-plus/es')['ElTag']
+    ElText: typeof import('element-plus/es')['ElText']
     ElTimeline: typeof import('element-plus/es')['ElTimeline']
     ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
+    InventoryTable: typeof import('./src/components/InventoryTable/index.vue')['default']
+    MaterialDetail: typeof import('./src/components/Material/MaterialDetail.vue')['default']
     Modal: typeof import('./src/components/Modal/index.vue')['default']
     MonthRangePicker: typeof import('./src/components/MonthRangePicker/index.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SearchInput: typeof import('./src/components/SearchInput/index.vue')['default']
     Table: typeof import('./src/components/Table/index.vue')['default']
   }
   export interface GlobalDirectives {
@@ -59,9 +68,13 @@ declare module 'vue' {
 
 // For TSX support
 declare global {
+  const AddMaterialDialog: typeof import('./src/components/Material/AddMaterialDialog.vue')['default']
+  const AddQuoteDialog: typeof import('./src/components/Material/AddQuoteDialog.vue')['default']
   const Button: typeof import('./src/components/Button/index.vue')['default']
   const ElAlert: typeof import('element-plus/es')['ElAlert']
+  const ElAutocomplete: typeof import('element-plus/es')['ElAutocomplete']
   const ElButton: typeof import('element-plus/es')['ElButton']
+  const ElCard: typeof import('element-plus/es')['ElCard']
   const ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
   const ElCheckboxGroup: typeof import('element-plus/es')['ElCheckboxGroup']
   const ElCol: typeof import('element-plus/es')['ElCol']
@@ -83,6 +96,7 @@ declare global {
   const ElRow: typeof import('element-plus/es')['ElRow']
   const ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
   const ElSelect: typeof import('element-plus/es')['ElSelect']
+  const ElSpace: typeof import('element-plus/es')['ElSpace']
   const ElStatistic: typeof import('element-plus/es')['ElStatistic']
   const ElStep: typeof import('element-plus/es')['ElStep']
   const ElSteps: typeof import('element-plus/es')['ElSteps']
@@ -91,11 +105,15 @@ declare global {
   const ElTabPane: typeof import('element-plus/es')['ElTabPane']
   const ElTabs: typeof import('element-plus/es')['ElTabs']
   const ElTag: typeof import('element-plus/es')['ElTag']
+  const ElText: typeof import('element-plus/es')['ElText']
   const ElTimeline: typeof import('element-plus/es')['ElTimeline']
   const ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
+  const InventoryTable: typeof import('./src/components/InventoryTable/index.vue')['default']
+  const MaterialDetail: typeof import('./src/components/Material/MaterialDetail.vue')['default']
   const Modal: typeof import('./src/components/Modal/index.vue')['default']
   const MonthRangePicker: typeof import('./src/components/MonthRangePicker/index.vue')['default']
   const RouterLink: typeof import('vue-router')['RouterLink']
   const RouterView: typeof import('vue-router')['RouterView']
+  const SearchInput: typeof import('./src/components/SearchInput/index.vue')['default']
   const Table: typeof import('./src/components/Table/index.vue')['default']
 }
