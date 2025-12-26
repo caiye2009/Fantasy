@@ -19,6 +19,7 @@ const (
 	RoleWarehouse            = "warehouse"            // 仓管
 	RoleSalesManager         = "salesManager"         // 销售经理
 	RoleSalesAssistant       = "salesAssistant"       // 销售助理
+	RoleFabricDeveloper      = "fabricDeveloper"      // 布料开发
 )
 
 // 获取所有角色
@@ -35,6 +36,7 @@ func GetAllRoles() []string {
 		RoleWarehouse,
 		RoleSalesManager,
 		RoleSalesAssistant,
+		RoleFabricDeveloper,
 	}
 }
 

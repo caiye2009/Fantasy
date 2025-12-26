@@ -61,21 +61,21 @@ func (aw *AuthWang) AuthMiddleware() gin.HandlerFunc {
 		}
 
 		// 检查 JWT 白名单
-		if aw.whitelistManager != nil {
-			jti := claims.ID // JWT ID from RegisteredClaims
-			inWhitelist, err := aw.whitelistManager.IsInWhitelist(claims.LoginID, source, jti)
-			if err != nil {
-				println("whitelist check error:", err.Error())
-				c.JSON(500, gin.H{"error": "验证失败"})
-				c.Abort()
-				return
-			}
-			if !inWhitelist {
-				c.JSON(401, gin.H{"error": "token已失效，请重新登录"})
-				c.Abort()
-				return
-			}
-		}
+		// if aw.whitelistManager != nil {
+		// 	jti := claims.ID // JWT ID from RegisteredClaims
+		// 	inWhitelist, err := aw.whitelistManager.IsInWhitelist(claims.LoginID, source, jti)
+		// 	if err != nil {
+		// 		println("whitelist check error:", err.Error())
+		// 		c.JSON(500, gin.H{"error": "验证失败"})
+		// 		c.Abort()
+		// 		return
+		// 	}
+		// 	if !inWhitelist {
+		// 		c.JSON(401, gin.H{"error": "token已失效，请重新登录"})
+		// 		c.Abort()
+		// 		return
+		// 	}
+		// }
 
 		// 设置完整的 context 到 gin.Context（供 Audit 等中间件使用）
 		c.Set("source", source)
