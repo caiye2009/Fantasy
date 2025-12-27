@@ -1,8 +1,8 @@
 package main
 
 import (
-	"log"
 	"back/config"
+	"log"
 )
 
 // @title           后台管理系统 API
@@ -15,7 +15,7 @@ import (
 // @description 请输入 Bearer {token}
 func main() {
 	log.Println("Starting application...")
-	
+
 	if err := config.Init(); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}

@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"back/pkg/audit"
 	"back/pkg/endpoint"
 	"back/internal/supplier/application"
 	"back/internal/supplier/domain"
@@ -174,40 +173,10 @@ func (h *SupplierHandler) Delete(c *gin.Context) {
 // GetRoutes 获取路由定义
 func (h *SupplierHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:      "POST",
-			Path:        "/supplier",
-			Handler:     h.Create,
-			Middlewares: []gin.HandlerFunc{audit.Mark("supplier", "create")},
-			Name:        "创建供应商",
-		},
-		{
-			Method:      "GET",
-			Path:        "/supplier/:id",
-			Handler:     h.Get,
-			Middlewares: nil,
-			Name:        "获取供应商详情",
-		},
-		{
-			Method:      "GET",
-			Path:        "/supplier",
-			Handler:     h.List,
-			Middlewares: nil,
-			Name:        "获取供应商列表",
-		},
-		{
-			Method:      "PUT",
-			Path:        "/supplier/:id",
-			Handler:     h.Update,
-			Middlewares: []gin.HandlerFunc{audit.Mark("supplier", "update")},
-			Name:        "更新供应商信息",
-		},
-		{
-			Method:      "DELETE",
-			Path:        "/supplier/:id",
-			Handler:     h.Delete,
-			Middlewares: []gin.HandlerFunc{audit.Mark("supplier", "delete")},
-			Name:        "删除供应商",
-		},
+		{Method: "POST", Path: "/supplier", Handler: h.Create, Domain: "supplier", Action: "create"},
+		{Method: "GET", Path: "/supplier/:id", Handler: h.Get, Domain: "", Action: ""},
+		{Method: "GET", Path: "/supplier", Handler: h.List, Domain: "", Action: ""},
+		{Method: "PUT", Path: "/supplier/:id", Handler: h.Update, Domain: "supplier", Action: "update"},
+		{Method: "DELETE", Path: "/supplier/:id", Handler: h.Delete, Domain: "supplier", Action: "delete"},
 	}
 }

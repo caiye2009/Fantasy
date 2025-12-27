@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"back/pkg/audit"
 	"back/pkg/endpoint"
 	"back/internal/user/application"
 	"back/internal/user/domain"
@@ -230,47 +229,11 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 // GetRoutes 获取路由定义
 func (h *UserHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:      "POST",
-			Path:        "/user",
-			Handler:     h.Create,
-			Middlewares: []gin.HandlerFunc{audit.Mark("user", "create")},
-			Name:        "创建用户",
-		},
-		{
-			Method:      "GET",
-			Path:        "/user/:id",
-			Handler:     h.Get,
-			Middlewares: nil,
-			Name:        "获取用户详情",
-		},
-		{
-			Method:      "GET",
-			Path:        "/user",
-			Handler:     h.List,
-			Middlewares: nil,
-			Name:        "获取用户列表",
-		},
-		{
-			Method:      "PUT",
-			Path:        "/user/:id",
-			Handler:     h.Update,
-			Middlewares: []gin.HandlerFunc{audit.Mark("user", "update")},
-			Name:        "更新用户信息",
-		},
-		{
-			Method:      "DELETE",
-			Path:        "/user/:id",
-			Handler:     h.Delete,
-			Middlewares: []gin.HandlerFunc{audit.Mark("user", "delete")},
-			Name:        "删除用户",
-		},
-		{
-			Method:      "PUT",
-			Path:        "/user/:id/password",
-			Handler:     h.ChangePassword,
-			Middlewares: []gin.HandlerFunc{audit.Mark("user", "changePassword")},
-			Name:        "修改用户密码",
-		},
+		{Method: "POST", Path: "/user", Handler: h.Create, Domain: "user", Action: "create"},
+		{Method: "GET", Path: "/user/:id", Handler: h.Get, Domain: "", Action: ""},
+		{Method: "GET", Path: "/user", Handler: h.List, Domain: "", Action: ""},
+		{Method: "PUT", Path: "/user/:id", Handler: h.Update, Domain: "user", Action: "update"},
+		{Method: "DELETE", Path: "/user/:id", Handler: h.Delete, Domain: "user", Action: "delete"},
+		{Method: "PUT", Path: "/user/:id/password", Handler: h.ChangePassword, Domain: "user", Action: "changePassword"},
 	}
 }

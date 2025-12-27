@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"back/pkg/audit"
 	"back/pkg/endpoint"
 	"back/internal/user/application"
 	"back/internal/user/domain"
@@ -185,41 +184,11 @@ func (h *RoleHandler) Delete(c *gin.Context) {
 // GetRoutes 获取路由定义
 func (h *RoleHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:      "POST",
-			Path:        "/role",
-			Handler:     h.Create,
-			Middlewares: []gin.HandlerFunc{audit.Mark("role", "create")},
-			Name:        "创建职位",
-		},
-		{
-			Method:      "GET",
-			Path:        "/role/:id",
-			Handler:     h.Get,
-			Middlewares: nil,
-			Name:        "获取职位详情",
-		},
-		{
-			Method:      "GET",
-			Path:        "/role",
-			Handler:     h.List,
-			Middlewares: nil,
-			Name:        "获取职位列表",
-		},
-		{
-			Method:      "PUT",
-			Path:        "/role/:id",
-			Handler:     h.Update,
-			Middlewares: []gin.HandlerFunc{audit.Mark("role", "update")},
-			Name:        "更新职位信息",
-		},
-		{
-			Method:      "DELETE",
-			Path:        "/role/:id",
-			Handler:     h.Delete,
-			Middlewares: []gin.HandlerFunc{audit.Mark("role", "delete")},
-			Name:        "删除职位",
-		},
+		{Method: "POST", Path: "/role", Handler: h.Create, Domain: "role", Action: "create"},
+		{Method: "GET", Path: "/role/:id", Handler: h.Get, Domain: "", Action: ""},
+		{Method: "GET", Path: "/role", Handler: h.List, Domain: "", Action: ""},
+		{Method: "PUT", Path: "/role/:id", Handler: h.Update, Domain: "role", Action: "update"},
+		{Method: "DELETE", Path: "/role/:id", Handler: h.Delete, Domain: "role", Action: "delete"},
 	}
 }
 

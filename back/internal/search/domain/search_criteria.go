@@ -2,12 +2,13 @@ package domain
 
 // SearchCriteria 搜索条件（领域对象）
 type SearchCriteria struct {
-	Index       string                 // ES 索引名（client, supplier, etc.）
-	Query       string                 // 全文搜索关键词
-	Filters     map[string]interface{} // 筛选条件
-	AggRequests map[string]AggRequest  // 聚合请求
-	Pagination  Pagination
-	Sort        []SortField
+	Index        string                 // ES 索引名（client, supplier, etc.）
+	Query        string                 // 全文搜索关键词
+	SearchFields []string               // 指定搜索字段（可选，为空则使用配置的queryFields）
+	Filters      map[string]interface{} // 筛选条件
+	AggRequests  map[string]AggRequest  // 聚合请求
+	Pagination   Pagination
+	Sort         []SortField
 }
 
 // AggRequest 聚合请求

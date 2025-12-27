@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"back/pkg/audit"
 	"back/pkg/endpoint"
 	"back/internal/pricing/application"
 )
@@ -108,26 +107,8 @@ func (h *ProcessPriceHandler) GetHistory(c *gin.Context) {
 // GetRoutes 获取路由定义
 func (h *ProcessPriceHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:      "POST",
-			Path:        "/pricing/process",
-			Handler:     h.Quote,
-			Middlewares: []gin.HandlerFunc{audit.Mark("pricing", "processUpsert")},
-			Name:        "工序报价",
-		},
-		{
-			Method:      "GET",
-			Path:        "/pricing/process/:id",
-			Handler:     h.GetPrice,
-			Middlewares: nil,
-			Name:        "获取工序价格",
-		},
-		{
-			Method:      "GET",
-			Path:        "/pricing/process/:id/history",
-			Handler:     h.GetHistory,
-			Middlewares: nil,
-			Name:        "获取工序价格历史",
-		},
+		{Method: "POST", Path: "/pricing/process", Handler: h.Quote, Domain: "pricing", Action: "processUpsert"},
+		{Method: "GET", Path: "/pricing/process/:id", Handler: h.GetPrice, Domain: "", Action: ""},
+		{Method: "GET", Path: "/pricing/process/:id/history", Handler: h.GetHistory, Domain: "", Action: ""},
 	}
 }

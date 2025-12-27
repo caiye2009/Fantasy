@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"back/pkg/audit"
 	"back/pkg/endpoint"
 	"back/internal/plan/application"
 	"back/internal/plan/domain"
@@ -180,38 +179,10 @@ func (h *PlanHandler) Delete(c *gin.Context) {
 // GetRoutes 返回路由定义
 func (h *PlanHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:      "POST",
-			Path:        "/plan",
-			Handler:     h.Create,
-			Middlewares: []gin.HandlerFunc{audit.Mark("plan", "create")},
-			Name:        "创建计划",
-		},
-		{
-			Method:  "GET",
-			Path:    "/plan/:id",
-			Handler: h.Get,
-			Name:    "获取计划详情",
-		},
-		{
-			Method:  "GET",
-			Path:    "/plan",
-			Handler: h.List,
-			Name:    "获取计划列表",
-		},
-		{
-			Method:      "PUT",
-			Path:        "/plan/:id",
-			Handler:     h.Update,
-			Middlewares: []gin.HandlerFunc{audit.Mark("plan", "update")},
-			Name:        "更新计划",
-		},
-		{
-			Method:      "DELETE",
-			Path:        "/plan/:id",
-			Handler:     h.Delete,
-			Middlewares: []gin.HandlerFunc{audit.Mark("plan", "delete")},
-			Name:        "删除计划",
-		},
+		{Method: "POST", Path: "/plan", Handler: h.Create, Domain: "plan", Action: "create"},
+		{Method: "GET", Path: "/plan/:id", Handler: h.Get, Domain: "", Action: ""},
+		{Method: "GET", Path: "/plan", Handler: h.List, Domain: "", Action: ""},
+		{Method: "PUT", Path: "/plan/:id", Handler: h.Update, Domain: "plan", Action: "update"},
+		{Method: "DELETE", Path: "/plan/:id", Handler: h.Delete, Domain: "plan", Action: "delete"},
 	}
 }

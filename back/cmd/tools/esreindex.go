@@ -15,8 +15,8 @@ import (
 	processDomain "back/internal/process/domain"
 	productDomain "back/internal/product/domain"
 	supplierDomain "back/internal/supplier/domain"
-	applog "back/pkg/log"
 	"back/pkg/es"
+	applog "back/pkg/log"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"

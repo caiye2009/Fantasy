@@ -23,6 +23,56 @@ func NewOrderHandler(service *application.OrderService) *OrderHandler {
 	return &OrderHandler{service: service}
 }
 
+// getUserInfo 从上下文获取用户信息
+func getUserInfo(c *gin.Context) (loginID uint, username string, role string, err error) {
+	loginIDVal, exists := c.Get("loginId")
+	if !exists {
+		err = errors.New("未找到用户登录信息")
+		return
+	}
+
+	usernameVal, exists := c.Get("username")
+	if !exists {
+		err = errors.New("未找到用户名信息")
+		return
+	}
+
+	roleVal, exists := c.Get("role")
+	if !exists {
+		err = errors.New("未找到用户角色信息")
+		return
+	}
+
+	// 转换 loginID
+	loginIDStr, ok := loginIDVal.(string)
+	if !ok {
+		err = errors.New("用户登录信息格式错误")
+		return
+	}
+	id, parseErr := strconv.Atoi(loginIDStr)
+	if parseErr != nil {
+		err = errors.New("用户登录信息格式错误")
+		return
+	}
+	loginID = uint(id)
+
+	// 转换 username
+	username, ok = usernameVal.(string)
+	if !ok {
+		err = errors.New("用户名格式错误")
+		return
+	}
+
+	// 转换 role
+	role, ok = roleVal.(string)
+	if !ok {
+		err = errors.New("用户角色格式错误")
+		return
+	}
+
+	return
+}
+
 // Create 创建订单
 // @Summary      创建订单
 // @Description  创建新的订单信息
@@ -200,14 +250,13 @@ func (h *OrderHandler) CreateV2(c *gin.Context) {
 	}
 
 	// 从上下文获取用户信息
-	loginID, _ := c.Get("loginId")
-	role, _ := c.Get("role")
-	creatorID, _ := strconv.Atoi(loginID.(string))
+	creatorID, username, role, err := getUserInfo(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
 
-	// TODO: 从用户服务获取用户名称，这里简化处理
-	creatorName := "User" + loginID.(string)
-
-	resp, err := h.service.CreateV2(c.Request.Context(), &req, uint(creatorID), creatorName, role.(string))
+	resp, err := h.service.CreateV2(c.Request.Context(), &req, creatorID, username, role)
 	if err != nil {
 		if errors.Is(err, domain.ErrOrderNoDuplicate) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "订单编号已存在"})
@@ -260,12 +309,13 @@ func (h *OrderHandler) AssignDepartment(c *gin.Context) {
 	// ===== Audit End =====
 
 	// 从上下文获取用户信息
-	loginID, _ := c.Get("loginId")
-	role, _ := c.Get("role")
-	directorID, _ := strconv.Atoi(loginID.(string))
-	directorName := "User" + loginID.(string)
+	directorID, directorName, role, err := getUserInfo(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
 
-	if err := h.service.AssignDepartment(c.Request.Context(), uint(id), &req, uint(directorID), directorName, role.(string)); err != nil {
+	if err := h.service.AssignDepartment(c.Request.Context(), uint(id), &req, directorID, directorName, role); err != nil {
 		if errors.Is(err, domain.ErrOrderNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "订单不存在"})
 			return
@@ -313,12 +363,13 @@ func (h *OrderHandler) AssignPersonnel(c *gin.Context) {
 	}
 
 	// 从上下文获取用户信息
-	loginID, _ := c.Get("loginId")
-	role, _ := c.Get("role")
-	assistantID, _ := strconv.Atoi(loginID.(string))
-	assistantName := "User" + loginID.(string)
+	assistantID, assistantName, role, err := getUserInfo(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
 
-	if err := h.service.AssignPersonnel(c.Request.Context(), uint(id), &req, uint(assistantID), assistantName, role.(string)); err != nil {
+	if err := h.service.AssignPersonnel(c.Request.Context(), uint(id), &req, assistantID, assistantName, role); err != nil {
 		if errors.Is(err, domain.ErrOrderNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "订单不存在"})
 			return
@@ -357,12 +408,13 @@ func (h *OrderHandler) UpdateFabricInput(c *gin.Context) {
 	}
 
 	// 从上下文获取用户信息
-	loginID, _ := c.Get("loginId")
-	role, _ := c.Get("role")
-	operatorID, _ := strconv.Atoi(loginID.(string))
-	operatorName := "User" + loginID.(string)
+	operatorID, operatorName, role, err := getUserInfo(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
 
-	if err := h.service.UpdateProgress(c.Request.Context(), uint(id), domain.ProgressTypeFabricInput, &req, uint(operatorID), operatorName, role.(string)); err != nil {
+	if err := h.service.UpdateProgress(c.Request.Context(), uint(id), domain.ProgressTypeFabricInput, &req, operatorID, operatorName, role); err != nil {
 		if errors.Is(err, domain.ErrProgressNotExists) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "该进度项不存在"})
 			return
@@ -397,12 +449,13 @@ func (h *OrderHandler) UpdateProduction(c *gin.Context) {
 	}
 
 	// 从上下文获取用户信息
-	loginID, _ := c.Get("loginId")
-	role, _ := c.Get("role")
-	operatorID, _ := strconv.Atoi(loginID.(string))
-	operatorName := "User" + loginID.(string)
+	operatorID, operatorName, role, err := getUserInfo(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
 
-	if err := h.service.UpdateProgress(c.Request.Context(), uint(id), domain.ProgressTypeProduction, &req, uint(operatorID), operatorName, role.(string)); err != nil {
+	if err := h.service.UpdateProgress(c.Request.Context(), uint(id), domain.ProgressTypeProduction, &req, operatorID, operatorName, role); err != nil {
 		if errors.Is(err, domain.ErrProgressNotExists) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "该进度项不存在"})
 			return
@@ -437,12 +490,13 @@ func (h *OrderHandler) UpdateWarehouseCheck(c *gin.Context) {
 	}
 
 	// 从上下文获取用户信息
-	loginID, _ := c.Get("loginId")
-	role, _ := c.Get("role")
-	operatorID, _ := strconv.Atoi(loginID.(string))
-	operatorName := "User" + loginID.(string)
+	operatorID, operatorName, role, err := getUserInfo(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
 
-	if err := h.service.UpdateProgress(c.Request.Context(), uint(id), domain.ProgressTypeWarehouseCheck, &req, uint(operatorID), operatorName, role.(string)); err != nil {
+	if err := h.service.UpdateProgress(c.Request.Context(), uint(id), domain.ProgressTypeWarehouseCheck, &req, operatorID, operatorName, role); err != nil {
 		if errors.Is(err, domain.ErrProgressNotExists) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "该进度项不存在"})
 			return
@@ -477,12 +531,13 @@ func (h *OrderHandler) UpdateRework(c *gin.Context) {
 	}
 
 	// 从上下文获取用户信息
-	loginID, _ := c.Get("loginId")
-	role, _ := c.Get("role")
-	operatorID, _ := strconv.Atoi(loginID.(string))
-	operatorName := "User" + loginID.(string)
+	operatorID, operatorName, role, err := getUserInfo(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
 
-	if err := h.service.UpdateProgress(c.Request.Context(), uint(id), domain.ProgressTypeRework, &req, uint(operatorID), operatorName, role.(string)); err != nil {
+	if err := h.service.UpdateProgress(c.Request.Context(), uint(id), domain.ProgressTypeRework, &req, operatorID, operatorName, role); err != nil {
 		if errors.Is(err, domain.ErrProgressNotExists) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "该进度项不存在"})
 			return
@@ -517,12 +572,13 @@ func (h *OrderHandler) AddDefect(c *gin.Context) {
 	}
 
 	// 从上下文获取用户信息
-	loginID, _ := c.Get("loginId")
-	role, _ := c.Get("role")
-	warehouseID, _ := strconv.Atoi(loginID.(string))
-	warehouseName := "User" + loginID.(string)
+	warehouseID, warehouseName, role, err := getUserInfo(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
 
-	if err := h.service.AddDefect(c.Request.Context(), uint(id), &req, uint(warehouseID), warehouseName, role.(string)); err != nil {
+	if err := h.service.AddDefect(c.Request.Context(), uint(id), &req, warehouseID, warehouseName, role); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -614,107 +670,22 @@ func (h *OrderHandler) ListWithDetail(c *gin.Context) {
 func (h *OrderHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
 		// 基本CRUD
-		{
-			Method:      "POST",
-			Path:        "/order",
-			Handler:     h.Create,
-			Middlewares: []gin.HandlerFunc{audit.Mark("order", "create")},
-			Name:        "创建订单",
-		},
-		{
-			Method:  "GET",
-			Path:    "/order/:id",
-			Handler: h.Get,
-			Name:    "获取订单详情",
-		},
-		{
-			Method:  "GET",
-			Path:    "/order",
-			Handler: h.List,
-			Name:    "获取订单列表",
-		},
-		{
-			Method:      "PUT",
-			Path:        "/order/:id",
-			Handler:     h.Update,
-			Middlewares: []gin.HandlerFunc{audit.Mark("order", "update")},
-			Name:        "更新订单",
-		},
-		{
-			Method:      "DELETE",
-			Path:        "/order/:id",
-			Handler:     h.Delete,
-			Middlewares: []gin.HandlerFunc{audit.Mark("order", "delete")},
-			Name:        "删除订单",
-		},
+		{Method: "POST", Path: "/order", Handler: h.Create, Domain: "order", Action: "create"},
+		{Method: "GET", Path: "/order/:id", Handler: h.Get, Domain: "", Action: ""},
+		{Method: "GET", Path: "/order", Handler: h.List, Domain: "", Action: ""},
+		{Method: "PUT", Path: "/order/:id", Handler: h.Update, Domain: "order", Action: "update"},
+		{Method: "DELETE", Path: "/order/:id", Handler: h.Delete, Domain: "order", Action: "delete"},
 		// 工作流端点
-		{
-			Method:      "POST",
-			Path:        "/order/:id/assign-department",
-			Handler:     h.AssignDepartment,
-			Middlewares: []gin.HandlerFunc{audit.Mark("order", "assignDepartment")},
-			Name:        "分配部门",
-		},
-		{
-			Method:      "POST",
-			Path:        "/order/:id/assign-personnel",
-			Handler:     h.AssignPersonnel,
-			Middlewares: []gin.HandlerFunc{audit.Mark("order", "assignPersonnel")},
-			Name:        "分配人员",
-		},
-		{
-			Method:      "POST",
-			Path:        "/order/:id/progress/fabric-input",
-			Handler:     h.UpdateFabricInput,
-			Middlewares: []gin.HandlerFunc{audit.Mark("order", "fabricInput")},
-			Name:        "更新胚布投入进度",
-		},
-		{
-			Method:      "POST",
-			Path:        "/order/:id/progress/production",
-			Handler:     h.UpdateProduction,
-			Middlewares: []gin.HandlerFunc{audit.Mark("order", "production")},
-			Name:        "更新生产进度",
-		},
-		{
-			Method:      "POST",
-			Path:        "/order/:id/progress/warehouse-check",
-			Handler:     h.UpdateWarehouseCheck,
-			Middlewares: []gin.HandlerFunc{audit.Mark("order", "warehouseCheck")},
-			Name:        "更新验货进度",
-		},
-		{
-			Method:      "POST",
-			Path:        "/order/:id/progress/rework",
-			Handler:     h.UpdateRework,
-			Middlewares: []gin.HandlerFunc{audit.Mark("order", "rework")},
-			Name:        "更新回修进度",
-		},
-		{
-			Method:      "POST",
-			Path:        "/order/:id/defect",
-			Handler:     h.AddDefect,
-			Middlewares: []gin.HandlerFunc{audit.Mark("order", "defect")},
-			Name:        "录入次品",
-		},
+		{Method: "POST", Path: "/order/:id/assign-department", Handler: h.AssignDepartment, Domain: "order", Action: "assignDepartment"},
+		{Method: "POST", Path: "/order/:id/assign-personnel", Handler: h.AssignPersonnel, Domain: "order", Action: "assignPersonnel"},
+		{Method: "POST", Path: "/order/:id/progress/fabric-input", Handler: h.UpdateFabricInput, Domain: "order", Action: "fabricInput"},
+		{Method: "POST", Path: "/order/:id/progress/production", Handler: h.UpdateProduction, Domain: "order", Action: "production"},
+		{Method: "POST", Path: "/order/:id/progress/warehouse-check", Handler: h.UpdateWarehouseCheck, Domain: "order", Action: "warehouseCheck"},
+		{Method: "POST", Path: "/order/:id/progress/rework", Handler: h.UpdateRework, Domain: "order", Action: "rework"},
+		{Method: "POST", Path: "/order/:id/defect", Handler: h.AddDefect, Domain: "order", Action: "defect"},
 		// 详情端点
-		{
-			Method:  "GET",
-			Path:    "/order/list-detail",
-			Handler: h.ListWithDetail,
-			Name:    "获取订单列表（含详情）",
-		},
-		{
-			Method:  "GET",
-			Path:    "/order/:id/detail",
-			Handler: h.GetDetail,
-			Name:    "获取订单完整详情",
-		},
-		{
-			Method:  "GET",
-			Path:    "/order/:id/events",
-			Handler: h.GetEvents,
-			Name:    "获取订单事件流",
-		},
+		{Method: "GET", Path: "/order/list-detail", Handler: h.ListWithDetail, Domain: "", Action: ""},
+		{Method: "GET", Path: "/order/:id/detail", Handler: h.GetDetail, Domain: "", Action: ""},
+		{Method: "GET", Path: "/order/:id/events", Handler: h.GetEvents, Domain: "", Action: ""},
 	}
 }

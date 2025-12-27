@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"back/pkg/audit"
 	"back/pkg/endpoint"
 	"back/internal/product/application"
 	"back/internal/product/domain"
@@ -219,45 +218,11 @@ func (h *ProductHandler) GetPrice(c *gin.Context) {
 // GetRoutes 返回路由定义
 func (h *ProductHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:      "POST",
-			Path:        "/product",
-			Handler:     h.Create,
-			Middlewares: []gin.HandlerFunc{audit.Mark("product", "create")},
-			Name:        "创建产品",
-		},
-		{
-			Method:  "GET",
-			Path:    "/product/:id",
-			Handler: h.Get,
-			Name:    "获取产品详情",
-		},
-		{
-			Method:  "GET",
-			Path:    "/product/:id/price",
-			Handler: h.GetPrice,
-			Name:    "获取产品价格",
-		},
-		{
-			Method:      "PUT",
-			Path:        "/product/:id",
-			Handler:     h.Update,
-			Middlewares: []gin.HandlerFunc{audit.Mark("product", "update")},
-			Name:        "更新产品",
-		},
-		{
-			Method:      "DELETE",
-			Path:        "/product/:id",
-			Handler:     h.Delete,
-			Middlewares: []gin.HandlerFunc{audit.Mark("product", "delete")},
-			Name:        "删除产品",
-		},
-		{
-			Method:      "POST",
-			Path:        "/product/calculate-cost",
-			Handler:     h.CalculateCost,
-			Middlewares: []gin.HandlerFunc{audit.Mark("product", "cost")},
-			Name:        "计算产品成本",
-		},
+		{Method: "POST", Path: "/product", Handler: h.Create, Domain: "product", Action: "create"},
+		{Method: "GET", Path: "/product/:id", Handler: h.Get, Domain: "", Action: ""},
+		{Method: "GET", Path: "/product/:id/price", Handler: h.GetPrice, Domain: "", Action: ""},
+		{Method: "PUT", Path: "/product/:id", Handler: h.Update, Domain: "product", Action: "update"},
+		{Method: "DELETE", Path: "/product/:id", Handler: h.Delete, Domain: "product", Action: "delete"},
+		{Method: "POST", Path: "/product/calculate-cost", Handler: h.CalculateCost, Domain: "product", Action: "cost"},
 	}
 }

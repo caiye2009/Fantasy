@@ -84,3 +84,23 @@ func (c *SearchConfig) IsAggregableField(field string) bool {
 	}
 	return false
 }
+
+// IsQueryableField 判断字段是否可搜索
+func (c *SearchConfig) IsQueryableField(field string) bool {
+	for _, f := range c.QueryFields {
+		if f.Field == field {
+			return true
+		}
+	}
+	return false
+}
+
+// GetQueryField 获取查询字段配置
+func (c *SearchConfig) GetQueryField(field string) *QueryFieldConfig {
+	for i := range c.QueryFields {
+		if c.QueryFields[i].Field == field {
+			return &c.QueryFields[i]
+		}
+	}
+	return nil
+}

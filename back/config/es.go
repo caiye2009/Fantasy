@@ -1,8 +1,8 @@
 package config
 
 import (
-	"log"
 	"github.com/elastic/go-elasticsearch/v8"
+	"log"
 )
 
 func InitElasticsearch(cfg *Config) *elasticsearch.Client {

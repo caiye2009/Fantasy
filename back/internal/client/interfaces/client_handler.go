@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"back/pkg/audit"
 	"back/pkg/endpoint"
 	"back/internal/client/application"
 	"back/internal/client/domain"
@@ -149,33 +148,9 @@ func (h *ClientHandler) Delete(c *gin.Context) {
 // GetRoutes 获取路由定义
 func (h *ClientHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:      "POST",
-			Path:        "/client",
-			Handler:     h.Create,
-			Middlewares: []gin.HandlerFunc{audit.Mark("client", "create")},
-			Name:        "创建客户",
-		},
-		{
-			Method:      "GET",
-			Path:        "/client/:id",
-			Handler:     h.Get,
-			Middlewares: nil,
-			Name:        "获取客户详情",
-		},
-		{
-			Method:      "PUT",
-			Path:        "/client/:id",
-			Handler:     h.Update,
-			Middlewares: []gin.HandlerFunc{audit.Mark("client", "update")},
-			Name:        "更新客户信息",
-		},
-		{
-			Method:      "DELETE",
-			Path:        "/client/:id",
-			Handler:     h.Delete,
-			Middlewares: []gin.HandlerFunc{audit.Mark("client", "delete")},
-			Name:        "删除客户",
-		},
+		{Method: "POST", Path: "/client", Handler: h.Create, Domain: "client", Action: "create"},
+		{Method: "GET", Path: "/client/:id", Handler: h.Get, Domain: "client", Action: "get"},
+		{Method: "PUT", Path: "/client/:id", Handler: h.Update, Domain: "client", Action: "update"},
+		{Method: "DELETE", Path: "/client/:id", Handler: h.Delete, Domain: "client", Action: "delete"},
 	}
 }

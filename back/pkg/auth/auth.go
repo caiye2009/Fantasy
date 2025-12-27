@@ -46,9 +46,8 @@ func (aw *AuthWang) AuthMiddleware() gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-		// if source == "" || authHeader == "" || tokenString == authHeader {
 		if authHeader == "" || tokenString == authHeader {
-			c.JSON(401, gin.H{"error": "菜叶"})
+			c.JSON(401, gin.H{"error": "未提供认证信息"})
 			c.Abort()
 			return
 		}
@@ -93,20 +92,12 @@ func (aw *AuthWang) AuthMiddleware() gin.HandlerFunc {
 		ctx = context.WithValue(ctx, DepartmentContextKey, claims.Department)
 		c.Request = c.Request.WithContext(ctx)
 
-		println("===== Auth Context =====")
-		println("source:", source)
-		println("loginId:", claims.LoginID)
-		println("username:", claims.UserName)
-		println("role:", claims.Role)
-		println("department:", claims.Department)
-		println("========================")
-
 		// 5. 根据 HTTP route 查找 endpoint
 		ep := endpoint.GlobalRegistry.FindByRoute(c.Request.Method, c.Request.URL.Path)
 		if ep == nil {
-			// 未注册的接口，允许通过（或者可以选择拒绝）
-			println("Warning: Endpoint not found for", c.Request.Method, c.Request.URL.Path)
-			c.Next()
+			// 未注册的接口，拒绝访问
+			c.JSON(404, gin.H{"error": "接口未注册"})
+			c.Abort()
 			return
 		}
 
@@ -119,16 +110,9 @@ func (aw *AuthWang) AuthMiddleware() gin.HandlerFunc {
 			role := claims.Role
 			permission := ep.GetName() // 如 "user.create", "order.list"
 
-			println("===== Permission Check =====")
-			println("loginID:", loginID)
-			println("role:", role)
-			println("permission:", permission)
-			println("path:", c.Request.URL.Path)
-
 			// 先检查用户个性化权限
 			allowed, err := aw.enforcer.Enforce(loginID, permission, "*")
 			if err != nil {
-				println("permission check error:", err.Error())
 				c.JSON(500, gin.H{"error": "权限检查失败"})
 				c.Abort()
 				return
@@ -138,15 +122,11 @@ func (aw *AuthWang) AuthMiddleware() gin.HandlerFunc {
 			if !allowed {
 				allowed, err = aw.enforcer.Enforce(role, permission, "*")
 				if err != nil {
-					println("permission check error:", err.Error())
 					c.JSON(500, gin.H{"error": "权限检查失败"})
 					c.Abort()
 					return
 				}
 			}
-
-			println("allowed:", allowed)
-			println("===========================")
 
 			if !allowed {
 				c.JSON(403, gin.H{"error": "无权限访问: " + permission})

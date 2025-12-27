@@ -24,7 +24,9 @@ func (b *QueryBuilder) Build(criteria *domain.SearchCriteria, config *domain.Sea
 
 	// 1. 构建全文搜索（Query 字段）
 	if criteria.Query != "" {
-		mustClause := b.buildQueryClause(criteria.Query, config.QueryFields)
+		// 如果指定了 searchFields，使用指定的字段；否则使用配置的 queryFields
+		queryFields := b.resolveQueryFields(criteria.SearchFields, config)
+		mustClause := b.buildQueryClause(criteria.Query, queryFields)
 		if mustClause != nil {
 			boolQuery["must"] = append(boolQuery["must"].([]interface{}), mustClause)
 		}
@@ -191,4 +193,30 @@ func (b *QueryBuilder) extractBaseField(field string) string {
 		return strings.TrimSuffix(field, "Max")
 	}
 	return ""
+}
+
+// resolveQueryFields 解析搜索字段（使用指定字段或配置字段）
+func (b *QueryBuilder) resolveQueryFields(searchFields []string, config *domain.SearchConfig) []domain.QueryFieldConfig {
+	// 如果未指定 searchFields，使用配置的全部 queryFields
+	if len(searchFields) == 0 {
+		return config.QueryFields
+	}
+
+	// 如果指定了 searchFields，从配置中提取对应字段的配置（保留 boost 权重）
+	result := make([]domain.QueryFieldConfig, 0, len(searchFields))
+	for _, fieldName := range searchFields {
+		// 查找字段配置
+		fieldConfig := config.GetQueryField(fieldName)
+		if fieldConfig != nil {
+			result = append(result, *fieldConfig)
+		} else {
+			// 如果字段不在配置中，使用默认配置（boost=1.0）
+			result = append(result, domain.QueryFieldConfig{
+				Field: fieldName,
+				Boost: 1.0,
+			})
+		}
+	}
+
+	return result
 }

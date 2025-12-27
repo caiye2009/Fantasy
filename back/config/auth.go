@@ -1,11 +1,11 @@
 package config
 
 import (
-	"log"
-	"gorm.io/gorm"
-	"github.com/redis/go-redis/v9"
-	"github.com/casbin/casbin/v2"
 	"back/pkg/auth"
+	"github.com/casbin/casbin/v2"
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
+	"log"
 )
 
 func InitAuth(db *gorm.DB, rdb *redis.Client, cfg *Config, enforcer *casbin.Enforcer) (*auth.JWTWang, *auth.AuthWang, *auth.WhitelistManager) {

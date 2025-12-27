@@ -132,32 +132,14 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 // GetPublicRoutes 获取公开路由定义（不需要认证）
 func (h *AuthHandler) GetPublicRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:      "POST",
-			Path:        "/auth/login",
-			Handler:     h.Login,
-			Middlewares: nil,
-			Name:        "用户登录",
-		},
-		{
-			Method:      "POST",
-			Path:        "/auth/refresh",
-			Handler:     h.RefreshToken,
-			Middlewares: nil,
-			Name:        "刷新令牌",
-		},
+		{Method: "POST", Path: "/auth/login", Handler: h.Login, Domain: "auth", Action: "login"},
+		{Method: "POST", Path: "/auth/refresh", Handler: h.RefreshToken, Domain: "auth", Action: "refresh"},
 	}
 }
 
 // GetProtectedRoutes 获取受保护路由定义（需要认证）
 func (h *AuthHandler) GetProtectedRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:      "POST",
-			Path:        "/auth/logout",
-			Handler:     h.Logout,
-			Middlewares: nil,
-			Name:        "用户登出",
-		},
+		{Method: "POST", Path: "/auth/logout", Handler: h.Logout, Domain: "auth", Action: "logout"},
 	}
 }

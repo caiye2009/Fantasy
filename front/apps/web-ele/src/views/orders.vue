@@ -41,26 +41,20 @@
               <div v-if="currentStep === 1" class="step-content">
                 <el-form :model="form" label-width="100px">
                   <el-form-item label="客户名称">
-                    <el-select
-                      v-model="form.customerId"
-                      placeholder="请选择客户"
-                      @change="handleCustomerChange"
-                      style="width: 100%"
-                      size="large"
-                    >
-                      <el-option
-                        v-for="customer in customers"
-                        :key="customer.id"
-                        :label="customer.name"
-                        :value="customer.id"
-                      >
-                        <div style="display: flex; justify-content: space-between">
-                          <span>{{ customer.name }}</span>
-                          <span style="color: #8492a6; font-size: 13px">{{ customer.phone }}</span>
-                        </div>
-                      </el-option>
-                    </el-select>
+                    <SearchInput
+                      v-model="customerSearchKeyword"
+                      index="client"
+                      placeholder="搜索客户名称或编号"
+                      @select="handleCustomerSelect"
+                    />
                   </el-form-item>
+                  <div v-if="selectedCustomer" class="selected-info">
+                    <el-alert type="success" :closable="false" show-icon>
+                      <template #title>
+                        已选择：{{ selectedCustomer.customName }} ({{ selectedCustomer.customNo }})
+                      </template>
+                    </el-alert>
+                  </div>
                 </el-form>
               </div>
             </div>
@@ -88,44 +82,80 @@
 
               <div v-if="currentStep === 2" class="step-content">
                 <el-form :model="form" label-width="100px">
-                  <el-row :gutter="20">
-                    <el-col :span="12">
-                      <el-form-item label="产品名称">
-                        <el-select
-                          v-model="form.productId"
-                          placeholder="请选择产品"
-                          @change="handleProductChange"
-                          style="width: 100%"
-                          size="large"
-                        >
-                          <el-option
-                            v-for="product in products"
-                            :key="product.id"
-                            :label="product.name"
-                            :value="product.id"
-                          >
-                            <div style="display: flex; justify-content: space-between">
-                              <span>{{ product.name }}</span>
-                              <span style="color: #8492a6; font-size: 13px">¥{{ product.price }}</span>
-                            </div>
-                          </el-option>
-                        </el-select>
-                      </el-form-item>
-                    </el-col>
+                  <el-form-item label="产品名称">
+                    <SearchInput
+                      v-model="productSearchKeyword"
+                      index="product"
+                      :search-fields="['name']"
+                      placeholder="搜索产品名称"
+                      @select="handleProductSelect"
+                    />
+                  </el-form-item>
+                  <div v-if="selectedProduct" class="selected-info">
+                    <el-alert type="success" :closable="false" show-icon>
+                      <template #title>
+                        已选择：{{ selectedProduct.name }} (¥{{ selectedProduct.price }})
+                      </template>
+                    </el-alert>
+                  </div>
 
-                    <el-col :span="12">
-                      <el-form-item label="购买数量">
-                        <el-input-number
-                          v-model="form.quantity"
-                          :min="1"
-                          :max="100"
-                          style="width: 100%"
-                          size="large"
-                          @change="handleQuantityChange"
-                        />
-                      </el-form-item>
-                    </el-col>
-                  </el-row>
+                  <!-- 库存信息展示 -->
+                  <div v-if="selectedProduct" class="inventory-section">
+                    <div class="inventory-header">
+                      <el-icon style="margin-right: 8px"><Box /></el-icon>
+                      <span>库存信息</span>
+                    </div>
+
+                    <div v-if="loadingInventories" class="inventory-loading">
+                      <el-icon class="is-loading"><Loading /></el-icon>
+                      <span>加载库存中...</span>
+                    </div>
+
+                    <div v-else-if="productInventories.length === 0" class="inventory-empty">
+                      <el-empty description="暂无库存信息" :image-size="80" />
+                    </div>
+
+                    <div v-else class="inventory-list">
+                      <el-table :data="productInventories" border stripe>
+                        <el-table-column prop="batchId" label="批次号" min-width="120" />
+                        <el-table-column prop="category" label="类别" width="100">
+                          <template #default="{ row }">
+                            <el-tag v-if="row.category === 'raw_material'" type="info">原材料</el-tag>
+                            <el-tag v-else-if="row.category === 'semi_finished'" type="warning">半成品</el-tag>
+                            <el-tag v-else-if="row.category === 'finished'" type="success">成品</el-tag>
+                            <el-tag v-else>{{ row.category }}</el-tag>
+                          </template>
+                        </el-table-column>
+                        <el-table-column prop="quantity" label="数量" width="100">
+                          <template #default="{ row }">
+                            {{ row.quantity }} {{ row.unit }}
+                          </template>
+                        </el-table-column>
+                        <el-table-column prop="unitCost" label="单价" width="100">
+                          <template #default="{ row }">
+                            ¥{{ row.unitCost.toFixed(2) }}
+                          </template>
+                        </el-table-column>
+                        <el-table-column prop="totalCost" label="总成本" width="120">
+                          <template #default="{ row }">
+                            ¥{{ row.totalCost.toFixed(2) }}
+                          </template>
+                        </el-table-column>
+                        <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
+                      </el-table>
+                    </div>
+                  </div>
+
+                  <el-form-item label="购买数量" style="margin-top: 20px">
+                    <el-input-number
+                      v-model="form.quantity"
+                      :min="1"
+                      :max="100"
+                      style="width: 100%"
+                      size="large"
+                      @change="handleQuantityChange"
+                    />
+                  </el-form-item>
                 </el-form>
               </div>
             </div>
@@ -309,11 +339,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { User, ShoppingCart, Box } from '@element-plus/icons-vue'
+import { User, ShoppingCart, Box, Loading } from '@element-plus/icons-vue'
 import DataTable from '#/components/Table/index.vue'
+import SearchInput from '#/components/SearchInput/index.vue'
 import { elasticsearchService } from '#/api/core/es'
 import { useDataTable } from '#/composables/useDataTable'
 import type { PageConfig, BulkAction } from '#/components/Table/types'
+import { getInventoriesByProductIdApi, type InventoryResponse } from '#/api/core/inventory'
 
 const { searchLoading } = useDataTable('order', 20)
 
@@ -430,21 +462,17 @@ const form = ref({
   warehouseId: ''
 })
 
-// 模拟客户数据
-const customers = ref([
-  { id: 1, name: '张三', phone: '13800138001', address: '北京市朝阳区xxx街道xxx号' },
-  { id: 2, name: '李四', phone: '13800138002', address: '上海市浦东新区xxx路xxx号' },
-  { id: 3, name: '王五', phone: '13800138003', address: '广州市天河区xxx大道xxx号' },
-  { id: 4, name: '赵六', phone: '13800138004', address: '深圳市南山区xxx街xxx号' }
-])
+// 搜索关键词
+const customerSearchKeyword = ref('')
+const productSearchKeyword = ref('')
 
-// 模拟产品数据
-const products = ref([
-  { id: 1, name: 'iPhone 15 Pro', code: 'IP15P-001', price: 7999, category: '手机' },
-  { id: 2, name: 'MacBook Pro 14', code: 'MBP14-001', price: 14999, category: '电脑' },
-  { id: 3, name: 'AirPods Pro 2', code: 'APP2-001', price: 1899, category: '耳机' },
-  { id: 4, name: 'iPad Air', code: 'IPA-001', price: 4799, category: '平板' }
-])
+// 选中的客户和产品（从搜索中选择）
+const selectedCustomerData = ref<any>(null)
+const selectedProductData = ref<any>(null)
+
+// 库存相关
+const productInventories = ref<InventoryResponse[]>([])
+const loadingInventories = ref(false)
 
 // 模拟仓库数据
 const warehouses = ref([
@@ -455,13 +483,9 @@ const warehouses = ref([
 ])
 
 // 已选择的数据
-const selectedCustomer = computed(() =>
-  customers.value.find(c => c.id === form.value.customerId)
-)
+const selectedCustomer = computed(() => selectedCustomerData.value)
 
-const selectedProduct = computed(() =>
-  products.value.find(p => p.id === form.value.productId)
-)
+const selectedProduct = computed(() => selectedProductData.value)
 
 const selectedWarehouse = computed(() =>
   warehouses.value.find(w => w.id === form.value.warehouseId)
@@ -476,16 +500,50 @@ const totalAmount = computed(() => {
 })
 
 // 处理客户选择
-const handleCustomerChange = () => {
-  if (form.value.customerId) {
-    currentStep.value = 2
+const handleCustomerSelect = (customer: any) => {
+  selectedCustomerData.value = {
+    id: customer.id,
+    name: customer.customName || customer.customNameEn,
+    phone: customer.mobile || customer.unitPhone,
+    address: customer.address || customer.addressEn,
+    customName: customer.customName,
+    customNo: customer.customNo
   }
+  form.value.customerId = customer.id
+  currentStep.value = 2
 }
 
 // 处理产品选择
-const handleProductChange = () => {
-  if (form.value.productId && form.value.quantity) {
+const handleProductSelect = async (product: any) => {
+  selectedProductData.value = {
+    id: product.id,
+    name: product.name,
+    code: product.code || product.id,
+    price: product.price || 0,
+    category: product.category
+  }
+  form.value.productId = product.id
+
+  // 获取产品库存
+  await fetchProductInventories(product.id)
+
+  if (form.value.quantity) {
     currentStep.value = 3
+  }
+}
+
+// 获取产品库存
+const fetchProductInventories = async (productId: number) => {
+  loadingInventories.value = true
+  try {
+    const response = await getInventoriesByProductIdApi(productId)
+    productInventories.value = response.inventories || []
+  } catch (error) {
+    console.error('获取库存失败:', error)
+    ElMessage.error('获取库存信息失败')
+    productInventories.value = []
+  } finally {
+    loadingInventories.value = false
   }
 }
 
@@ -553,6 +611,11 @@ const handleCreateClose = () => {
     quantity: 1,
     warehouseId: ''
   }
+  customerSearchKeyword.value = ''
+  productSearchKeyword.value = ''
+  selectedCustomerData.value = null
+  selectedProductData.value = null
+  productInventories.value = []
   currentStep.value = 1
   showPreview.value = false
 }
@@ -873,6 +936,65 @@ const handleExport = async (rows: any[]) => {
   font-size: 36px;
   font-weight: bold;
   color: #f56c6c;
+}
+
+.selected-info {
+  margin-top: 16px;
+}
+
+.inventory-section {
+  margin-top: 24px;
+  padding: 20px;
+  background: #f8fafc;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+}
+
+.inventory-header {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #409eff;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #409eff;
+}
+
+.inventory-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  color: #909399;
+  gap: 12px;
+
+  .el-icon {
+    font-size: 32px;
+  }
+}
+
+.inventory-empty {
+  padding: 20px 0;
+}
+
+.inventory-list {
+  :deep(.el-table) {
+    font-size: 14px;
+
+    .el-table__header th {
+      background-color: #f5f7fa;
+      color: #606266;
+      font-weight: 600;
+    }
+
+    .el-table__row {
+      &:hover {
+        background-color: #ecf5ff;
+      }
+    }
+  }
 }
 
 .order-detail {

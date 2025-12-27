@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"back/pkg/audit"
 	"back/pkg/endpoint"
 	"back/internal/material/application"
 	"back/internal/material/domain"
@@ -141,33 +140,9 @@ func (h *MaterialHandler) Delete(c *gin.Context) {
 // GetRoutes 获取路由定义
 func (h *MaterialHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:      "POST",
-			Path:        "/material",
-			Handler:     h.Create,
-			Middlewares: []gin.HandlerFunc{audit.Mark("material", "create")},
-			Name:        "创建材料",
-		},
-		{
-			Method:      "GET",
-			Path:        "/material/:id",
-			Handler:     h.Get,
-			Middlewares: nil,
-			Name:        "获取材料详情",
-		},
-		{
-			Method:      "PUT",
-			Path:        "/material/:id",
-			Handler:     h.Update,
-			Middlewares: []gin.HandlerFunc{audit.Mark("material", "update")},
-			Name:        "更新材料信息",
-		},
-		{
-			Method:      "DELETE",
-			Path:        "/material/:id",
-			Handler:     h.Delete,
-			Middlewares: []gin.HandlerFunc{audit.Mark("material", "delete")},
-			Name:        "删除材料",
-		},
+		{Method: "POST", Path: "/material", Handler: h.Create, Domain: "material", Action: "create"},
+		{Method: "GET", Path: "/material/:id", Handler: h.Get, Domain: "", Action: ""},
+		{Method: "PUT", Path: "/material/:id", Handler: h.Update, Domain: "material", Action: "update"},
+		{Method: "DELETE", Path: "/material/:id", Handler: h.Delete, Domain: "material", Action: "delete"},
 	}
 }

@@ -10,6 +10,16 @@ definitions:
     - defect_quantity
     - remark
     type: object
+  application.AddInventoryRequest:
+    properties:
+      id:
+        type: integer
+      quantity:
+        type: number
+    required:
+    - id
+    - quantity
+    type: object
   application.AddUserPermissionRequest:
     properties:
       loginId:
@@ -240,6 +250,31 @@ definitions:
     required:
     - name
     type: object
+  application.CreateInventoryRequest:
+    properties:
+      batchId:
+        type: string
+      category:
+        type: string
+      productId:
+        type: integer
+      quantity:
+        type: number
+      remark:
+        type: string
+      unit:
+        type: string
+      unitCost:
+        minimum: 0
+        type: number
+    required:
+    - batchId
+    - category
+    - productId
+    - quantity
+    - unit
+    - unitCost
+    type: object
   application.CreateMaterialRequest:
     properties:
       category:
@@ -457,6 +492,16 @@ definitions:
         example: "2024-01-01"
         type: string
     type: object
+  application.DeductInventoryRequest:
+    properties:
+      id:
+        type: integer
+      quantity:
+        type: number
+    required:
+    - id
+    - quantity
+    type: object
   application.DepartmentListResponse:
     properties:
       departments:
@@ -516,6 +561,40 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  application.InventoryListResponse:
+    properties:
+      inventories:
+        items:
+          $ref: '#/definitions/application.InventoryResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  application.InventoryResponse:
+    properties:
+      batchId:
+        type: string
+      category:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      productId:
+        type: integer
+      quantity:
+        type: number
+      remark:
+        type: string
+      totalCost:
+        type: number
+      unit:
+        type: string
+      unitCost:
+        type: number
+      updatedAt:
+        type: string
     type: object
   application.LoginRequest:
     properties:
@@ -961,6 +1040,11 @@ definitions:
       query:
         description: 全文搜索关键词
         type: string
+      searchFields:
+        description: 指定搜索字段（可选，默认使用配置的queryFields）
+        items:
+          type: string
+        type: array
       sort:
         items:
           $ref: '#/definitions/application.SortRequest'
@@ -1097,6 +1181,34 @@ definitions:
       parent_id:
         type: integer
     type: object
+  application.UpdateInventoryRequest:
+    properties:
+      batchId:
+        type: string
+      category:
+        type: string
+      id:
+        type: integer
+      productId:
+        type: integer
+      quantity:
+        type: number
+      remark:
+        type: string
+      unit:
+        type: string
+      unitCost:
+        minimum: 0
+        type: number
+    required:
+    - batchId
+    - category
+    - id
+    - productId
+    - quantity
+    - unit
+    - unitCost
+    type: object
   application.UpdateMaterialRequest:
     properties:
       category:
@@ -1192,6 +1304,16 @@ definitions:
       remark:
         type: string
     required:
+    - quantity
+    type: object
+  application.UpdateQuantityRequest:
+    properties:
+      id:
+        type: integer
+      quantity:
+        type: number
+    required:
+    - id
     - quantity
     type: object
   application.UpdateRoleRequest:
@@ -1616,6 +1738,368 @@ paths:
       summary: 更新客户信息
       tags:
       - 客户管理
+  /inventory:
+    post:
+      consumes:
+      - application/json
+      description: 创建新的库存记录
+      parameters:
+      - description: 创建库存请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.CreateInventoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/application.InventoryResponse'
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 创建库存
+      tags:
+      - 库存管理
+    put:
+      consumes:
+      - application/json
+      description: 更新库存信息
+      parameters:
+      - description: 更新库存请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.UpdateInventoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            $ref: '#/definitions/application.InventoryResponse'
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 库存不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新库存
+      tags:
+      - 库存管理
+  /inventory/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除库存记录
+      parameters:
+      - description: 库存ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 库存不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 删除库存
+      tags:
+      - 库存管理
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取库存详情
+      parameters:
+      - description: 库存ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 库存详情
+          schema:
+            $ref: '#/definitions/application.InventoryResponse'
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 库存不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取库存详情
+      tags:
+      - 库存管理
+  /inventory/add:
+    post:
+      consumes:
+      - application/json
+      description: 增加指定数量的库存
+      parameters:
+      - description: 增加库存请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.AddInventoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 增加成功
+          schema:
+            $ref: '#/definitions/application.InventoryResponse'
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 库存不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 增加库存
+      tags:
+      - 库存管理
+  /inventory/batch:
+    get:
+      consumes:
+      - application/json
+      description: 根据批次ID获取库存记录
+      parameters:
+      - description: 批次ID
+        in: query
+        name: batchId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 库存详情
+          schema:
+            $ref: '#/definitions/application.InventoryResponse'
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 库存不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 根据批次ID获取库存
+      tags:
+      - 库存管理
+  /inventory/category:
+    get:
+      consumes:
+      - application/json
+      description: 根据类别获取库存列表
+      parameters:
+      - description: 类别
+        in: query
+        name: category
+        required: true
+        type: string
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: 偏移量
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 库存列表
+          schema:
+            $ref: '#/definitions/application.InventoryListResponse'
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 根据类别获取库存列表
+      tags:
+      - 库存管理
+  /inventory/deduct:
+    post:
+      consumes:
+      - application/json
+      description: 扣减指定数量的库存
+      parameters:
+      - description: 扣减库存请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.DeductInventoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 扣减成功
+          schema:
+            $ref: '#/definitions/application.InventoryResponse'
+        "400":
+          description: 参数错误或库存不足
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 库存不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 扣减库存
+      tags:
+      - 库存管理
+  /inventory/list:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有库存列表
+      parameters:
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: 偏移量
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 库存列表
+          schema:
+            $ref: '#/definitions/application.InventoryListResponse'
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 获取库存列表
+      tags:
+      - 库存管理
+  /inventory/product:
+    get:
+      consumes:
+      - application/json
+      description: 根据产品ID获取该产品的所有库存记录
+      parameters:
+      - description: 产品ID
+        in: query
+        name: productId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 库存列表
+          schema:
+            $ref: '#/definitions/application.InventoryListResponse'
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 根据产品ID获取库存列表
+      tags:
+      - 库存管理
+  /inventory/quantity:
+    put:
+      consumes:
+      - application/json
+      description: 更新库存数量
+      parameters:
+      - description: 更新数量请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.UpdateQuantityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            $ref: '#/definitions/application.InventoryResponse'
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 库存不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: 更新库存数量
+      tags:
+      - 库存管理
   /material:
     post:
       consumes:

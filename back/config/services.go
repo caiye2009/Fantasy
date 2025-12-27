@@ -2,62 +2,66 @@
 package config
 
 import (
-	"gorm.io/gorm"
-	"github.com/redis/go-redis/v9"
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 
 	"back/pkg/auth"
 	"back/pkg/es"
-	
+
 	// Auth
 	authApp "back/internal/auth/application"
-	
+
 	// Supplier
 	supplierApp "back/internal/supplier/application"
 	supplierInfra "back/internal/supplier/infra"
-	
+
 	// Client
 	clientApp "back/internal/client/application"
 	clientInfra "back/internal/client/infra"
-	
+
 	// User
 	userApp "back/internal/user/application"
 	userInfra "back/internal/user/infra"
-	
+
 	// Material
 	materialApp "back/internal/material/application"
 	materialInfra "back/internal/material/infra"
-	
+
 	// Process
 	processApp "back/internal/process/application"
 	processInfra "back/internal/process/infra"
-	
+
 	// Pricing
 	pricingApp "back/internal/pricing/application"
 	pricingInfra "back/internal/pricing/infra"
-	
+
 	// Product
 	productApp "back/internal/product/application"
 	productInfra "back/internal/product/infra"
-	
+
 	// Plan
 	planApp "back/internal/plan/application"
 	planInfra "back/internal/plan/infra"
-	
+
 	// Order
 	orderApp "back/internal/order/application"
 	orderInfra "back/internal/order/infra"
-	
+
 	// Search
 	searchApp "back/internal/search/application"
 	searchInfra "back/internal/search/infra"
-	
+
 	// Analytics
 	analyticsApp "back/internal/analytics/application"
 	analyticsInfra "back/internal/analytics/infra"
 
 	// Permission
-	permissionApp "back/internal/permission/application"
+	permissionApp "back/internal/user/permission/application"
+
+	// Inventory
+	inventoryApp "back/internal/inventory/application"
+	inventoryInfra "back/internal/inventory/infra"
 
 	// Casbin
 	casbinPkg "back/pkg/casbin"
@@ -97,6 +101,9 @@ type Services struct {
 
 	// Permission
 	Permission *permissionApp.PermissionService
+
+	// Inventory
+	Inventory *inventoryApp.InventoryService
 }
 
 func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client, jwtWang *auth.JWTWang, whitelistManager *auth.WhitelistManager, casbinManager *casbinPkg.Manager, esSync *es.ESSync, searchRegistry *searchInfra.DomainAwareRegistry) *Services {
@@ -174,17 +181,21 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 	// ========== Order ==========
 	orderRepo := orderInfra.NewOrderRepo(db)
 	orderService := orderApp.NewOrderService(orderRepo, esSync)
-	
+
 	// ========== Search ==========
 	searchRepo := searchInfra.NewESSearchRepository(esClient)
 	searchService := searchApp.NewSearchService(searchRegistry, searchRepo)
-	
+
 	// ========== Analytics ==========
 	returnAnalysisRepo := analyticsInfra.NewReturnAnalysisRepository(db)
 	returnAnalysisService := analyticsApp.NewReturnAnalysisService(returnAnalysisRepo)
 
 	// ========== Permission ==========
 	permissionService := permissionApp.NewPermissionService(casbinManager)
+
+	// ========== Inventory ==========
+	inventoryRepo := inventoryInfra.NewInventoryRepo(db)
+	inventoryService := inventoryApp.NewInventoryService(inventoryRepo)
 
 	return &Services{
 		Auth:                  authService,
@@ -205,5 +216,6 @@ func InitServices(db *gorm.DB, rdb *redis.Client, esClient *elasticsearch.Client
 		Search:                searchService,
 		ReturnAnalysis:        returnAnalysisService,
 		Permission:            permissionService,
+		Inventory:             inventoryService,
 	}
 }

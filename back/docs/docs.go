@@ -335,6 +335,567 @@ const docTemplate = `{
                 }
             }
         },
+        "/inventory": {
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "更新库存信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "库存管理"
+                ],
+                "summary": "更新库存",
+                "parameters": [
+                    {
+                        "description": "更新库存请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.UpdateInventoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.InventoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "库存不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "创建新的库存记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "库存管理"
+                ],
+                "summary": "创建库存",
+                "parameters": [
+                    {
+                        "description": "创建库存请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.CreateInventoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.InventoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/add": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "增加指定数量的库存",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "库存管理"
+                ],
+                "summary": "增加库存",
+                "parameters": [
+                    {
+                        "description": "增加库存请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.AddInventoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "增加成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.InventoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "库存不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/batch": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "根据批次ID获取库存记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "库存管理"
+                ],
+                "summary": "根据批次ID获取库存",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "批次ID",
+                        "name": "batchId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "库存详情",
+                        "schema": {
+                            "$ref": "#/definitions/application.InventoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "库存不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/category": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "根据类别获取库存列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "库存管理"
+                ],
+                "summary": "根据类别获取库存列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "类别",
+                        "name": "category",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "偏移量",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "库存列表",
+                        "schema": {
+                            "$ref": "#/definitions/application.InventoryListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/deduct": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "扣减指定数量的库存",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "库存管理"
+                ],
+                "summary": "扣减库存",
+                "parameters": [
+                    {
+                        "description": "扣减库存请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.DeductInventoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "扣减成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.InventoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误或库存不足",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "库存不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/list": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "获取所有库存列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "库存管理"
+                ],
+                "summary": "获取库存列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "偏移量",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "库存列表",
+                        "schema": {
+                            "$ref": "#/definitions/application.InventoryListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/product": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "根据产品ID获取该产品的所有库存记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "库存管理"
+                ],
+                "summary": "根据产品ID获取库存列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "产品ID",
+                        "name": "productId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "库存列表",
+                        "schema": {
+                            "$ref": "#/definitions/application.InventoryListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/quantity": {
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "更新库存数量",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "库存管理"
+                ],
+                "summary": "更新库存数量",
+                "parameters": [
+                    {
+                        "description": "更新数量请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/application.UpdateQuantityRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/application.InventoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "库存不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "根据ID获取库存详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "库存管理"
+                ],
+                "summary": "获取库存详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "库存ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "库存详情",
+                        "schema": {
+                            "$ref": "#/definitions/application.InventoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "库存不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "删除库存记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "库存管理"
+                ],
+                "summary": "删除库存",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "库存ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "库存不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/material": {
             "post": {
                 "security": [
@@ -4130,6 +4691,21 @@ const docTemplate = `{
                 }
             }
         },
+        "application.AddInventoryRequest": {
+            "type": "object",
+            "required": [
+                "id",
+                "quantity"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "number"
+                }
+            }
+        },
         "application.AddUserPermissionRequest": {
             "type": "object",
             "required": [
@@ -4460,6 +5036,41 @@ const docTemplate = `{
                 }
             }
         },
+        "application.CreateInventoryRequest": {
+            "type": "object",
+            "required": [
+                "batchId",
+                "category",
+                "productId",
+                "quantity",
+                "unit",
+                "unitCost"
+            ],
+            "properties": {
+                "batchId": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "remark": {
+                    "type": "string"
+                },
+                "unit": {
+                    "type": "string"
+                },
+                "unitCost": {
+                    "type": "number",
+                    "minimum": 0
+                }
+            }
+        },
         "application.CreateMaterialRequest": {
             "type": "object",
             "required": [
@@ -4760,6 +5371,21 @@ const docTemplate = `{
                 }
             }
         },
+        "application.DeductInventoryRequest": {
+            "type": "object",
+            "required": [
+                "id",
+                "quantity"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "number"
+                }
+            }
+        },
         "application.DepartmentListResponse": {
             "type": "object",
             "properties": {
@@ -4849,6 +5475,58 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "application.InventoryListResponse": {
+            "type": "object",
+            "properties": {
+                "inventories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/application.InventoryResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "application.InventoryResponse": {
+            "type": "object",
+            "properties": {
+                "batchId": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "remark": {
+                    "type": "string"
+                },
+                "totalCost": {
+                    "type": "number"
+                },
+                "unit": {
+                    "type": "string"
+                },
+                "unitCost": {
+                    "type": "number"
+                },
+                "updatedAt": {
+                    "type": "string"
                 }
             }
         },
@@ -5527,6 +6205,13 @@ const docTemplate = `{
                     "description": "全文搜索关键词",
                     "type": "string"
                 },
+                "searchFields": {
+                    "description": "指定搜索字段（可选，默认使用配置的queryFields）",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "sort": {
                     "type": "array",
                     "items": {
@@ -5718,6 +6403,45 @@ const docTemplate = `{
                 }
             }
         },
+        "application.UpdateInventoryRequest": {
+            "type": "object",
+            "required": [
+                "batchId",
+                "category",
+                "id",
+                "productId",
+                "quantity",
+                "unit",
+                "unitCost"
+            ],
+            "properties": {
+                "batchId": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "remark": {
+                    "type": "string"
+                },
+                "unit": {
+                    "type": "string"
+                },
+                "unitCost": {
+                    "type": "number",
+                    "minimum": 0
+                }
+            }
+        },
         "application.UpdateMaterialRequest": {
             "type": "object",
             "properties": {
@@ -5852,6 +6576,21 @@ const docTemplate = `{
                 },
                 "remark": {
                     "type": "string"
+                }
+            }
+        },
+        "application.UpdateQuantityRequest": {
+            "type": "object",
+            "required": [
+                "id",
+                "quantity"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "number"
                 }
             }
         },

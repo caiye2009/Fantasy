@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"back/pkg/audit"
 	"back/pkg/endpoint"
 	"back/internal/process/application"
 	"back/internal/process/domain"
@@ -144,33 +143,9 @@ func (h *ProcessHandler) Delete(c *gin.Context) {
 // GetRoutes 获取路由定义
 func (h *ProcessHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:      "POST",
-			Path:        "/process",
-			Handler:     h.Create,
-			Middlewares: []gin.HandlerFunc{audit.Mark("process", "create")},
-			Name:        "创建工序",
-		},
-		{
-			Method:      "GET",
-			Path:        "/process/:id",
-			Handler:     h.Get,
-			Middlewares: nil,
-			Name:        "获取工序详情",
-		},
-		{
-			Method:      "PUT",
-			Path:        "/process/:id",
-			Handler:     h.Update,
-			Middlewares: []gin.HandlerFunc{audit.Mark("process", "update")},
-			Name:        "更新工序信息",
-		},
-		{
-			Method:      "DELETE",
-			Path:        "/process/:id",
-			Handler:     h.Delete,
-			Middlewares: []gin.HandlerFunc{audit.Mark("process", "delete")},
-			Name:        "删除工序",
-		},
+		{Method: "POST", Path: "/process", Handler: h.Create, Domain: "process", Action: "create"},
+		{Method: "GET", Path: "/process/:id", Handler: h.Get, Domain: "", Action: ""},
+		{Method: "PUT", Path: "/process/:id", Handler: h.Update, Domain: "process", Action: "update"},
+		{Method: "DELETE", Path: "/process/:id", Handler: h.Delete, Domain: "process", Action: "delete"},
 	}
 }

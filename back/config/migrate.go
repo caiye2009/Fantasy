@@ -1,19 +1,20 @@
 package config
 
 import (
-	"log"
 	"gorm.io/gorm"
+	"log"
 
-	"back/pkg/audit"
-	userDomain "back/internal/user/domain"
-	supplierDomain "back/internal/supplier/domain"
 	clientDomain "back/internal/client/domain"
+	inventoryDomain "back/internal/inventory/domain"
 	materialDomain "back/internal/material/domain"
-	processDomain "back/internal/process/domain"
-	pricingDomain "back/internal/pricing/domain"
-	productDomain "back/internal/product/domain"
-	planDomain "back/internal/plan/domain"
 	orderDomain "back/internal/order/domain"
+	planDomain "back/internal/plan/domain"
+	pricingDomain "back/internal/pricing/domain"
+	processDomain "back/internal/process/domain"
+	productDomain "back/internal/product/domain"
+	supplierDomain "back/internal/supplier/domain"
+	userDomain "back/internal/user/domain"
+	"back/pkg/audit"
 )
 
 func AutoMigrate(db *gorm.DB) error {
@@ -37,6 +38,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&orderDomain.OrderParticipant{},
 		&orderDomain.OrderProgress{},
 		&orderDomain.OrderEvent{},
+		&inventoryDomain.Inventory{},
 	)
 
 	if err != nil {

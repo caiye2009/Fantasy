@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"back/pkg/endpoint"
-	"back/internal/permission/application"
+	"back/internal/user/permission/application"
 	"github.com/gin-gonic/gin"
 )
 
@@ -142,35 +142,10 @@ func (h *PermissionHandler) ListPermissionsByDomain(c *gin.Context) {
 // GetRoutes 返回路由定义
 func (h *PermissionHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:  "POST",
-			Path:    "/permission/user/add",
-			Handler: h.AddUserPermission,
-			Name:    "添加用户权限",
-		},
-		{
-			Method:  "POST",
-			Path:    "/permission/user/remove",
-			Handler: h.RemoveUserPermission,
-			Name:    "删除用户权限",
-		},
-		{
-			Method:  "GET",
-			Path:    "/permission/user",
-			Handler: h.GetUserPermissions,
-			Name:    "获取用户权限",
-		},
-		{
-			Method:  "GET",
-			Path:    "/permission/list",
-			Handler: h.ListAllPermissions,
-			Name:    "列出所有权限",
-		},
-		{
-			Method:  "GET",
-			Path:    "/permission/list-by-domain",
-			Handler: h.ListPermissionsByDomain,
-			Name:    "按域列出权限",
-		},
+		{Method: "POST", Path: "/permission/user/add", Handler: h.AddUserPermission, Domain: "", Action: ""},
+		{Method: "POST", Path: "/permission/user/remove", Handler: h.RemoveUserPermission, Domain: "", Action: ""},
+		{Method: "GET", Path: "/permission/user", Handler: h.GetUserPermissions, Domain: "", Action: ""},
+		{Method: "GET", Path: "/permission/list", Handler: h.ListAllPermissions, Domain: "", Action: ""},
+		{Method: "GET", Path: "/permission/list-by-domain", Handler: h.ListPermissionsByDomain, Domain: "", Action: ""},
 	}
 }

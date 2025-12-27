@@ -1,9 +1,9 @@
 package config
 
 import (
-	"log"
 	"context"
 	"github.com/redis/go-redis/v9"
+	"log"
 )
 
 func InitRedis(cfg *Config) *redis.Client {

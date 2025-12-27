@@ -1,9 +1,9 @@
 package config
 
 import (
-	"github.com/casbin/casbin/v2"
-	casbinPkg "back/pkg/casbin"
 	"back/pkg/auth"
+	casbinPkg "back/pkg/casbin"
+	"github.com/casbin/casbin/v2"
 )
 
 // InitCasbin 初始化 Casbin enforcer（文件存储）

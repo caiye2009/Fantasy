@@ -24,18 +24,8 @@ func NewReturnAnalysisHandler(service *application.ReturnAnalysisService) *Retur
 // GetRoutes 返回路由定义
 func (h *ReturnAnalysisHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:  "GET",
-			Path:    "/return-analysis/customers",
-			Handler: h.GetCustomerList,
-			Name:    "获取客户列表",
-		},
-		{
-			Method:  "POST",
-			Path:    "/return-analysis/analysis",
-			Handler: h.GetReturnAnalysis,
-			Name:    "获取退货分析",
-		},
+		{Method: "GET", Path: "/return-analysis/customers", Handler: h.GetCustomerList, Domain: "", Action: ""},
+		{Method: "POST", Path: "/return-analysis/analysis", Handler: h.GetReturnAnalysis, Domain: "", Action: ""},
 	}
 }
 

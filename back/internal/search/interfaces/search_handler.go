@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"back/pkg/audit"
 	"back/pkg/endpoint"
 	"back/internal/search/application"
 )
@@ -82,18 +81,7 @@ func isClientError(err error) bool {
 // GetRoutes 返回路由定义
 func (h *SearchHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{
-			Method:      "POST",
-			Path:        "/search",
-			Handler:     h.Search,
-			Middlewares: []gin.HandlerFunc{audit.Skip()},
-			Name:        "搜索",
-		},
-		{
-			Method:  "GET",
-			Path:    "/search/indices",
-			Handler: h.GetIndices,
-			Name:    "获取索引列表",
-		},
+		{Method: "POST", Path: "/search", Handler: h.Search, Domain: "", Action: ""},
+		{Method: "GET", Path: "/search/indices", Handler: h.GetIndices, Domain: "", Action: ""},
 	}
 }

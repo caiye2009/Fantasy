@@ -1,7 +1,6 @@
 package infra
 
 import (
-	"fmt"
 	"strings"
 
 	"back/internal/search/domain"
@@ -30,19 +29,13 @@ func (b *AggregationBuilder) Build(
 	for aggField, aggReq := range aggRequests {
 		aggConfig := config.GetAggField(aggField)
 		if aggConfig == nil {
-			fmt.Printf("[WARN] Aggregation field '%s' not found in config, skipping\n", aggField)
 			continue // 字段不在白名单，忽略
 		}
-
-		fmt.Printf("[DEBUG] Building aggregation for field '%s': type=%s, aggType=%s\n", aggField, aggConfig.Type, aggConfig.AggType)
 
 		// 构建聚合
 		agg := b.buildAggregation(aggField, aggReq, aggConfig, currentFilters, config)
 		if agg != nil {
 			aggregations[aggField] = agg
-			fmt.Printf("[DEBUG] Aggregation '%s' built successfully\n", aggField)
-		} else {
-			fmt.Printf("[WARN] Aggregation '%s' returned nil\n", aggField)
 		}
 	}
 

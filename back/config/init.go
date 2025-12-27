@@ -9,12 +9,12 @@ import (
 	"syscall"
 	"time"
 
-	"gorm.io/gorm"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 
-	applog "back/pkg/log"
-	"back/pkg/es"
 	userDomain "back/internal/user/domain"
+	"back/pkg/es"
+	applog "back/pkg/log"
 )
 
 func Init() error {

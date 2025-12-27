@@ -24,22 +24,14 @@ func NewSearchService(registry *infra.DomainAwareRegistry, repo domain.SearchRep
 
 // Search 执行搜索
 func (s *SearchService) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
-	fmt.Printf("\n=== Search Request ===\nIndex: %s\nAggRequests: %+v\n==================\n", req.Index, req.AggRequests)
-
 	// 1. 加载配置（通过索引名查找配置）
 	config, ok := s.registry.GetConfigByIndex(req.Index)
 	if !ok {
 		return nil, fmt.Errorf("unsupported index: %s", req.Index)
 	}
 
-	fmt.Printf("[DEBUG] Config loaded for index '%s': %d aggregation fields configured\n", req.Index, len(config.AggregationFields))
-	for _, af := range config.AggregationFields {
-		fmt.Printf("  - %s (aggType: %s, size: %d)\n", af.Field, af.AggType, af.Size)
-	}
-
 	// 2. 验证请求参数
 	if err := s.validateRequest(config, req); err != nil {
-		fmt.Printf("[ERROR] Validation failed: %v\n", err)
 		return nil, err
 	}
 
@@ -58,6 +50,13 @@ func (s *SearchService) Search(ctx context.Context, req *SearchRequest) (*Search
 
 // validateRequest 验证请求参数
 func (s *SearchService) validateRequest(config *domain.SearchConfig, req *SearchRequest) error {
+	// 验证 searchFields 字段是否在白名单
+	for _, field := range req.SearchFields {
+		if !config.IsQueryableField(field) {
+			return fmt.Errorf("field '%s' is not queryable", field)
+		}
+	}
+
 	// 验证 filter 字段是否在白名单
 	for field := range req.Filters {
 		if !config.IsFilterableField(field) {
@@ -89,7 +88,7 @@ func (s *SearchService) validateRequest(config *domain.SearchConfig, req *Search
 // buildCriteria 构建搜索条件
 func (s *SearchService) buildCriteria(config *domain.SearchConfig, req *SearchRequest) *domain.SearchCriteria {
 	// 自动组装排序（defaultSort + userSort + 兜底）
-	sortFields := s.buildSortFields(config, req.Sort)
+	sortFields := s.buildSortFields(config, req.Query, req.Sort)
 
 	// 转换 AggRequests
 	aggRequests := make(map[string]domain.AggRequest)
@@ -114,10 +113,11 @@ func (s *SearchService) buildCriteria(config *domain.SearchConfig, req *SearchRe
 	}
 
 	return &domain.SearchCriteria{
-		Index:       req.Index,
-		Query:       req.Query,
-		Filters:     filters,
-		AggRequests: aggRequests,
+		Index:        req.Index,
+		Query:        req.Query,
+		SearchFields: req.SearchFields,
+		Filters:      filters,
+		AggRequests:  aggRequests,
 		Pagination: domain.Pagination{
 			Offset: pagination.Offset,
 			Size:   pagination.Size,
@@ -127,18 +127,24 @@ func (s *SearchService) buildCriteria(config *domain.SearchConfig, req *SearchRe
 }
 
 // buildSortFields 构建排序字段（自动组装）
-// 优先级：defaultSort → userSort → 兜底(id asc)
-func (s *SearchService) buildSortFields(config *domain.SearchConfig, userSort []SortRequest) []domain.SortField {
+// 优先级：
+// - 有查询词时：用户排序 → _score desc（相关性）→ id asc
+// - 无查询词时：defaultSort → 用户排序 → id asc
+func (s *SearchService) buildSortFields(config *domain.SearchConfig, query string, userSort []SortRequest) []domain.SortField {
 	sortFields := make([]domain.SortField, 0)
+	hasQuery := query != ""
 
-	// 1. 添加 defaultSort（例如 priorityScore desc）
-	for _, sortConfig := range config.DefaultSort {
-		sortFields = append(sortFields, domain.SortField{
-			Field:   sortConfig.Field,
-			Order:   sortConfig.Order,
-			Type:    sortConfig.Type,
-			Missing: sortConfig.Missing,
-		})
+	// 1. 添加 defaultSort（仅在无查询词时）
+	// 有查询词时应该按相关性评分排序，而不是业务字段
+	if !hasQuery {
+		for _, sortConfig := range config.DefaultSort {
+			sortFields = append(sortFields, domain.SortField{
+				Field:   sortConfig.Field,
+				Order:   sortConfig.Order,
+				Type:    sortConfig.Type,
+				Missing: sortConfig.Missing,
+			})
+		}
 	}
 
 	// 2. 添加用户选择的排序
@@ -149,7 +155,15 @@ func (s *SearchService) buildSortFields(config *domain.SearchConfig, userSort []
 		})
 	}
 
-	// 3. 添加兜底排序（保证排序稳定性）
+	// 3. 有查询词时添加相关性排序
+	if hasQuery {
+		sortFields = append(sortFields, domain.SortField{
+			Field: "_score",
+			Order: "desc",
+		})
+	}
+
+	// 4. 添加兜底排序（保证排序稳定性）
 	sortFields = append(sortFields, domain.SortField{
 		Field: "id",
 		Order: "asc",
