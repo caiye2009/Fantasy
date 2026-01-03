@@ -1,51 +1,54 @@
+# Order 搜索配置
+# 字段定义以 internal/order/domain/order.go 为准
+
 index: order
 
+# 全文搜索字段（按优先级排序）
 queryFields:
-  - field: orderNo
+  - field: orderCode
+    boost: 5.0
+  - field: clientCode
     boost: 3.0
-  - field: status
-    boost: 1.0
+  - field: orderStatus
+    boost: 2.0
 
+# 过滤字段（type 自动从 Domain 推断）
 filterFields:
   - field: id
-    type: keyword
     operator: term
-  - field: orderNo
-    type: keyword
+  - field: orderCode
     operator: term
-  - field: status
-    type: keyword
+  - field: clientCode
+    operator: term
+  - field: orderStatus
     operator: terms
-  - field: clientId
-    type: keyword
-    operator: terms
-  - field: productId
-    type: keyword
-    operator: terms
-  - field: totalPrice
-    type: numeric
+  - field: orderDate
     operator: range
+  - field: deliveryDate
+    operator: range
+  - field: createdBy
+    operator: term
   - field: createdAt
-    type: date
     operator: range
   - field: updatedAt
-    type: date
     operator: range
 
+# 聚合字段（用于下拉筛选器）
 aggregationFields:
-  - field: status
-    type: keyword
+  - field: orderStatus
     aggType: terms
     size: 20
     supportSearch: false
-    excludeSelf: true
-  - field: clientId
-    type: keyword
-    aggType: composite
-    size: 10
+  - field: clientCode
+    aggType: terms
+    size: 50
     supportSearch: true
-    excludeSelf: true
-  - field: totalPrice
-    type: numeric
-    aggType: stats
-    excludeSelf: false
+  - field: createdBy
+    aggType: terms
+    size: 50
+    supportSearch: true
+
+# 默认排序
+defaultSort:
+  - field: createdAt
+    order: desc

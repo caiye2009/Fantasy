@@ -79,19 +79,39 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
   });
 
   // token过期的处理
-  client.addResponseInterceptor(
-    authenticateResponseInterceptor({
-      client,
-      doReAuthenticate,
-      doRefreshToken,
-      enableRefreshToken: preferences.app.enableRefreshToken,
-      formatToken,
-    }),
-  );
+  client.addResponseInterceptor({
+    fulfilled: (response) => {
+      return response;
+    },
+    rejected: async (error: any) => {
+      const { config } = error;
+
+      // 如果是 logout 请求失败，直接忽略，不触发重新认证
+      if (config?.url?.includes('/auth/logout')) {
+        return Promise.reject(error);
+      }
+
+      // 其他请求使用标准的认证拦截器
+      const authInterceptor = authenticateResponseInterceptor({
+        client,
+        doReAuthenticate,
+        doRefreshToken,
+        enableRefreshToken: preferences.app.enableRefreshToken,
+        formatToken,
+      });
+
+      return authInterceptor.rejected?.(error);
+    },
+  });
 
   // 通用的错误处理,如果没有进入上面的错误处理逻辑，就会进入这里
   client.addResponseInterceptor(
     errorMessageResponseInterceptor((msg: string, error) => {
+      // 如果是 logout 请求，忽略错误提示
+      if (error?.config?.url?.includes('/auth/logout')) {
+        return;
+      }
+
       // 这里可以根据业务进行定制,你可以拿到 error 内的信息进行定制化处理，根据不同的 code 做不同的提示，而不是直接使用 message.error 提示 msg
       // 当前mock接口返回的错误字段是 error 或者 message
       const responseData = error?.response?.data ?? {};

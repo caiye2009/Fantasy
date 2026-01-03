@@ -37,7 +37,7 @@ func Init() error {
 	logger := applog.NewLogger()
 	loggerAdapter := es.NewLoggerAdapter(logger)
 	esSync := es.NewESSync(esClient, loggerAdapter)
-	log.Println("✓ ES Sync initialized")
+	// log.Println("✓ ES Sync initialized")
 
 	// 初始化 Casbin（文件存储）
 	enforcer := InitCasbin(cfg)
@@ -46,8 +46,8 @@ func Init() error {
 	jwtWang, authWang, whitelistManager := InitAuth(db, rdb, cfg, enforcer)
 
 	// 初始化 Casbin 管理器（权限管理）
-	casbinManager := InitCasbinManager(enforcer, whitelistManager)
-	log.Println("✓ Casbin manager initialized")
+	// casbinManager := InitCasbinManager(enforcer, whitelistManager)
+	// log.Println("✓ Casbin manager initialized")
 
 	log.Println("=== Database Migration ===")
 	if err := AutoMigrate(db); err != nil {
@@ -64,7 +64,7 @@ func Init() error {
 	log.Printf("✓ Search registry initialized with indices: %v", searchRegistry.ListIndices())
 
 	log.Println("=== Initializing Services ===")
-	services := InitServices(db, rdb, esClient, jwtWang, whitelistManager, casbinManager, esSync, searchRegistry)
+	services := InitServices(db, esClient, esSync, searchRegistry, jwtWang, whitelistManager)
 	log.Println("✓ Services initialized")
 
 	log.Println("=== Initializing Router ===")
@@ -99,16 +99,18 @@ func InitAdminUser(db *gorm.DB) {
 	// Admin 密码: admin
 	hash, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
 	admin := &userDomain.User{
-		LoginID:      "admin",
-		Username:     "admin",
-		PasswordHash: string(hash),
-		Email:        "admin@example.com",
-		Role:         userDomain.RoleAdmin,
-		Status:       userDomain.UserStatusActive,
-		HasInitPass:  false,
+		LoginID:     "admin",
+		Username:    "admin",
+		Password:    string(hash),
+		RealName:    "Administrator",
+		Email:       "admin@example.com",
+		Role:        "admin",
+		Department:  "IT",
+		IsActive:    true,
+		HasInitPass: false,
 	}
 	db.Create(admin)
-	log.Println("✓ Default admin user created (login_id: 8000, password: admin)")
+	log.Println("✓ Default admin user created (login_id: admin, password: admin)")
 }
 
 func gracefulShutdown(server *http.Server, logger *applog.Logger) {

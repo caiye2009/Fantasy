@@ -21,7 +21,6 @@ var allIndexes = []string{
 	"product",
 	"supplier",
 	"order",
-	"plan",
 }
 
 func main() {

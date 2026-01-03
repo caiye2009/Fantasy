@@ -7,222 +7,117 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"back/pkg/endpoint"
 	"back/internal/product/application"
 	"back/internal/product/domain"
+	"back/pkg/endpoint"
 )
 
-// ProductHandler 产品 Handler
+// ProductHandler 客户 Handler
 type ProductHandler struct {
-	service      *application.ProductService
-	calculator   *application.CostCalculator
-	priceService *application.ProductPriceService
+	service *application.ProductService
 }
 
 // NewProductHandler 创建 Handler
-func NewProductHandler(
-	service *application.ProductService,
-	calculator *application.CostCalculator,
-	priceService *application.ProductPriceService,
-) *ProductHandler {
-	return &ProductHandler{
-		service:      service,
-		calculator:   calculator,
-		priceService: priceService,
-	}
+func NewProductHandler(service *application.ProductService) *ProductHandler {
+	return &ProductHandler{service: service}
 }
 
-// Create 创建产品
-// @Summary      创建产品
-// @Description  创建新的产品信息
-// @Tags         产品管理
-// @Accept       json
-// @Produce      json
-// @Param        request body application.CreateProductRequest true "产品信息"
-// @Success      200 {object} application.ProductResponse "创建成功"
-// @Failure      400 {object} map[string]string "请求参数错误"
-// @Failure      500 {object} map[string]string "服务器错误"
-// @Security     Bearer
-// @Router       /product [post]
+// Create 创建客户
 func (h *ProductHandler) Create(c *gin.Context) {
 	var req application.CreateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	resp, err := h.service.Create(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, resp)
 }
 
-// Get 获取产品详情
-// @Summary      获取产品详情
-// @Description  根据产品ID获取产品详细信息
-// @Tags         产品管理
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "产品ID"
-// @Success      200 {object} application.ProductResponse "获取成功"
-// @Failure      404 {object} map[string]string "产品不存在"
-// @Security     Bearer
-// @Router       /product/{id} [get]
+// Get 获取客户
 func (h *ProductHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	
+
 	resp, err := h.service.Get(c.Request.Context(), uint(id))
 	if err != nil {
 		if errors.Is(err, domain.ErrProductNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "产品不存在"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, resp)
 }
 
-// Update 更新产品信息
-// @Summary      更新产品信息
-// @Description  根据产品ID更新产品信息
-// @Tags         产品管理
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "产品ID"
-// @Param        request body application.UpdateProductRequest true "更新的产品信息"
-// @Success      200 {object} map[string]string "更新成功"
-// @Failure      400 {object} map[string]string "请求参数错误"
-// @Failure      500 {object} map[string]string "服务器错误"
-// @Security     Bearer
-// @Router       /product/{id} [post]
+// List 列表
+func (h *ProductHandler) List(c *gin.Context) {
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	list, total, err := h.service.List(c.Request.Context(), limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"total": total,
+		"list":  list,
+	})
+}
+
+// Update 更新客户
 func (h *ProductHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	
-	var req application.UpdateProductRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+
+	var updates map[string]interface{}
+	if err := c.ShouldBindJSON(&updates); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
-	if err := h.service.Update(c.Request.Context(), uint(id), &req); err != nil {
+
+	if err := h.service.Update(c.Request.Context(), uint(id), updates); err != nil {
 		if errors.Is(err, domain.ErrProductNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "产品不存在"})
-			return
-		}
-		if errors.Is(err, domain.ErrCannotUpdateApprovedProduct) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "已审批的产品不能修改"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
-	c.JSON(http.StatusOK, gin.H{"message": "更新成功"})
+
+	c.JSON(http.StatusOK, gin.H{"message": "updated successfully"})
 }
 
-// Delete 删除产品
-// @Summary      删除产品
-// @Description  根据产品ID删除产品
-// @Tags         产品管理
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "产品ID"
-// @Success      200 {object} map[string]string "删除成功"
-// @Failure      500 {object} map[string]string "服务器错误"
-// @Security     Bearer
-// @Router       /product/{id} [delete]
+// Delete 删除客户
 func (h *ProductHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	
+
 	if err := h.service.Delete(c.Request.Context(), uint(id)); err != nil {
 		if errors.Is(err, domain.ErrProductNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "产品不存在"})
-			return
-		}
-		if errors.Is(err, domain.ErrCannotDeleteApprovedProduct) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "已审批的产品不能删除"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	
-	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
-}
-
-// CalculateCost 计算产品成本
-// @Summary      计算产品成本
-// @Description  根据产品ID和数量计算产品成本
-// @Tags         产品管理
-// @Accept       json
-// @Produce      json
-// @Param        request body application.CalculateCostRequest true "成本计算参数"
-// @Success      200 {object} domain.CostResult "成本计算结果"
-// @Failure      400 {object} map[string]string "请求参数错误"
-// @Failure      500 {object} map[string]string "服务器错误"
-// @Security     Bearer
-// @Router       /product/calculate-cost [post]
-func (h *ProductHandler) CalculateCost(c *gin.Context) {
-	var req application.CalculateCostRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	result, err := h.calculator.Calculate(c.Request.Context(), &req)
-	if err != nil {
-		if errors.Is(err, domain.ErrProductNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "产品不存在"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, gin.H{"message": "deleted successfully"})
 }
 
-// GetPrice 获取产品价格
-// @Summary      获取产品价格
-// @Description  获取产品的当前价、历史最高价和历史最低价
-// @Tags         产品管理
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "产品ID"
-// @Success      200 {object} application.ProductPriceResponse "价格信息"
-// @Failure      404 {object} map[string]string "产品不存在"
-// @Failure      500 {object} map[string]string "服务器错误"
-// @Security     Bearer
-// @Router       /product/{id}/price [get]
-func (h *ProductHandler) GetPrice(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-
-	result, err := h.priceService.GetPrice(c.Request.Context(), uint(id))
-	if err != nil {
-		if errors.Is(err, domain.ErrProductNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "产品不存在"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
-}
-
-// GetRoutes 返回路由定义
+// GetRoutes 获取路由定义
 func (h *ProductHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{Method: "POST", Path: "/product", Handler: h.Create, Domain: "product", Action: "create"},
-		{Method: "GET", Path: "/product/:id", Handler: h.Get, Domain: "", Action: ""},
-		{Method: "GET", Path: "/product/:id/price", Handler: h.GetPrice, Domain: "", Action: ""},
-		{Method: "PUT", Path: "/product/:id", Handler: h.Update, Domain: "product", Action: "update"},
-		{Method: "DELETE", Path: "/product/:id", Handler: h.Delete, Domain: "product", Action: "delete"},
-		{Method: "POST", Path: "/product/calculate-cost", Handler: h.CalculateCost, Domain: "product", Action: "cost"},
+		{Method: "POST", Path: "/products", Handler: h.Create, Domain: "product", Action: "create"},
+		{Method: "GET", Path: "/products/:id", Handler: h.Get, Domain: "product", Action: "get"},
+		{Method: "GET", Path: "/products", Handler: h.List, Domain: "product", Action: "list"},
+		{Method: "PUT", Path: "/products/:id", Handler: h.Update, Domain: "product", Action: "update"},
+		{Method: "DELETE", Path: "/products/:id", Handler: h.Delete, Domain: "product", Action: "delete"},
 	}
 }

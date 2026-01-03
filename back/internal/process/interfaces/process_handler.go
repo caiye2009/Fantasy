@@ -7,12 +7,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"back/pkg/endpoint"
 	"back/internal/process/application"
 	"back/internal/process/domain"
+	"back/pkg/endpoint"
 )
 
-// ProcessHandler 工序 Handler
+// ProcessHandler 客户 Handler
 type ProcessHandler struct {
 	service *application.ProcessService
 }
@@ -22,130 +22,102 @@ func NewProcessHandler(service *application.ProcessService) *ProcessHandler {
 	return &ProcessHandler{service: service}
 }
 
-// Create 创建工序
-// @Summary      创建工序
-// @Description  创建新的工序信息
-// @Tags         工序管理
-// @Accept       json
-// @Produce      json
-// @Param        request body application.CreateProcessRequest true "工序信息"
-// @Success      200 {object} application.ProcessResponse "创建成功"
-// @Failure      400 {object} map[string]string "请求参数错误"
-// @Failure      500 {object} map[string]string "服务器错误"
-// @Security     Bearer
-// @Router       /process [post]
+// Create 创建客户
 func (h *ProcessHandler) Create(c *gin.Context) {
 	var req application.CreateProcessRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	resp, err := h.service.Create(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, resp)
 }
 
-// Get 获取工序详情
-// @Summary      获取工序详情
-// @Description  根据工序ID获取工序详细信息
-// @Tags         工序管理
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "工序ID"
-// @Success      200 {object} application.ProcessResponse "获取成功"
-// @Failure      404 {object} map[string]string "工序不存在"
-// @Security     Bearer
-// @Router       /process/{id} [get]
+// Get 获取客户
 func (h *ProcessHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	
+
 	resp, err := h.service.Get(c.Request.Context(), uint(id))
 	if err != nil {
 		if errors.Is(err, domain.ErrProcessNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "工序不存在"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "process not found"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, resp)
 }
 
-// List 功能已迁移至 /search 接口
-// 使用 POST /search 并指定 indices: ["processes"] 来获取工序列表
+// List 列表
+func (h *ProcessHandler) List(c *gin.Context) {
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-// Update 更新工序
-// @Summary      更新工序
-// @Description  根据工序ID更新工序信息
-// @Tags         工序管理
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "工序ID"
-// @Param        request body application.UpdateProcessRequest true "更新的工序信息"
-// @Success      200 {object} map[string]string "更新成功"
-// @Failure      400 {object} map[string]string "请求参数错误"
-// @Failure      500 {object} map[string]string "服务器错误"
-// @Security     Bearer
-// @Router       /process/{id} [post]
+	list, total, err := h.service.List(c.Request.Context(), limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"total": total,
+		"list":  list,
+	})
+}
+
+// Update 更新客户
 func (h *ProcessHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	
-	var req application.UpdateProcessRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+
+	var updates map[string]interface{}
+	if err := c.ShouldBindJSON(&updates); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
-	if err := h.service.Update(c.Request.Context(), uint(id), &req); err != nil {
+
+	if err := h.service.Update(c.Request.Context(), uint(id), updates); err != nil {
 		if errors.Is(err, domain.ErrProcessNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "工序不存在"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "process not found"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
-	c.JSON(http.StatusOK, gin.H{"message": "更新成功"})
+
+	c.JSON(http.StatusOK, gin.H{"message": "updated successfully"})
 }
 
-// Delete 删除工序
-// @Summary      删除工序
-// @Description  根据工序ID删除工序
-// @Tags         工序管理
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "工序ID"
-// @Success      200 {object} map[string]string "删除成功"
-// @Failure      500 {object} map[string]string "服务器错误"
-// @Security     Bearer
-// @Router       /process/{id} [delete]
+// Delete 删除客户
 func (h *ProcessHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	
+
 	if err := h.service.Delete(c.Request.Context(), uint(id)); err != nil {
 		if errors.Is(err, domain.ErrProcessNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "工序不存在"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "process not found"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
-	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
+
+	c.JSON(http.StatusOK, gin.H{"message": "deleted successfully"})
 }
 
 // GetRoutes 获取路由定义
 func (h *ProcessHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{Method: "POST", Path: "/process", Handler: h.Create, Domain: "process", Action: "create"},
-		{Method: "GET", Path: "/process/:id", Handler: h.Get, Domain: "", Action: ""},
-		{Method: "PUT", Path: "/process/:id", Handler: h.Update, Domain: "process", Action: "update"},
-		{Method: "DELETE", Path: "/process/:id", Handler: h.Delete, Domain: "process", Action: "delete"},
+		{Method: "POST", Path: "/processs", Handler: h.Create, Domain: "process", Action: "create"},
+		{Method: "GET", Path: "/processs/:id", Handler: h.Get, Domain: "process", Action: "get"},
+		{Method: "GET", Path: "/processs", Handler: h.List, Domain: "process", Action: "list"},
+		{Method: "PUT", Path: "/processs/:id", Handler: h.Update, Domain: "process", Action: "update"},
+		{Method: "DELETE", Path: "/processs/:id", Handler: h.Delete, Domain: "process", Action: "delete"},
 	}
 }

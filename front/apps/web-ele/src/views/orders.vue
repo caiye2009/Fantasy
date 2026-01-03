@@ -345,7 +345,7 @@ import SearchInput from '#/components/SearchInput/index.vue'
 import { elasticsearchService } from '#/api/core/es'
 import { useDataTable } from '#/composables/useDataTable'
 import type { PageConfig, BulkAction } from '#/components/Table/types'
-import { getInventoriesByProductIdApi, type InventoryResponse } from '#/api/core/inventory'
+import { getInventoriesByProductIdApi, type InventoryResponse } from '#/api/core/product_allocation'
 
 const { searchLoading } = useDataTable('order', 20)
 

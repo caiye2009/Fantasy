@@ -202,7 +202,7 @@ const pageConfig: PageConfig = {
 const handleAddSuccess = (newMaterial: Material) => {
   ElMessage.success('新增成功')
   // 重新加载数据
-  window.location.reload()
+  // window.location.reload()
 }
 
 // 打开详情

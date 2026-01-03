@@ -2,27 +2,51 @@ package config
 
 import (
 	_ "back/docs" // 导入生成的 docs
+	"time"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"gorm.io/gorm"
-	"time"
 
-	analyticsInterfaces "back/internal/analytics/interfaces"
+	// Auth
 	authInterfaces "back/internal/auth/interfaces"
+
+	// 基础数据模块
 	clientInterfaces "back/internal/client/interfaces"
-	inventoryInterfaces "back/internal/inventory/interfaces"
+	supplierInterfaces "back/internal/supplier/interfaces"
 	materialInterfaces "back/internal/material/interfaces"
-	orderInterfaces "back/internal/order/interfaces"
-	planInterfaces "back/internal/plan/interfaces"
-	pricingInterfaces "back/internal/pricing/interfaces"
 	processInterfaces "back/internal/process/interfaces"
 	productInterfaces "back/internal/product/interfaces"
-	searchInterfaces "back/internal/search/interfaces"
-	supplierInterfaces "back/internal/supplier/interfaces"
 	userInterfaces "back/internal/user/interfaces"
-	permissionInterfaces "back/internal/user/permission/interfaces"
+	userDeptInterfaces "back/internal/user_dept/interfaces"
+	userRoleInterfaces "back/internal/user_role/interfaces"
+
+	// 关联配置模块
+	productMaterialInterfaces "back/internal/product_material/interfaces"
+	productProcessInterfaces "back/internal/product_process/interfaces"
+	materialQuoteInterfaces "back/internal/material_quote/interfaces"
+	processQuoteInterfaces "back/internal/process_quote/interfaces"
+
+	// 订单主模块
+	orderInterfaces "back/internal/order/interfaces"
+	orderProductInterfaces "back/internal/order_product/interfaces"
+
+	// 订单执行模块
+	orderMaterialInterfaces "back/internal/order_material/interfaces"
+	orderProcessInterfaces "back/internal/order_process/interfaces"
+	purchaseOrderInterfaces "back/internal/purchase_order/interfaces"
+	materialAllocationInterfaces "back/internal/material_allocation/interfaces"
+	productionOrderInterfaces "back/internal/production_order/interfaces"
+	productAllocationInterfaces "back/internal/product_allocation/interfaces"
+
+	// 订单辅助模块
+	orderParticipantInterfaces "back/internal/order_participant/interfaces"
+	orderEventInterfaces "back/internal/order_event/interfaces"
+
+	searchInterfaces "back/internal/search/interfaces"
+
 	"back/pkg/audit"
 	"back/pkg/auth"
 	"back/pkg/endpoint"
@@ -34,6 +58,7 @@ func InitRoutes(authWang *auth.AuthWang, services *Services, db *gorm.DB) *gin.E
 
 	router := gin.Default()
 
+	// CORS 配置
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -48,87 +73,96 @@ func InitRoutes(authWang *auth.AuthWang, services *Services, db *gorm.DB) *gin.E
 
 	api := router.Group("/api/v1")
 
-	// 公开路由（不需要认证）
+	// ========== 公开路由（不需要认证）==========
 	public := api.Group("")
 	{
-		// 登录和刷新token不需要认证
 		authHandler := authInterfaces.NewAuthHandler(services.Auth)
 		public.POST("/auth/login", authHandler.Login)
 		public.POST("/auth/refresh", authHandler.RefreshToken)
 	}
 
-	// 受保护路由
+	// ========== 受保护路由 ==========
 	protected := api.Group("")
-	protected.Use(authWang.AuthMiddleware()) // 1. 先认证鉴权
-	protected.Use(audit.AuditMiddleware(db)) // 2. 再审计（auth > handler > audit）
+	protected.Use(authWang.AuthMiddleware())
+	protected.Use(audit.AuditMiddleware(db))
 	{
-		// 登出需要认证
+		// Auth - 登出
 		authHandler := authInterfaces.NewAuthHandler(services.Auth)
 		protected.POST("/auth/logout", authHandler.Logout)
 
-		// User
-		userHandler := userInterfaces.NewUserHandler(services.User)
-		endpoint.RegisterRoutes(protected, userHandler.GetRoutes())
-
-		// Department
-		departmentHandler := userInterfaces.NewDepartmentHandler(services.Department)
-		endpoint.RegisterRoutes(protected, departmentHandler.GetRoutes())
-
-		// Role
-		roleHandler := userInterfaces.NewRoleHandler(services.Role)
-		endpoint.RegisterRoutes(protected, roleHandler.GetRoutes())
-
-		// Supplier
-		supplierHandler := supplierInterfaces.NewSupplierHandler(services.Supplier)
-		endpoint.RegisterRoutes(protected, supplierHandler.GetRoutes())
-
-		// Client
+		// ========== 基础数据模块（6个）==========
 		clientHandler := clientInterfaces.NewClientHandler(services.Client)
 		endpoint.RegisterRoutes(protected, clientHandler.GetRoutes())
 
-		// Material
+		supplierHandler := supplierInterfaces.NewSupplierHandler(services.Supplier)
+		endpoint.RegisterRoutes(protected, supplierHandler.GetRoutes())
+
 		materialHandler := materialInterfaces.NewMaterialHandler(services.Material)
 		endpoint.RegisterRoutes(protected, materialHandler.GetRoutes())
 
-		// Process
 		processHandler := processInterfaces.NewProcessHandler(services.Process)
 		endpoint.RegisterRoutes(protected, processHandler.GetRoutes())
 
-		// Material Price
-		materialPriceHandler := pricingInterfaces.NewMaterialPriceHandler(services.MaterialPrice)
-		endpoint.RegisterRoutes(protected, materialPriceHandler.GetRoutes())
-
-		// Process Price
-		processPriceHandler := pricingInterfaces.NewProcessPriceHandler(services.ProcessPrice)
-		endpoint.RegisterRoutes(protected, processPriceHandler.GetRoutes())
-
-		// Product
-		productHandler := productInterfaces.NewProductHandler(services.Product, services.ProductCostCalculator, services.ProductPrice)
+		productHandler := productInterfaces.NewProductHandler(services.Product)
 		endpoint.RegisterRoutes(protected, productHandler.GetRoutes())
 
-		// Plan
-		planHandler := planInterfaces.NewPlanHandler(services.Plan)
-		endpoint.RegisterRoutes(protected, planHandler.GetRoutes())
+		userHandler := userInterfaces.NewUserHandler(services.User)
+		endpoint.RegisterRoutes(protected, userHandler.GetRoutes())
 
-		// Order
+		userDeptHandler := userDeptInterfaces.NewUserDeptHandler(services.UserDept)
+		endpoint.RegisterRoutes(protected, userDeptHandler.GetRoutes())
+
+		userRoleHandler := userRoleInterfaces.NewUserRoleHandler(services.UserRole)
+		endpoint.RegisterRoutes(protected, userRoleHandler.GetRoutes())
+
+		// ========== 关联配置模块（4个）==========
+		productMaterialHandler := productMaterialInterfaces.NewProductMaterialHandler(services.ProductMaterial)
+		endpoint.RegisterRoutes(protected, productMaterialHandler.GetRoutes())
+
+		productProcessHandler := productProcessInterfaces.NewProductProcessHandler(services.ProductProcess)
+		endpoint.RegisterRoutes(protected, productProcessHandler.GetRoutes())
+
+		materialQuoteHandler := materialQuoteInterfaces.NewMaterialQuoteHandler(services.MaterialQuote)
+		endpoint.RegisterRoutes(protected, materialQuoteHandler.GetRoutes())
+
+		processQuoteHandler := processQuoteInterfaces.NewProcessQuoteHandler(services.ProcessQuote)
+		endpoint.RegisterRoutes(protected, processQuoteHandler.GetRoutes())
+
+		// ========== 订单主模块（2个）==========
 		orderHandler := orderInterfaces.NewOrderHandler(services.Order)
 		endpoint.RegisterRoutes(protected, orderHandler.GetRoutes())
 
-		// Search
+		orderProductHandler := orderProductInterfaces.NewOrderProductHandler(services.OrderProduct)
+		endpoint.RegisterRoutes(protected, orderProductHandler.GetRoutes())
+
+		// ========== 订单执行模块（6个）==========
+		orderMaterialHandler := orderMaterialInterfaces.NewOrderMaterialHandler(services.OrderMaterial)
+		endpoint.RegisterRoutes(protected, orderMaterialHandler.GetRoutes())
+
+		orderProcessHandler := orderProcessInterfaces.NewOrderProcessHandler(services.OrderProcess)
+		endpoint.RegisterRoutes(protected, orderProcessHandler.GetRoutes())
+
+		purchaseOrderHandler := purchaseOrderInterfaces.NewPurchaseOrderHandler(services.PurchaseOrder)
+		endpoint.RegisterRoutes(protected, purchaseOrderHandler.GetRoutes())
+
+		materialAllocationHandler := materialAllocationInterfaces.NewMaterialAllocationHandler(services.MaterialAllocation)
+		endpoint.RegisterRoutes(protected, materialAllocationHandler.GetRoutes())
+
+		productionOrderHandler := productionOrderInterfaces.NewProductionOrderHandler(services.ProductionOrder)
+		endpoint.RegisterRoutes(protected, productionOrderHandler.GetRoutes())
+
+		productAllocationHandler := productAllocationInterfaces.NewProductAllocationHandler(services.ProductAllocation)
+		endpoint.RegisterRoutes(protected, productAllocationHandler.GetRoutes())
+
+		// ========== 订单辅助模块（2个）==========
+		orderParticipantHandler := orderParticipantInterfaces.NewOrderParticipantHandler(services.OrderParticipant)
+		endpoint.RegisterRoutes(protected, orderParticipantHandler.GetRoutes())
+
+		orderEventHandler := orderEventInterfaces.NewOrderEventHandler(services.OrderEvent)
+		endpoint.RegisterRoutes(protected, orderEventHandler.GetRoutes())
+
 		searchHandler := searchInterfaces.NewSearchHandler(services.Search)
 		endpoint.RegisterRoutes(protected, searchHandler.GetRoutes())
-
-		// Analytics
-		returnAnalysisHandler := analyticsInterfaces.NewReturnAnalysisHandler(services.ReturnAnalysis)
-		endpoint.RegisterRoutes(protected, returnAnalysisHandler.GetRoutes())
-
-		// Permission
-		permissionHandler := permissionInterfaces.NewPermissionHandler(services.Permission)
-		endpoint.RegisterRoutes(protected, permissionHandler.GetRoutes())
-
-		// Inventory
-		inventoryHandler := inventoryInterfaces.NewInventoryHandler(services.Inventory)
-		endpoint.RegisterRoutes(protected, inventoryHandler.GetRoutes())
 	}
 
 	return router

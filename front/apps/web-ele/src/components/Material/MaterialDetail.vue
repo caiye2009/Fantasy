@@ -167,8 +167,10 @@ import * as echarts from 'echarts'
 import type { EChartsOption } from 'echarts'
 import type { Material, SupplierQuote } from './types'
 import AddQuoteDialog from './AddQuoteDialog.vue'
-import { getMaterialPriceHistoryApi, type PriceData } from '#/api/core/pricing'
 import { elasticsearchService } from '#/api/core/es'
+import { getMaterialPriceHistoryApi, type MaterialPriceHistory } from '#/api/core/material_quote'
+
+type PriceData = MaterialPriceHistory
 
 interface Props {
   visible: boolean

@@ -1,96 +1,82 @@
-import { requestClient } from '#/api/request';
+import { requestClient } from '../request';
+import { search } from './search';
 
-/**
- * 材料配置
- */
-export interface MaterialConfig {
-  material_id: number;
-  ratio: number; // 占比 (0-1)
+export interface Product {
+  id: number;
+  productCode: string;
+  productName: string;
+  createdBy: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-/**
- * 工艺配置
- */
-export interface ProcessConfig {
-  process_id: number;
-  quantity?: number;
+export interface ProductListResponse {
+  total: number;
+  list: Product[];
 }
 
-/**
- * 产品价格响应
- */
+export async function createProduct(data: {
+  productCode: string;
+  productName: string;
+  createdBy: number;
+}) {
+  const response = await requestClient.post<Product>('/products', data);
+  return response;
+}
+
+export async function getProduct(id: number) {
+  const response = await requestClient.get<Product>(`/products/${id}`);
+  return response;
+}
+
+export async function updateProduct(
+  id: number,
+  data: {
+    productCode?: string;
+    productName?: string;
+  }
+) {
+  const response = await requestClient.post<Product>(`/products/${id}`, data);
+  return response;
+}
+
+export async function deleteProduct(id: number) {
+  const response = await requestClient.delete(`/products/${id}`);
+  return response;
+}
+
+// List queries use search API
+export async function getProducts(params?: { limit?: number; offset?: number }) {
+  const result = await search({
+    index: 'product',
+    from: params?.offset || 0,
+    size: params?.limit || 20,
+  });
+  return {
+    total: result.total || 0,
+    list: result.hits || [],
+  };
+}
+
+// Product price API (stub for now)
 export interface ProductPriceResponse {
   current_price: number;
   historical_high: number;
   historical_low: number;
 }
 
-/**
- * 创建产品请求
- */
-export interface CreateProductRequest {
-  name: string;
-  materials: MaterialConfig[];
-  processes: ProcessConfig[];
+export async function getProductPriceApi(_productId: number): Promise<ProductPriceResponse> {
+  // TODO: Implement actual product pricing logic
+  return {
+    current_price: 0,
+    historical_high: 0,
+    historical_low: 0,
+  };
 }
 
-/**
- * 更新产品请求
- */
-export interface UpdateProductRequest {
-  name?: string;
-  status?: string;
-  materials?: MaterialConfig[];
-  processes?: ProcessConfig[];
-}
-
-/**
- * 产品响应
- */
-export interface ProductResponse {
-  id: number;
-  name: string;
-  status: string;
-  materials: MaterialConfig[];
-  processes: ProcessConfig[];
-  created_at: string;
-  updated_at: string;
-}
-
-/**
- * 获取产品价格
- */
-export async function getProductPriceApi(productId: number): Promise<ProductPriceResponse> {
-  const response = await requestClient.get<ProductPriceResponse>(`/product/${productId}/price`);
-  return response.data;
-}
-
-/**
- * 创建产品
- */
-export async function createProductApi(data: CreateProductRequest): Promise<ProductResponse> {
-  const response = await requestClient.post<ProductResponse>('/product', data);
-  return response.data;
-}
-
-/**
- * 获取产品详情
- */
-export async function getProductApi(productId: number): Promise<ProductResponse> {
-  const response = await requestClient.get<ProductResponse>(`/product/${productId}`);
-  return response.data;
-}
-
-/**
- * 更新产品
- */
-export async function updateProductApi(productId: number, data: UpdateProductRequest): Promise<void> {
-  await requestClient.post(`/product/${productId}`, data);
-}
-
-/**
- * 删除产品
- */
-export async function deleteProductApi(productId: number): Promise<void> {
-  await requestClient.delete(`/product/${productId}`);
-}
+// Backward compatibility aliases
+export const getProductListApi = getProducts;
+export const getProductDetailApi = getProduct;
+export const createProductApi = createProduct;
+export const updateProductApi = updateProduct;
+export const deleteProductApi = deleteProduct;

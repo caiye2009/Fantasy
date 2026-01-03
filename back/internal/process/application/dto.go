@@ -2,32 +2,19 @@ package application
 
 import "time"
 
-// CreateProcessRequest 创建工序请求
 type CreateProcessRequest struct {
-	Name         string  `json:"name" binding:"required,min=2,max=100"`
-	Description  string  `json:"description" binding:"omitempty"`
-	CurrentPrice float64 `json:"currentPrice" binding:"omitempty,min=0"` // 当前价格
+	ProcessCode string `json:"processCode" validate:"required,max=50"`
+	ProcessName string `json:"processName" validate:"required,max=100"`
+	ProcessCountry string `json:"processCountry" validate:"max=50"`
+	CreatedBy uint `json:"createdBy" validate:"required"`
 }
 
-// UpdateProcessRequest 更新工序请求
-type UpdateProcessRequest struct {
-	Name         string  `json:"name" binding:"omitempty,min=2,max=100"`
-	Description  string  `json:"description" binding:"omitempty"`
-	CurrentPrice float64 `json:"currentPrice" binding:"omitempty,min=0"`
-}
-
-// ProcessResponse 工序响应
 type ProcessResponse struct {
-	ID           uint      `json:"id"`
-	Name         string    `json:"name"`
-	Description  string    `json:"description"`
-	CurrentPrice float64   `json:"currentPrice"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-}
-
-// ProcessListResponse 工序列表响应
-type ProcessListResponse struct {
-	Total     int64              `json:"total"`
-	Processes []*ProcessResponse `json:"processes"`
+	ID uint `json:"id"`
+	ProcessCode string `json:"processCode"`
+	ProcessName string `json:"processName"`
+	ProcessCountry string `json:"processCountry"`
+	CreatedBy uint `json:"createdBy"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }

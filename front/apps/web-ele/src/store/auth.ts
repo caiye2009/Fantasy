@@ -36,8 +36,14 @@ export const useAuthStore = defineStore('auth', () => {
 
       // 将表单的 username 映射为后端需要的 loginId
       const { username, password } = params;
-      const { accessToken, refreshToken, username: realUsername, role } =
-        await loginApi({ loginId: username, password });
+      const {
+        accessToken,
+        refreshToken,
+        username: realUsername,
+        role,
+        department,
+        requirePasswordChange
+      } = await loginApi({ loginId: username, password });
 
       // 如果成功获取到 accessToken
       if (accessToken) {
@@ -59,6 +65,12 @@ export const useAuthStore = defineStore('auth', () => {
 
         // 根据role设置权限码（简单映射，后续可以扩展）
         accessStore.setAccessCodes([role]);
+
+        // 如果需要修改密码，可以在这里添加逻辑
+        if (requirePasswordChange) {
+          console.warn('User needs to change password');
+          // TODO: 跳转到修改密码页面或显示提示
+        }
 
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
@@ -84,11 +96,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout(redirect: boolean = true) {
-    try {
-      await logoutApi();
-    } catch {
-      // 不做任何处理
-    }
+    // 发送 logout 请求到后端（不等待结果，不关心成功失败）
+    logoutApi().catch(() => {
+      // 忽略所有错误，包括 401
+    });
+
+    // 立即清理前端状态
     resetAllStores();
     accessStore.setLoginExpired(false);
 
@@ -117,22 +130,26 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       // 解析 JWT token (payload 是 base64 编码的第二部分)
-      const payload = token.split('.')[1];
-      const decodedPayload = JSON.parse(atob(payload));
+      const parts = token.split('.');
+      if (parts.length < 2 || !parts[1]) {
+        return null;
+      }
+      const decodedPayload = JSON.parse(atob(parts[1]));
 
       // 从 JWT payload 中提取用户信息
-      const { login_id, role } = decodedPayload;
+      const { login_id, user_name, role, department } = decodedPayload;
 
       // 构造用户信息对象
       userInfo = {
         userId: login_id,
-        username: login_id,
-        realName: login_id,
+        username: user_name || login_id,
+        realName: user_name || login_id,
         avatar: '',
         roles: [role],
       };
 
       userStore.setUserInfo(userInfo);
+      accessStore.setAccessCodes([role]);
     } catch (error) {
       console.error('Failed to parse JWT token:', error);
       return null;

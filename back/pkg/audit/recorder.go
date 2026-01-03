@@ -73,7 +73,7 @@ func NewRecorder(c *gin.Context, db *gorm.DB) *Recorder {
 
 	// 从 Auth 中间件设置的 endpoint 获取 domain 和 action
 	var domain, action string
-	if ep, exists := c.Get("endpoint"); exists {
+	if ep, exists := c.Get("endpoint"); exists && ep != nil {
 		endpoint := ep.(*endpoint.Endpoint)
 		domain = endpoint.Domain
 		action = endpoint.Action

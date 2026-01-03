@@ -15,6 +15,14 @@ func AuditMiddleware(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// 检查是否为注册的接口（只有注册的接口才记录 audit）
+		ep, exists := c.Get("endpoint")
+		if !exists || ep == nil {
+			// 未注册的接口，跳过 audit 记录
+			c.Next()
+			return
+		}
+
 		// 3. 创建 Recorder 并注入到 context
 		recorder := NewRecorder(c, db)
 		c.Set(RecorderContextKey, recorder)
@@ -40,18 +48,4 @@ func Mark(domain, action string) gin.HandlerFunc {
 		c.Set("audit_action", action)
 		c.Next()
 	}
-}
-
-// Skip 创建一个跳过审计的中间件（用于特殊路由）
-func Skip() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Set("skip_audit", true)
-		c.Next()
-	}
-}
-
-// shouldSkip 检查是否应该跳过审计
-func shouldSkip(c *gin.Context) bool {
-	skip, exists := c.Get("skip_audit")
-	return exists && skip.(bool)
 }

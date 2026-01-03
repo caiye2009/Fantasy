@@ -94,18 +94,15 @@ func (aw *AuthWang) AuthMiddleware() gin.HandlerFunc {
 
 		// 5. 根据 HTTP route 查找 endpoint
 		ep := endpoint.GlobalRegistry.FindByRoute(c.Request.Method, c.Request.URL.Path)
-		if ep == nil {
-			// 未注册的接口，拒绝访问
-			c.JSON(404, gin.H{"error": "接口未注册"})
-			c.Abort()
-			return
-		}
 
 		// 将 endpoint 信息存到 context（供 Audit 使用）
-		c.Set("endpoint", ep)
+		// 只有找到 endpoint 时才设置，避免 typed nil 问题
+		if ep != nil {
+			c.Set("endpoint", ep)
+		}
 
-		// 6. Casbin 权限检查（使用接口名称）
-		if aw.enforcer != nil {
+		// 6. Casbin 权限检查（仅对注册的接口进行权限检查）
+		if ep != nil && aw.enforcer != nil {
 			loginID := claims.LoginID
 			role := claims.Role
 			permission := ep.GetName() // 如 "user.create", "order.list"
@@ -134,6 +131,7 @@ func (aw *AuthWang) AuthMiddleware() gin.HandlerFunc {
 				return
 			}
 		}
+		// 未注册的接口（ep == nil）跳过权限检查，直接放行
 
 		// 7. 放行
 		c.Next()

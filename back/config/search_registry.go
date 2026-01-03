@@ -12,7 +12,6 @@ import (
 	clientDomain "back/internal/client/domain"
 	materialDomain "back/internal/material/domain"
 	orderDomain "back/internal/order/domain"
-	planDomain "back/internal/plan/domain"
 	processDomain "back/internal/process/domain"
 	productDomain "back/internal/product/domain"
 	supplierDomain "back/internal/supplier/domain"
@@ -54,7 +53,6 @@ func registerAllDomains(registry *infra.DomainAwareRegistry) error {
 		{"product", &productDomain.Product{}},
 		{"process", &processDomain.Process{}},
 		{"order", &orderDomain.Order{}},
-		{"plan", &planDomain.Plan{}},
 	}
 
 	for _, d := range domains {

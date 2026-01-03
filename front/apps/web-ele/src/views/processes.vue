@@ -211,12 +211,12 @@ import * as echarts from 'echarts'
 import type { EChartsOption } from 'echarts'
 import DataTable from '#/components/Table/index.vue'
 import { elasticsearchService } from '#/api/core/es'
-import {
-  quoteProcessPriceApi,
-  getProcessPriceHistoryApi,
-  type PriceData,
-} from '#/api/core/pricing'
 import { getSupplierListApi, type Supplier } from '#/api/core/supplier'
+import {
+  getProcessPriceHistoryApi,
+  quoteProcessPriceApi,
+  type ProcessPriceHistory
+} from '#/api/core/process_quote'
 
 import type {
   PageConfig,
@@ -227,6 +227,8 @@ import type {
 
 import { useDataTable } from '#/composables/useDataTable'
 const { searchLoading } = useDataTable('process', 20)
+
+type PriceData = ProcessPriceHistory
 
 // 配置
 const pageConfig: PageConfig = {
@@ -399,7 +401,7 @@ const renderPriceChart = () => {
 const loadSuppliers = async () => {
   try {
     const res = await getSupplierListApi({ limit: 1000, offset: 0 })
-    suppliers.value = res.suppliers || []
+    suppliers.value = res.list || []
   } catch (error) {
     console.error('加载供应商列表失败:', error)
   }

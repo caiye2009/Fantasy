@@ -2,152 +2,102 @@ package application
 
 import (
 	"context"
-	"strconv"
-	
+
 	"back/internal/process/domain"
 	"back/internal/process/infra"
 )
 
-// ESSync ES 同步接口
-type ESSync interface {
-	Index(doc interface{}) error
-	Update(doc interface{}) error
-	Delete(indexName, docID string) error
-}
-
-// ProcessService 工序应用服务
 type ProcessService struct {
-	repo   *infra.ProcessRepo
-	esSync ESSync
+	repo *infra.ProcessRepo
 }
 
-// NewProcessService 创建工序服务
-func NewProcessService(repo *infra.ProcessRepo, esSync ESSync) *ProcessService {
-	return &ProcessService{
-		repo:   repo,
-		esSync: esSync,
-	}
+func NewProcessService(repo *infra.ProcessRepo) *ProcessService {
+	return &ProcessService{repo: repo}
 }
 
-// toProcessResponse 领域模型转DTO
-func toProcessResponse(p *domain.Process) *ProcessResponse {
-	return &ProcessResponse{
-		ID:           p.ID,
-		Name:         p.Name,
-		Description:  p.Description,
-		CurrentPrice: p.CurrentPrice,
-		CreatedAt:    p.CreatedAt,
-		UpdatedAt:    p.UpdatedAt,
-	}
-}
-
-// Create 创建工序
 func (s *ProcessService) Create(ctx context.Context, req *CreateProcessRequest) (*ProcessResponse, error) {
-	// 1. DTO → Domain Model
 	process := &domain.Process{
-		Name:         req.Name,
-		Description:  req.Description,
-		CurrentPrice: req.CurrentPrice,
+		ProcessCode: req.ProcessCode,
+		ProcessName: req.ProcessName,
+		ProcessCountry: req.ProcessCountry,
+		CreatedBy: req.CreatedBy,
 	}
 
-	// 2. 领域验证
-	if err := process.Validate(); err != nil {
+	if err := s.repo.Create(ctx, process); err != nil {
 		return nil, err
 	}
 
-	// 3. 保存到数据库
-	if err := s.repo.Save(ctx, process); err != nil {
-		return nil, err
-	}
-
-	// 4. 异步同步到 ES
-	if s.esSync != nil {
-		s.esSync.Index(process)
-	}
-
-	// 5. Domain Model → DTO
 	return toProcessResponse(process), nil
 }
 
-// Get 获取工序
 func (s *ProcessService) Get(ctx context.Context, id uint) (*ProcessResponse, error) {
-	process, err := s.repo.FindByID(ctx, id)
+	process, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, domain.ErrProcessNotFound
 	}
-
 	return toProcessResponse(process), nil
 }
 
-// List 功能已移至 search 模块，通过 ES 实现
-// 使用 POST /api/v1/search 并指定 indices: ["processes"]
-
-// Update 更新工序
-func (s *ProcessService) Update(ctx context.Context, id uint, req *UpdateProcessRequest) error {
-	// 1. 查询工序
-	process, err := s.repo.FindByID(ctx, id)
+func (s *ProcessService) List(ctx context.Context, limit, offset int) ([]*ProcessResponse, int64, error) {
+	processs, err := s.repo.List(ctx, limit, offset)
 	if err != nil {
-		return err
-	}
-	
-	// 2. 更新字段（通过领域方法）
-	if req.Name != "" {
-		if err := process.UpdateName(req.Name); err != nil {
-			return err
-		}
+		return nil, 0, err
 	}
 
-	if req.Description != "" {
-		process.Description = req.Description
+	count, err := s.repo.Count(ctx)
+	if err != nil {
+		return nil, 0, err
 	}
 
-	if req.CurrentPrice > 0 {
-		process.CurrentPrice = req.CurrentPrice
+	responses := make([]*ProcessResponse, len(processs))
+	for i, process := range processs {
+		responses[i] = toProcessResponse(&process)
 	}
-	
-	// 3. 验证
-	if err := process.Validate(); err != nil {
-		return err
-	}
-	
-	// 4. 保存
-	if err := s.repo.Update(ctx, process); err != nil {
-		return err
-	}
-	
-	// 5. 异步同步到 ES
-	if s.esSync != nil {
-		s.esSync.Update(process)
-	}
-	
-	return nil
+
+	return responses, count, nil
 }
 
-// Delete 删除工序
-func (s *ProcessService) Delete(ctx context.Context, id uint) error {
-	// 1. 检查是否存在
-	exists, err := s.repo.ExistsByID(ctx, id)
+func (s *ProcessService) Update(ctx context.Context, id uint, updates map[string]interface{}) error {
+	exists, err := s.repo.Exists(ctx, id)
 	if err != nil {
 		return err
 	}
 	if !exists {
 		return domain.ErrProcessNotFound
 	}
-	
-	// 2. 删除
-	if err := s.repo.Delete(ctx, id); err != nil {
-		return err
+
+	delete(updates, "id")
+	delete(updates, "createdAt")
+	delete(updates, "createdBy")
+	delete(updates, "deletedAt")
+
+	if len(updates) == 0 {
+		return nil
 	}
-	
-	// 3. 异步删除 ES 文档
-	if s.esSync != nil {
-		s.esSync.Delete("processes", strconv.Itoa(int(id)))
-	}
-	
-	return nil
+
+	return s.repo.UpdateFields(ctx, id, updates)
 }
 
-// Exists 检查工序是否存在（供其他模块调用）
-func (s *ProcessService) Exists(ctx context.Context, id uint) (bool, error) {
-	return s.repo.ExistsByID(ctx, id)
+func (s *ProcessService) Delete(ctx context.Context, id uint) error {
+	exists, err := s.repo.Exists(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return domain.ErrProcessNotFound
+	}
+
+	return s.repo.Delete(ctx, id)
+}
+
+func toProcessResponse(process *domain.Process) *ProcessResponse {
+	return &ProcessResponse{
+		ID: process.ID,
+		ProcessCode: process.ProcessCode,
+		ProcessName: process.ProcessName,
+		ProcessCountry: process.ProcessCountry,
+		CreatedBy: process.CreatedBy,
+		CreatedAt: process.CreatedAt,
+		UpdatedAt: process.UpdatedAt,
+	}
 }

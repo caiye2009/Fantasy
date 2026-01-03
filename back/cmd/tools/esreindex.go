@@ -11,7 +11,6 @@ import (
 	clientDomain "back/internal/client/domain"
 	materialDomain "back/internal/material/domain"
 	orderDomain "back/internal/order/domain"
-	planDomain "back/internal/plan/domain"
 	processDomain "back/internal/process/domain"
 	productDomain "back/internal/product/domain"
 	supplierDomain "back/internal/supplier/domain"
@@ -24,7 +23,7 @@ import (
 )
 
 // 支持的域列表
-var supportedDomains = []string{"client", "material", "process", "product", "supplier", "order", "plan"}
+var supportedDomains = []string{"client", "material", "process", "product", "supplier", "order"}
 
 func main() {
 	log.Println("=== ES Reindex Tool ===")
@@ -161,8 +160,6 @@ func reindexDomain(db *gorm.DB, esSync *es.ESSync, domain string) (success, fail
 		return reindexSuppliers(db, esSync)
 	case "order":
 		return reindexOrders(db, esSync)
-	case "plan":
-		return reindexPlans(db, esSync)
 	default:
 		return 0, 0, fmt.Errorf("unsupported domain: %s", domain)
 	}
@@ -352,37 +349,6 @@ func reindexOrders(db *gorm.DB, esSync *es.ESSync) (success, failed int, err err
 
 	// 批量索引（每批 200 条）
 	return batchIndexDocuments(esSync, activeOrders, 200)
-}
-
-// reindexPlans 重新索引计划数据
-func reindexPlans(db *gorm.DB, esSync *es.ESSync) (success, failed int, err error) {
-	log.Println("→ Fetching plans from database...")
-
-	var plans []planDomain.Plan
-	if err := db.Unscoped().Find(&plans).Error; err != nil {
-		return 0, 0, fmt.Errorf("failed to fetch plans: %w", err)
-	}
-
-	total := len(plans)
-	log.Printf("  Found %d plans", total)
-
-	if total == 0 {
-		return 0, 0, nil
-	}
-
-	// 过滤掉已删除的记录
-	var activePlans []interface{}
-	for _, plan := range plans {
-		if !plan.DeletedAt.Valid {
-			p := plan
-			activePlans = append(activePlans, &p)
-		}
-	}
-
-	log.Printf("  Indexing %d active plans...", len(activePlans))
-
-	// 批量索引（每批 200 条）
-	return batchIndexDocuments(esSync, activePlans, 200)
 }
 
 // batchIndexDocuments 批量索引文档的辅助函数

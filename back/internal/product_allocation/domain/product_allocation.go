@@ -1,0 +1,29 @@
+package domain
+
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
+
+// ProductAllocation 成品调配
+type ProductAllocation struct {
+	ID        uint           `gorm:"primaryKey" json:"id"`
+	AllocationCode string `gorm:"size:50;uniqueIndex;not null" json:"allocationCode"`
+	OrderCode string `gorm:"size:50;not null;index" json:"orderCode"`
+	ProductCode string `gorm:"size:50;not null;index" json:"productCode"`
+	AllocationQty float64 `gorm:"type:decimal(10,2);not null" json:"allocationQty"`
+	ActualQty float64 `gorm:"type:decimal(10,2)" json:"actualQty"`
+	AllocationStatus string `gorm:"size:50;not null;default:'pending'" json:"allocationStatus"`
+	AllocatedBy uint `gorm:"not null" json:"allocatedBy"`
+	AllocatedAt time.Time `json:"allocatedAt"`
+	CreatedBy uint           `gorm:"not null" json:"createdBy"`
+	CreatedAt time.Time      `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
+}
+
+// TableName 表名
+func (ProductAllocation) TableName() string {
+	return "product_allocations"
+}

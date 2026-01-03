@@ -1,79 +1,46 @@
+# Material 搜索配置
+# 字段定义以 internal/material/domain/material.go 为准
+
 index: material
 
-# Query字段：全文搜索，算分排序
+# 全文搜索字段（按优先级排序）
 queryFields:
-  - field: name
+  - field: materialName
+    boost: 5.0
+  - field: materialCode
+    boost: 4.0
+  - field: materialCountry
     boost: 2.0
-  - field: code
-    boost: 1.8
-  - field: description
-    boost: 1.0
-  - field: spec
-    boost: 1.5
 
-# Filter字段：结构化过滤，不算分
+# 过滤字段（type 自动从 Domain 推断）
 filterFields:
   - field: id
-    type: keyword
     operator: term
-  - field: code
-    type: keyword
+  - field: materialCode
     operator: term
-  - field: name
-    type: text
+  - field: materialName
     operator: match
-  - field: spec
-    type: text
-    operator: match
-  - field: unit
-    type: keyword
-    operator: terms
-  - field: category
-    type: keyword
-    operator: terms
-  - field: supplierId
-    type: keyword
-    operator: terms
-  - field: currentPrice
-    type: numeric
-    operator: range
-  - field: status
-    type: keyword
-    operator: terms
+  - field: materialCountry
+    operator: term
+  - field: createdBy
+    operator: term
   - field: createdAt
-    type: date
     operator: range
   - field: updatedAt
-    type: date
     operator: range
 
-# Aggregation字段：动态统计，生成筛选项
+# 聚合字段（用于下拉筛选器）
 aggregationFields:
-  - field: category
-    type: keyword
+  - field: materialCountry
     aggType: terms
-    size: 20
-    supportSearch: false
-    excludeSelf: true
-  - field: supplierId
-    type: keyword
-    aggType: composite
-    size: 10
+    size: 50
     supportSearch: true
-    excludeSelf: true
-  - field: status
-    type: keyword
+  - field: createdBy
     aggType: terms
-    size: 20
-    supportSearch: false
-    excludeSelf: true
-  - field: currentPrice
-    type: numeric
-    aggType: stats
-    excludeSelf: false
-  - field: unit
-    type: keyword
-    aggType: terms
-    size: 20
-    supportSearch: false
-    excludeSelf: true
+    size: 50
+    supportSearch: true
+
+# 默认排序
+defaultSort:
+  - field: createdAt
+    order: desc

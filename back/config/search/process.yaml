@@ -1,30 +1,46 @@
+# Process 搜索配置
+# 字段定义以 internal/process/domain/process.go 为准
+
 index: process
 
+# 全文搜索字段（按优先级排序）
 queryFields:
-  - field: name
+  - field: processName
+    boost: 5.0
+  - field: processCode
+    boost: 4.0
+  - field: processCountry
     boost: 2.0
-  - field: description
-    boost: 1.0
 
+# 过滤字段（type 自动从 Domain 推断）
 filterFields:
   - field: id
-    type: keyword
     operator: term
-  - field: name
-    type: text
+  - field: processCode
+    operator: term
+  - field: processName
     operator: match
-  - field: currentPrice
-    type: numeric
-    operator: range
+  - field: processCountry
+    operator: term
+  - field: createdBy
+    operator: term
   - field: createdAt
-    type: date
     operator: range
   - field: updatedAt
-    type: date
     operator: range
 
+# 聚合字段（用于下拉筛选器）
 aggregationFields:
-  - field: currentPrice
-    type: numeric
-    aggType: stats
-    excludeSelf: false
+  - field: processCountry
+    aggType: terms
+    size: 50
+    supportSearch: true
+  - field: createdBy
+    aggType: terms
+    size: 50
+    supportSearch: true
+
+# 默认排序
+defaultSort:
+  - field: createdAt
+    order: desc

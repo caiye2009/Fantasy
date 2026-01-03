@@ -1,86 +1,69 @@
-import { requestClient } from '#/api/request';
+import { requestClient } from '../request';
+import { search } from './search';
 
-/**
- * 供应商信息
- */
 export interface Supplier {
   id: number;
-  name: string;
-  contact?: string;
-  phone?: string;
-  address?: string;
-  email?: string;
-  type?: string;
-  status?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  supplierCode: string;
+  supplierName: string;
+  supplierCategory: string;
+  createdBy: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-/**
- * 供应商列表响应
- */
 export interface SupplierListResponse {
   total: number;
-  suppliers: Supplier[];
+  list: Supplier[];
 }
 
-/**
- * 获取供应商列表
- */
-export async function getSupplierListApi(params?: {
-  limit?: number;
-  offset?: number;
-}): Promise<SupplierListResponse> {
-  const response = await requestClient.get<SupplierListResponse>('/supplier', { params });
-  return response.data;
+export async function createSupplier(data: {
+  supplierCode: string;
+  supplierName: string;
+  supplierCategory?: string;
+  createdBy: number;
+}) {
+  const response = await requestClient.post<Supplier>('/suppliers', data);
+  return response;
 }
 
-/**
- * 获取供应商详情
- */
-export async function getSupplierDetailApi(id: number): Promise<Supplier> {
-  const response = await requestClient.get<Supplier>(`/supplier/${id}`);
-  return response.data;
+export async function getSupplier(id: number) {
+  const response = await requestClient.get<Supplier>(`/suppliers/${id}`);
+  return response;
 }
 
-/**
- * 创建供应商
- */
-export async function createSupplierApi(data: {
-  name: string;
-  contact?: string;
-  phone?: string;
-  address?: string;
-  email?: string;
-  type?: string;
-}): Promise<Supplier> {
-  const response = await requestClient.post<Supplier>('/supplier', data);
-  return response.data;
-}
-
-/**
- * 更新供应商
- */
-export async function updateSupplierApi(
+export async function updateSupplier(
   id: number,
   data: {
-    name?: string;
-    contact?: string;
-    phone?: string;
-    address?: string;
-    email?: string;
-    type?: string;
-    status?: string;
+    supplierCode?: string;
+    supplierName?: string;
+    supplierCategory?: string;
   }
-): Promise<any> {
-  const response = await requestClient.put(`/supplier/${id}`, data);
-  return response.data;
+) {
+  const response = await requestClient.post<Supplier>(`/suppliers/${id}`, data);
+  return response;
 }
 
-/**
- * 删除供应商
- */
-export async function deleteSupplierApi(id: number): Promise<any> {
-  const response = await requestClient.delete(`/supplier/${id}`);
-  return response.data;
+export async function deleteSupplier(id: number) {
+  const response = await requestClient.delete(`/suppliers/${id}`);
+  return response;
 }
+
+// List queries use search API
+export async function getSuppliers(params?: { limit?: number; offset?: number }) {
+  const result = await search({
+    index: 'supplier',
+    from: params?.offset || 0,
+    size: params?.limit || 20,
+  });
+  return {
+    total: result.total || 0,
+    list: result.hits || [],
+  };
+}
+
+// Backward compatibility aliases
+export const getSupplierListApi = getSuppliers;
+export const getSupplierDetailApi = getSupplier;
+export const createSupplierApi = createSupplier;
+export const updateSupplierApi = updateSupplier;
+export const deleteSupplierApi = deleteSupplier;

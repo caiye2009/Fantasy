@@ -1,32 +1,38 @@
+# Product 搜索配置
+# 字段定义以 internal/product/domain/product.go 为准
+
 index: product
 
+# 全文搜索字段（按优先级排序）
 queryFields:
-  - field: name
-    boost: 2.0
-  - field: status
-    boost: 1.0
+  - field: productName
+    boost: 5.0
+  - field: productCode
+    boost: 4.0
 
+# 过滤字段（type 自动从 Domain 推断）
 filterFields:
   - field: id
-    type: keyword
     operator: term
-  - field: name
-    type: text
+  - field: productCode
+    operator: term
+  - field: productName
     operator: match
-  - field: status
-    type: keyword
-    operator: terms
+  - field: createdBy
+    operator: term
   - field: createdAt
-    type: date
     operator: range
   - field: updatedAt
-    type: date
     operator: range
 
+# 聚合字段（用于下拉筛选器）
 aggregationFields:
-  - field: status
-    type: keyword
+  - field: createdBy
     aggType: terms
-    size: 20
-    supportSearch: false
-    excludeSelf: true
+    size: 50
+    supportSearch: true
+
+# 默认排序
+defaultSort:
+  - field: createdAt
+    order: desc

@@ -9,7 +9,7 @@ type RouteDefinition struct {
 	Method  string          // HTTP 方法：GET, POST, PUT, DELETE 等
 	Path    string          // 路由路径，如 "/client", "/client/:id"
 	Handler gin.HandlerFunc // 处理函数
-	Domain  string          // 业务域，如 "client", "order"
+	Domain  string          // 业务域，如 "client", "order"（为空则不注册，跳过权限检查和审计）
 	Action  string          // 操作名称，如 "create", "update", "list"
 }
 
@@ -29,7 +29,7 @@ func RegisterRoutes(rg *gin.RouterGroup, routes []RouteDefinition) {
 	for _, route := range routes {
 		var handlers []gin.HandlerFunc
 
-		// 1. 自动添加 audit 中间件（非GET请求才需要审计）
+		// 1. 自动添加 audit 中间件（仅对注册的非GET请求）
 		if route.Domain != "" && route.Action != "" && route.Method != "GET" && auditMarker != nil {
 			handlers = append(handlers, auditMarker(route.Domain, route.Action))
 		}
@@ -40,6 +40,7 @@ func RegisterRoutes(rg *gin.RouterGroup, routes []RouteDefinition) {
 		rg.Handle(route.Method, route.Path, handlers...)
 
 		// 3. 注册到 GlobalRegistry（用于 auth 权限检查和 permission 列表）
+		// 只有设置了 Domain 和 Action 的路由才会注册
 		if route.Domain != "" && route.Action != "" {
 			endpointName := route.Domain + "." + route.Action
 			fullPath := "/api/v1" + route.Path

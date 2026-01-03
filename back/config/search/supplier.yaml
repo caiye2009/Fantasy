@@ -1,35 +1,46 @@
+# Supplier 搜索配置
+# 字段定义以 internal/supplier/domain/supplier.go 为准
+
 index: supplier
 
+# 全文搜索字段（按优先级排序）
 queryFields:
-  - field: name
-    boost: 3.0
-  - field: contact
+  - field: supplierName
+    boost: 5.0
+  - field: supplierCode
+    boost: 4.0
+  - field: supplierCategory
     boost: 2.0
-  - field: phone
-    boost: 1.5
-  - field: email
-    boost: 1.5
-  - field: address
-    boost: 1.0
 
+# 过滤字段（type 自动从 Domain 推断）
 filterFields:
   - field: id
-    type: keyword
     operator: term
-  - field: name
-    type: text
+  - field: supplierCode
+    operator: term
+  - field: supplierName
     operator: match
-  - field: phone
-    type: keyword
+  - field: supplierCategory
     operator: term
-  - field: email
-    type: keyword
+  - field: createdBy
     operator: term
   - field: createdAt
-    type: date
     operator: range
   - field: updatedAt
-    type: date
     operator: range
 
-aggregationFields: []
+# 聚合字段（用于下拉筛选器）
+aggregationFields:
+  - field: supplierCategory
+    aggType: terms
+    size: 50
+    supportSearch: true
+  - field: createdBy
+    aggType: terms
+    size: 50
+    supportSearch: true
+
+# 默认排序
+defaultSort:
+  - field: createdAt
+    order: desc

@@ -310,7 +310,7 @@ const loadUsers = async () => {
   try {
     const offset = (currentPage.value - 1) * pageSize.value
     const res = await getUserListApi({ limit: pageSize.value, offset })
-    users.value = res.users || []
+    users.value = res.list || []
     total.value = res.total || 0
   } catch (error) {
     console.error('加载用户列表失败:', error)

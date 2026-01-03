@@ -51,7 +51,7 @@ func main() {
 
 	for i := range products {
 		product := &products[i]
-		log.Printf("Syncing product %d: %s (ID: %d)", i+1, product.Name, product.ID)
+		log.Printf("Syncing product %d: %s (ID: %d)", i+1, product.ProductName, product.ID)
 
 		if err := esSync.Index(product); err != nil {
 			log.Printf("  ✗ Failed: %v", err)

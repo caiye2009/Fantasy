@@ -38,12 +38,12 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest, source strin
 	}
 
 	// 2. 检查用户状态
-	if !user.IsActive() {
+	if !user.IsActive {
 		return nil, ErrAccountSuspended
 	}
 
 	// 3. 生成 Access Token（包含 loginID、userName、role 和 department）
-	accessToken, jti, err := s.jwtWang.GenerateAccessToken(user.LoginID, user.Username, string(user.Role), user.Department)
+	accessToken, jti, err := s.jwtWang.GenerateAccessToken(user.LoginID, user.Username, user.Role, user.Department)
 	if err != nil {
 		return nil, ErrTokenGenerateFailed
 	}
@@ -67,7 +67,7 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest, source strin
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
 		Username:              user.Username,
-		Role:                  string(user.Role),
+		Role:                  user.Role,
 		Department:            user.Department,
 		RequirePasswordChange: user.HasInitPass,
 	}, nil
@@ -88,12 +88,12 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string, sou
 	}
 
 	// 3. 检查用户状态
-	if !user.IsActive() {
+	if !user.IsActive {
 		return nil, ErrAccountSuspended
 	}
 
 	// 4. 生成新的 Access Token（包含 department）
-	newAccessToken, jti, err := s.jwtWang.GenerateAccessToken(user.LoginID, user.Username, string(user.Role), user.Department)
+	newAccessToken, jti, err := s.jwtWang.GenerateAccessToken(user.LoginID, user.Username, user.Role, user.Department)
 	if err != nil {
 		return nil, ErrTokenGenerateFailed
 	}

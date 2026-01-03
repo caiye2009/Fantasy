@@ -13,6 +13,7 @@ export namespace AuthApi {
     refreshToken: string;
     username: string;
     role: string;
+    department: string;
     requirePasswordChange: boolean;
   }
 
@@ -32,7 +33,6 @@ export namespace AuthApi {
  */
 export async function loginApi(data: AuthApi.LoginParams): Promise<AuthApi.LoginResult> {
   const response = await requestClient.post<AuthApi.LoginResult>('/auth/login', data);
-  // 从 axios 响应中提取数据
   return response.data;
 }
 
@@ -44,8 +44,7 @@ export async function refreshTokenApi(refreshToken: string): Promise<AuthApi.Ref
     '/auth/refresh',
     { refreshToken },
   );
-  // 从 axios 响应中提取数据
-  return response.data;
+  return response;
 }
 
 /**
