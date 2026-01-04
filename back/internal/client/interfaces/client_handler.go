@@ -1,8 +1,6 @@
 package interfaces
 
 import (
-	"errors"
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -10,6 +8,7 @@ import (
 	"back/internal/client/application"
 	"back/internal/client/domain"
 	"back/pkg/endpoint"
+	"back/pkg/handler"
 )
 
 // ClientHandler 客户 Handler
@@ -24,91 +23,32 @@ func NewClientHandler(service *application.ClientService) *ClientHandler {
 
 // Create 创建客户
 func (h *ClientHandler) Create(c *gin.Context) {
-	var req application.CreateClientRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	resp, err := h.service.Create(c.Request.Context(), &req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, resp)
+	handler.HandleCreate(c, h.service.Create, func(resp *application.ClientResponse) interface{} {
+		return resp.ID
+	})
 }
 
 // Get 获取客户
 func (h *ClientHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
-	resp, err := h.service.Get(c.Request.Context(), uint(id))
-	if err != nil {
-		if errors.Is(err, domain.ErrClientNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "client not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, resp)
+	handler.HandleGet(c, uint(id), h.service.Get, domain.ErrClientNotFound)
 }
 
 // List 列表
 func (h *ClientHandler) List(c *gin.Context) {
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
-
-	list, total, err := h.service.List(c.Request.Context(), limit, offset)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"total": total,
-		"list":  list,
-	})
+	handler.HandleList(c, h.service.List)
 }
 
 // Update 更新客户
 func (h *ClientHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
-	var updates map[string]interface{}
-	if err := c.ShouldBindJSON(&updates); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := h.service.Update(c.Request.Context(), uint(id), updates); err != nil {
-		if errors.Is(err, domain.ErrClientNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "client not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "updated successfully"})
+	handler.HandleUpdate(c, uint(id), h.service.Get, h.service.Update, domain.ErrClientNotFound)
 }
 
 // Delete 删除客户
 func (h *ClientHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
-	if err := h.service.Delete(c.Request.Context(), uint(id)); err != nil {
-		if errors.Is(err, domain.ErrClientNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "client not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "deleted successfully"})
+	handler.HandleDelete(c, uint(id), h.service.Get, h.service.Delete, domain.ErrClientNotFound)
 }
 
 // GetRoutes 获取路由定义

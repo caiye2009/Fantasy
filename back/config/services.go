@@ -112,19 +112,19 @@ type Services struct {
 func InitServices(db *gorm.DB, esClient *elasticsearch.Client, esSync *es.ESSync, searchRegistry *searchInfra.DomainAwareRegistry, jwtWang *auth.JWTWang, whitelistManager *auth.WhitelistManager) *Services {
 	// ========== 基础数据模块 ==========
 	clientRepo := clientInfra.NewClientRepo(db)
-	clientService := clientApp.NewClientService(clientRepo)
+	clientService := clientApp.NewClientService(clientRepo, esSync)
 
 	supplierRepo := supplierInfra.NewSupplierRepo(db)
-	supplierService := supplierApp.NewSupplierService(supplierRepo)
+	supplierService := supplierApp.NewSupplierService(supplierRepo, esSync)
 
 	materialRepo := materialInfra.NewMaterialRepo(db)
-	materialService := materialApp.NewMaterialService(materialRepo)
+	materialService := materialApp.NewMaterialService(materialRepo, esSync)
 
 	processRepo := processInfra.NewProcessRepo(db)
-	processService := processApp.NewProcessService(processRepo)
+	processService := processApp.NewProcessService(processRepo, esSync)
 
 	productRepo := productInfra.NewProductRepo(db)
-	productService := productApp.NewProductService(productRepo)
+	productService := productApp.NewProductService(productRepo, esSync)
 
 	userRepo := userInfra.NewUserRepo(db)
 	userService := userApp.NewUserService(userRepo)

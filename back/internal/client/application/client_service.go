@@ -5,16 +5,21 @@ import (
 
 	"back/internal/client/domain"
 	"back/internal/client/infra"
+	"back/pkg/es"
 )
 
 // ClientService 客户应用服务
 type ClientService struct {
-	repo *infra.ClientRepo
+	repo   *infra.ClientRepo
+	syncer *es.EntitySyncer[*domain.Client]
 }
 
 // NewClientService 创建服务
-func NewClientService(repo *infra.ClientRepo) *ClientService {
-	return &ClientService{repo: repo}
+func NewClientService(repo *infra.ClientRepo, esSync *es.ESSync) *ClientService {
+	return &ClientService{
+		repo:   repo,
+		syncer: es.NewEntitySyncer[*domain.Client](esSync),
+	}
 }
 
 // Create 创建客户
@@ -29,6 +34,8 @@ func (s *ClientService) Create(ctx context.Context, req *CreateClientRequest) (*
 	if err := s.repo.Create(ctx, client); err != nil {
 		return nil, err
 	}
+
+	s.syncer.SyncCreate(client)
 
 	return toClientResponse(client), nil
 }
@@ -64,7 +71,6 @@ func (s *ClientService) List(ctx context.Context, limit, offset int) ([]*ClientR
 
 // Update 部分更新
 func (s *ClientService) Update(ctx context.Context, id uint, updates map[string]interface{}) error {
-	// 检查是否存在
 	exists, err := s.repo.Exists(ctx, id)
 	if err != nil {
 		return err
@@ -73,19 +79,22 @@ func (s *ClientService) Update(ctx context.Context, id uint, updates map[string]
 		return domain.ErrClientNotFound
 	}
 
-	// 过滤不允许更新的字段
 	delete(updates, "id")
 	delete(updates, "createdAt")
 	delete(updates, "createdBy")
 	delete(updates, "deletedAt")
 
-	// 如果没有要更新的字段，直接返回
 	if len(updates) == 0 {
 		return nil
 	}
 
-	// 部分更新
-	return s.repo.UpdateFields(ctx, id, updates)
+	if err := s.repo.UpdateFields(ctx, id, updates); err != nil {
+		return err
+	}
+
+	s.syncer.SyncUpdateWithFetch(ctx, id, s.repo.GetByID)
+
+	return nil
 }
 
 // Delete 删除客户
@@ -98,7 +107,18 @@ func (s *ClientService) Delete(ctx context.Context, id uint) error {
 		return domain.ErrClientNotFound
 	}
 
-	return s.repo.Delete(ctx, id)
+	client, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.Delete(ctx, id); err != nil {
+		return err
+	}
+
+	s.syncer.SyncDelete(client)
+
+	return nil
 }
 
 // DTO 转换

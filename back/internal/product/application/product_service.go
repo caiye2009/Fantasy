@@ -5,26 +5,33 @@ import (
 
 	"back/internal/product/domain"
 	"back/internal/product/infra"
+	"back/pkg/es"
 )
 
 type ProductService struct {
-	repo *infra.ProductRepo
+	repo   *infra.ProductRepo
+	syncer *es.EntitySyncer[*domain.Product]
 }
 
-func NewProductService(repo *infra.ProductRepo) *ProductService {
-	return &ProductService{repo: repo}
+func NewProductService(repo *infra.ProductRepo, esSync *es.ESSync) *ProductService {
+	return &ProductService{
+		repo:   repo,
+		syncer: es.NewEntitySyncer[*domain.Product](esSync),
+	}
 }
 
 func (s *ProductService) Create(ctx context.Context, req *CreateProductRequest) (*ProductResponse, error) {
 	product := &domain.Product{
 		ProductCode: req.ProductCode,
 		ProductName: req.ProductName,
-		CreatedBy: req.CreatedBy,
+		CreatedBy:   req.CreatedBy,
 	}
 
 	if err := s.repo.Create(ctx, product); err != nil {
 		return nil, err
 	}
+
+	s.syncer.SyncCreate(product)
 
 	return toProductResponse(product), nil
 }
@@ -74,7 +81,13 @@ func (s *ProductService) Update(ctx context.Context, id uint, updates map[string
 		return nil
 	}
 
-	return s.repo.UpdateFields(ctx, id, updates)
+	if err := s.repo.UpdateFields(ctx, id, updates); err != nil {
+		return err
+	}
+
+	s.syncer.SyncUpdateWithFetch(ctx, id, s.repo.GetByID)
+
+	return nil
 }
 
 func (s *ProductService) Delete(ctx context.Context, id uint) error {
@@ -86,16 +99,27 @@ func (s *ProductService) Delete(ctx context.Context, id uint) error {
 		return domain.ErrProductNotFound
 	}
 
-	return s.repo.Delete(ctx, id)
+	product, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.Delete(ctx, id); err != nil {
+		return err
+	}
+
+	s.syncer.SyncDelete(product)
+
+	return nil
 }
 
 func toProductResponse(product *domain.Product) *ProductResponse {
 	return &ProductResponse{
-		ID: product.ID,
+		ID:          product.ID,
 		ProductCode: product.ProductCode,
 		ProductName: product.ProductName,
-		CreatedBy: product.CreatedBy,
-		CreatedAt: product.CreatedAt,
-		UpdatedAt: product.UpdatedAt,
+		CreatedBy:   product.CreatedBy,
+		CreatedAt:   product.CreatedAt,
+		UpdatedAt:   product.UpdatedAt,
 	}
 }

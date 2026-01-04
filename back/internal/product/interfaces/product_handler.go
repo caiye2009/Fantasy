@@ -1,8 +1,6 @@
 package interfaces
 
 import (
-	"errors"
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -10,9 +8,10 @@ import (
 	"back/internal/product/application"
 	"back/internal/product/domain"
 	"back/pkg/endpoint"
+	"back/pkg/handler"
 )
 
-// ProductHandler 客户 Handler
+// ProductHandler 产品 Handler
 type ProductHandler struct {
 	service *application.ProductService
 }
@@ -22,93 +21,34 @@ func NewProductHandler(service *application.ProductService) *ProductHandler {
 	return &ProductHandler{service: service}
 }
 
-// Create 创建客户
+// Create 创建产品
 func (h *ProductHandler) Create(c *gin.Context) {
-	var req application.CreateProductRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	resp, err := h.service.Create(c.Request.Context(), &req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, resp)
+	handler.HandleCreate(c, h.service.Create, func(resp *application.ProductResponse) interface{} {
+		return resp.ID
+	})
 }
 
-// Get 获取客户
+// Get 获取产品
 func (h *ProductHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
-	resp, err := h.service.Get(c.Request.Context(), uint(id))
-	if err != nil {
-		if errors.Is(err, domain.ErrProductNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, resp)
+	handler.HandleGet(c, uint(id), h.service.Get, domain.ErrProductNotFound)
 }
 
 // List 列表
 func (h *ProductHandler) List(c *gin.Context) {
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
-
-	list, total, err := h.service.List(c.Request.Context(), limit, offset)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"total": total,
-		"list":  list,
-	})
+	handler.HandleList(c, h.service.List)
 }
 
-// Update 更新客户
+// Update 更新产品
 func (h *ProductHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
-	var updates map[string]interface{}
-	if err := c.ShouldBindJSON(&updates); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := h.service.Update(c.Request.Context(), uint(id), updates); err != nil {
-		if errors.Is(err, domain.ErrProductNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "updated successfully"})
+	handler.HandleUpdate(c, uint(id), h.service.Get, h.service.Update, domain.ErrProductNotFound)
 }
 
-// Delete 删除客户
+// Delete 删除产品
 func (h *ProductHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
-	if err := h.service.Delete(c.Request.Context(), uint(id)); err != nil {
-		if errors.Is(err, domain.ErrProductNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "deleted successfully"})
+	handler.HandleDelete(c, uint(id), h.service.Get, h.service.Delete, domain.ErrProductNotFound)
 }
 
 // GetRoutes 获取路由定义

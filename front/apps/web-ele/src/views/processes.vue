@@ -13,7 +13,7 @@
     <!-- 编辑对话框 -->
     <el-dialog
       v-model="editDialogVisible"
-      title="编辑工序"
+      title="编辑工艺"
       width="600px"
       @close="handleEditDialogClose"
     >
@@ -21,7 +21,7 @@
         <el-form-item label="ID">
           <el-input v-model="currentRow.id" disabled />
         </el-form-item>
-        <el-form-item label="工序名称">
+        <el-form-item label="工艺名称">
           <el-input v-model="currentRow.name" />
         </el-form-item>
         <el-form-item label="描述">
@@ -60,7 +60,7 @@
       @close="handleQuoteDialogClose"
     >
       <el-form :model="quoteForm" label-width="100px">
-        <el-form-item label="工序名称">
+        <el-form-item label="工艺名称">
           <el-input :value="quoteProcessName" disabled />
         </el-form-item>
         <el-form-item label="供应商" required>
@@ -99,7 +99,7 @@
     <!-- 详情大弹窗 -->
     <el-dialog
       v-model="detailDialogVisible"
-      title="工序详情"
+      title="工艺详情"
       width="900px"
       @close="handleDetailDialogClose"
     >
@@ -110,7 +110,7 @@
           <el-descriptions-item label="ID">
             {{ processDetail.id }}
           </el-descriptions-item>
-          <el-descriptions-item label="工序名称">
+          <el-descriptions-item label="工艺名称">
             {{ processDetail.name }}
           </el-descriptions-item>
           <el-descriptions-item label="描述" :span="2">
@@ -174,24 +174,22 @@
       </template>
     </el-dialog>
 
-    <!-- 新增工序对话框 -->
+    <!-- 新增工艺对话框 -->
     <el-dialog
       v-model="createDialogVisible"
-      title="新增工序"
+      title="新增工艺"
       width="600px"
       @close="handleCreateClose"
     >
-      <el-form :model="createForm" label-width="100px">
-        <el-form-item label="工序名称" required>
-          <el-input v-model="createForm.name" placeholder="请输入工序名称" />
+      <el-form :model="createForm" :rules="createFormRules" ref="createFormRef" label-width="100px">
+        <el-form-item label="工艺编码" prop="processCode" required>
+          <el-input v-model="createForm.processCode" placeholder="请输入工艺编码（最多50字符）" />
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input
-            v-model="createForm.description"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入工序描述"
-          />
+        <el-form-item label="工艺名称" prop="processName" required>
+          <el-input v-model="createForm.processName" placeholder="请输入工艺名称（最多100字符）" />
+        </el-form-item>
+        <el-form-item label="工艺国别" prop="processCategory">
+          <el-input v-model="createForm.processCategory" placeholder="请输入工艺国别（可选，最多50字符）" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -206,7 +204,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import * as echarts from 'echarts'
 import type { EChartsOption } from 'echarts'
 import DataTable from '#/components/Table/index.vue'
@@ -217,6 +215,7 @@ import {
   quoteProcessPriceApi,
   type ProcessPriceHistory
 } from '#/api/core/process_quote'
+import { createProcess } from '#/api/core/process'
 
 import type {
   PageConfig,
@@ -237,7 +236,7 @@ const pageConfig: PageConfig = {
   pageSize: 20,
   columns: [
     { key: 'id', label: 'ID', width: 80, visible: true, sortable: true, order: 0 },
-    { key: 'name', label: '工序名称', width: 200, visible: true, sortable: true, order: 1 },
+    { key: 'name', label: '工艺名称', width: 200, visible: true, sortable: true, order: 1 },
     { key: 'description', label: '描述', width: 250, visible: true, order: 2 },
     {
       key: 'createdAt',
@@ -261,24 +260,24 @@ const pageConfig: PageConfig = {
   filters: [
     {
       key: 'type',
-      label: '工序类型',
+      label: '工艺类型',
       type: 'select',
-      placeholder: '请选择工序类型',
+      placeholder: '请选择工艺类型',
       options: [],
     },
     {
       key: 'category',
-      label: '工序类别',
+      label: '工艺类别',
       type: 'select',
-      placeholder: '请选择工序类别',
+      placeholder: '请选择工艺类别',
       options: [],
     },
   ] as FilterConfig[],
   topActions: [
-    { key: 'create', label: '新增工序', type: 'primary' },
+    { key: 'create', label: '新增工艺', type: 'primary' },
   ],
   bulkActions: [
-    { key: 'delete', label: '批量删除', type: 'danger', confirm: true, confirmMessage: '确定要删除选中的工序吗？此操作不可恢复！' },
+    { key: 'delete', label: '批量删除', type: 'danger', confirm: true, confirmMessage: '确定要删除选中的工艺吗？此操作不可恢复！' },
     { key: 'export', label: '导出数据', type: 'primary' },
   ] as BulkAction[],
   actions: [
@@ -450,7 +449,6 @@ const handleSave = async () => {
     ElMessage.success('保存成功')
 
     editDialogVisible.value = false
-    window.location.reload()
   } catch (error) {
     console.error('保存出错:', error)
   } finally {
@@ -556,12 +554,27 @@ const handleBulkAction = async ({
   }
 }
 
-// 新增工序
+// 新增工艺
 const createDialogVisible = ref(false)
 const createForm = ref({
-  name: '',
-  description: '',
+  processCode: '',
+  processName: '',
+  processCategory: '',
 })
+const createFormRef = ref<FormInstance>()
+const createFormRules: FormRules = {
+  processCode: [
+    { required: true, message: '请输入工艺编码', trigger: 'blur' },
+    { max: 50, message: '工艺编码最多50个字符', trigger: 'blur' }
+  ],
+  processName: [
+    { required: true, message: '请输入工艺名称', trigger: 'blur' },
+    { max: 100, message: '工艺名称最多100个字符', trigger: 'blur' }
+  ],
+  processCategory: [
+    { max: 50, message: '工艺国别最多50个字符', trigger: 'blur' }
+  ]
+}
 const creating = ref(false)
 
 const handleCreate = () => {
@@ -569,17 +582,20 @@ const handleCreate = () => {
 }
 
 const handleCreateSubmit = async () => {
-  if (!createForm.value.name) {
-    ElMessage.error('请输入工序名称')
-    return
-  }
+  // 表单验证
+  const valid = await createFormRef.value?.validate()
+  if (!valid) return
 
   creating.value = true
   try {
-    await elasticsearchService.create('process', createForm.value)
+    await createProcess({
+      processCode: createForm.value.processCode,
+      processName: createForm.value.processName,
+      processCategory: createForm.value.processCategory,
+      createdBy: 1 // TODO: 从用户状态获取实际用户ID
+    })
     ElMessage.success('新增成功')
     createDialogVisible.value = false
-    setTimeout(() => window.location.reload(), 500)
   } catch (error) {
     console.error(error)
     ElMessage.error('新增失败')
@@ -590,8 +606,9 @@ const handleCreateSubmit = async () => {
 
 const handleCreateClose = () => {
   createForm.value = {
-    name: '',
-    description: '',
+    processCode: '',
+    processName: '',
+    processCategory: '',
   }
 }
 

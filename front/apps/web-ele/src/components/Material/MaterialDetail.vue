@@ -26,57 +26,30 @@
         <el-form v-if="isCreateMode || isEditing" :model="editForm" :rules="formRules" ref="formRef" label-width="100px">
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="原料编码">
-                <el-input v-model="editForm.code" />
+              <el-form-item label="原料编码" prop="materialCode">
+                <el-input v-model="editForm.materialCode" placeholder="请输入原料编码" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="原料名称">
-                <el-input v-model="editForm.name" />
+              <el-form-item label="原料名称" prop="materialName">
+                <el-input v-model="editForm.materialName" placeholder="请输入原料名称" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="规格">
-                <el-input v-model="editForm.spec" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="分类">
-                <el-select v-model="editForm.category" placeholder="请选择分类" style="width: 100%">
+              <el-form-item label="原料分类" prop="materialCategory">
+                <el-select v-model="editForm.materialCategory" placeholder="请选择分类" style="width: 100%" clearable>
                   <el-option label="胚布" value="胚布" />
                   <el-option label="染料" value="染料" />
                   <el-option label="助剂" value="助剂" />
                 </el-select>
               </el-form-item>
             </el-col>
-          </el-row>
-          <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="单位">
-                <el-input v-model="editForm.unit" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="当前价格">
-                <el-input-number v-model="editForm.currentPrice" :precision="2" :step="0.01" style="width: 100%" />
-              </el-form-item>
+              <!-- 占位列，保持对齐 -->
             </el-col>
           </el-row>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="状态">
-                <el-select v-model="editForm.status" placeholder="请选择状态" style="width: 100%">
-                  <el-option label="在用" value="active" />
-                  <el-option label="停用" value="inactive" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-form-item label="描述">
-            <el-input v-model="editForm.description" type="textarea" :rows="3" />
-          </el-form-item>
         </el-form>
 
         <el-descriptions v-else :column="2" border>
@@ -206,8 +179,17 @@ const isCreateMode = computed(() => !props.material)
 
 // 表单验证规则
 const formRules: FormRules = {
-  code: [{ required: true, message: '请输入原料编码', trigger: 'blur' }],
-  name: [{ required: true, message: '请输入原料名称', trigger: 'blur' }]
+  materialCode: [
+    { required: true, message: '请输入原料编码', trigger: 'blur' },
+    { max: 50, message: '原料编码最多50个字符', trigger: 'blur' }
+  ],
+  materialName: [
+    { required: true, message: '请输入原料名称', trigger: 'blur' },
+    { max: 100, message: '原料名称最多100个字符', trigger: 'blur' }
+  ],
+  materialCategory: [
+    { max: 50, message: '原料分类最多50个字符', trigger: 'blur' }
+  ]
 }
 
 // 开始编辑
@@ -235,28 +217,16 @@ const saveEdit = async () => {
     if (isCreateMode.value) {
       // 新增模式
       const result = await createMaterial({
-        materialCode: editForm.value.code!,
-        materialName: editForm.value.name!,
+        materialCode: editForm.value.materialCode!,
+        materialName: editForm.value.materialName!,
+        materialCategory: editForm.value.materialCategory || '',
         createdBy: 1 // TODO: 从用户状态获取实际用户ID
       })
 
       ElMessage.success('创建成功')
-
-      // 通知父组件新增成功
-      const newMaterial: Material = {
-        id: `mat-${result.id}`,
-        code: result.materialCode,
-        name: result.materialName,
-        category: editForm.value.category || '',
-        unit: editForm.value.unit || 'kg',
-        currentPrice: editForm.value.currentPrice || 0,
-        status: editForm.value.status || 'active',
-        updatedBy: '当前用户',
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt
-      }
-      emit('updateMaterial', newMaterial)
       emit('update:visible', false)
+
+      // 刷新页面以显示新数据
     } else {
       // 编辑模式
       if (!props.material?._id) {
@@ -393,13 +363,9 @@ watch(() => props.material, async (newMaterial) => {
     supplierQuotes.value = []
     priceHistory.value = []
     editForm.value = {
-      code: '',
-      name: '',
-      category: '',
-      unit: 'kg',
-      currentPrice: 0,
-      status: 'active',
-      description: ''
+      materialCode: '',
+      materialName: '',
+      materialCategory: ''
     }
   }
 }, { immediate: true })

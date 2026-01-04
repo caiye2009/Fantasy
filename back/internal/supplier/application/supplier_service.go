@@ -5,16 +5,21 @@ import (
 
 	"back/internal/supplier/domain"
 	"back/internal/supplier/infra"
+	"back/pkg/es"
 )
 
 // SupplierService 供应商应用服务
 type SupplierService struct {
-	repo *infra.SupplierRepo
+	repo   *infra.SupplierRepo
+	syncer *es.EntitySyncer[*domain.Supplier]
 }
 
 // NewSupplierService 创建服务
-func NewSupplierService(repo *infra.SupplierRepo) *SupplierService {
-	return &SupplierService{repo: repo}
+func NewSupplierService(repo *infra.SupplierRepo, esSync *es.ESSync) *SupplierService {
+	return &SupplierService{
+		repo:   repo,
+		syncer: es.NewEntitySyncer[*domain.Supplier](esSync),
+	}
 }
 
 // Create 创建供应商
@@ -29,6 +34,8 @@ func (s *SupplierService) Create(ctx context.Context, req *CreateSupplierRequest
 	if err := s.repo.Create(ctx, supplier); err != nil {
 		return nil, err
 	}
+
+	s.syncer.SyncCreate(supplier)
 
 	return toSupplierResponse(supplier), nil
 }
@@ -81,7 +88,13 @@ func (s *SupplierService) Update(ctx context.Context, id uint, updates map[strin
 		return nil
 	}
 
-	return s.repo.UpdateFields(ctx, id, updates)
+	if err := s.repo.UpdateFields(ctx, id, updates); err != nil {
+		return err
+	}
+
+	s.syncer.SyncUpdateWithFetch(ctx, id, s.repo.GetByID)
+
+	return nil
 }
 
 // Delete 删除供应商
@@ -94,7 +107,18 @@ func (s *SupplierService) Delete(ctx context.Context, id uint) error {
 		return domain.ErrSupplierNotFound
 	}
 
-	return s.repo.Delete(ctx, id)
+	supplier, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.Delete(ctx, id); err != nil {
+		return err
+	}
+
+	s.syncer.SyncDelete(supplier)
+
+	return nil
 }
 
 // DTO 转换

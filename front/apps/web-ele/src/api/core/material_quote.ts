@@ -51,7 +51,7 @@ export async function updateMaterialQuote(
     quotePrice?: number;
   }
 ) {
-  const response = await requestClient.post<MaterialQuote>(`/material_quotes/${id}`, data);
+  const response = await requestClient.put<MaterialQuote>(`/material_quotes/${id}`, data);
   return response;
 }
 
@@ -73,4 +73,21 @@ export async function getMaterialPriceHistoryApi(materialId: number): Promise<Ma
   // 可能需要后端添加按material_id筛选的接口
   console.warn('getMaterialPriceHistoryApi not implemented yet, materialId:', materialId);
   return [];
+}
+
+// 提交原料报价
+export async function quoteMaterialPriceApi(data: {
+  target_id: number;
+  supplier_id: number;
+  price: number;
+}) {
+  const requestData = {
+    quoteId: `MQ-${Date.now()}`,
+    materialCode: String(data.target_id),
+    supplierCode: String(data.supplier_id),
+    quotePrice: data.price,
+    createdBy: 1, // TODO: 从用户上下文获取
+  };
+  const response = await createMaterialQuote(requestData);
+  return response;
 }

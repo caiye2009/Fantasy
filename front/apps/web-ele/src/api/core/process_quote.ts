@@ -51,7 +51,7 @@ export async function updateProcessQuote(
     quotePrice?: number;
   }
 ) {
-  const response = await requestClient.post<ProcessQuote>(`/process_quotes/${id}`, data);
+  const response = await requestClient.put<ProcessQuote>(`/process_quotes/${id}`, data);
   return response;
 }
 

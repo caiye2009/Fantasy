@@ -9,7 +9,7 @@ queryFields:
     boost: 5.0
   - field: processCode
     boost: 4.0
-  - field: processCountry
+  - field: processCategory
     boost: 2.0
 
 # 过滤字段（type 自动从 Domain 推断）
@@ -20,7 +20,7 @@ filterFields:
     operator: term
   - field: processName
     operator: match
-  - field: processCountry
+  - field: processCategory
     operator: term
   - field: createdBy
     operator: term
@@ -31,7 +31,7 @@ filterFields:
 
 # 聚合字段（用于下拉筛选器）
 aggregationFields:
-  - field: processCountry
+  - field: processCategory
     aggType: terms
     size: 50
     supportSearch: true

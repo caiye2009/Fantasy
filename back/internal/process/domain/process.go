@@ -11,6 +11,7 @@ type Process struct {
 	ID        uint           `gorm:"primaryKey" json:"id"`
 	ProcessCode string `gorm:"size:50;uniqueIndex;not null" json:"processCode"`
 	ProcessName string `gorm:"size:100;not null" json:"processName"`
+	ProcessCategory string `gorm:"size:100;not null" json:"processCategory"`
 	CreatedBy uint           `gorm:"not null" json:"createdBy"`
 	CreatedAt time.Time      `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
@@ -40,6 +41,7 @@ func (p *Process) ToDocument() map[string]interface{} {
 		"id":            p.ID,
 		"processCode":   p.ProcessCode,
 		"processName":   p.ProcessName,
+		"processCategory": p.ProcessCategory,
 		"createdBy":     p.CreatedBy,
 		"createdAt":     p.CreatedAt,
 		"updatedAt":     p.UpdatedAt,

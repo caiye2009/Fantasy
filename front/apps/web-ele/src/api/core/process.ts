@@ -5,7 +5,7 @@ export interface Process {
   id: number;
   processCode: string;
   processName: string;
-  processCountry: string;
+  processCategory?: string;
   createdBy: number;
   createdAt: string;
   updatedAt: string;
@@ -19,7 +19,7 @@ export interface ProcessListResponse {
 export async function createProcess(data: {
   processCode: string;
   processName: string;
-  processCountry?: string;
+  processCategory?: string;
   createdBy: number;
 }) {
   const response = await requestClient.post<Process>('/processs', data);
@@ -36,10 +36,10 @@ export async function updateProcess(
   data: {
     processCode?: string;
     processName?: string;
-    processCountry?: string;
+    processCategory?: string;
   }
 ) {
-  const response = await requestClient.post<Process>(`/processs/${id}`, data);
+  const response = await requestClient.put<Process>(`/processs/${id}`, data);
   return response;
 }
 
@@ -60,10 +60,3 @@ export async function getProcesses(params?: { limit?: number; offset?: number })
     list: result.hits || [],
   };
 }
-
-// Backward compatibility aliases
-export const getProcessListApi = getProcesses;
-export const getProcessDetailApi = getProcess;
-export const createProcessApi = createProcess;
-export const updateProcessApi = updateProcess;
-export const deleteProcessApi = deleteProcess;

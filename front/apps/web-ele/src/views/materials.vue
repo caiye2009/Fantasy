@@ -5,6 +5,7 @@
       :loading="searchLoading"
       @view="openDetail"
       @edit="openDetail"
+      @quote="handleQuote"
       @bulkAction="handleBulkAction"
       @topAction="handleTopAction"
     />
@@ -15,6 +16,50 @@
       :material="selectedMaterial"
       @update-material="handleMaterialUpdate"
     />
+
+    <!-- 报价对话框 -->
+    <el-dialog
+      v-model="quoteDialogVisible"
+      title="添加报价"
+      width="500px"
+      @close="handleQuoteDialogClose"
+    >
+      <el-form :model="quoteForm" label-width="100px">
+        <el-form-item label="原料名称">
+          <el-input :value="quoteMaterialName" disabled />
+        </el-form-item>
+        <el-form-item label="供应商" required>
+          <el-select
+            v-model="quoteForm.supplier_id"
+            placeholder="请选择供应商"
+            filterable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="supplier in suppliers"
+              :key="supplier.id"
+              :label="supplier.name"
+              :value="supplier.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="报价金额" required>
+          <el-input-number
+            v-model="quoteForm.price"
+            :min="0"
+            :precision="2"
+            :step="0.01"
+            style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="quoteDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleQuoteSubmit" :loading="quoting">
+          提交报价
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -27,6 +72,8 @@ import type { Material } from '#/components/Material/types'
 import type { PageConfig, BulkAction } from '#/components/Table/types'
 import { useDataTable } from '#/composables/useDataTable'
 import { elasticsearchService } from '#/api/core/es'
+import { getSupplierListApi, type Supplier } from '#/api/core/supplier'
+import { quoteMaterialPriceApi } from '#/api/core/material_quote'
 
 // 数据表格配置
 const { searchLoading } = useDataTable({
@@ -187,7 +234,14 @@ const pageConfig: PageConfig = {
   ],
   bulkActions: [
     { key: 'delete', label: '批量删除', type: 'danger', confirm: true, confirmMessage: '确定要删除选中的原料吗?' }
-  ]
+  ],
+  actions: [
+    {
+      key: 'quote',
+      label: '报价',
+      type: 'warning',
+    },
+  ],
 }
 
 // 打开详情
@@ -213,6 +267,74 @@ const handleTopAction = ({ action }: { action: string }) => {
 // 批量操作
 const handleBulkAction = ({ action }: { action: string; rows: any[] }) => {
   // TODO: 实现批量删除功能
+}
+
+// 报价对话框
+const quoteDialogVisible = ref(false)
+const quoting = ref(false)
+const quoteForm = ref({
+  target_id: 0,
+  supplier_id: undefined as number | undefined,
+  price: 0,
+})
+const quoteMaterialName = ref('')
+const suppliers = ref<Supplier[]>([])
+
+// 加载供应商列表
+const loadSuppliers = async () => {
+  try {
+    const res = await getSupplierListApi({ limit: 1000, offset: 0 })
+    suppliers.value = res.list || []
+  } catch (error) {
+    console.error('加载供应商列表失败:', error)
+  }
+}
+
+// 报价
+const handleQuote = async (row: any) => {
+  quoteForm.value = {
+    target_id: row.id,
+    supplier_id: undefined,
+    price: 0,
+  }
+  quoteMaterialName.value = row.name
+  await loadSuppliers()
+  quoteDialogVisible.value = true
+}
+
+// 提交报价
+const handleQuoteSubmit = async () => {
+  if (!quoteForm.value.supplier_id) {
+    ElMessage.warning('请选择供应商')
+    return
+  }
+
+  if (quoteForm.value.price <= 0) {
+    ElMessage.warning('请输入有效的报价金额')
+    return
+  }
+
+  quoting.value = true
+  try {
+    await quoteMaterialPriceApi(quoteForm.value)
+    ElMessage.success('报价成功')
+    quoteDialogVisible.value = false
+  } catch (error: any) {
+    console.error('报价失败:', error)
+    ElMessage.error(error.response?.data?.error || '报价失败')
+  } finally {
+    quoting.value = false
+  }
+}
+
+// 关闭报价对话框
+const handleQuoteDialogClose = () => {
+  quoteForm.value = {
+    target_id: 0,
+    supplier_id: undefined,
+    price: 0,
+  }
+  quoteMaterialName.value = ''
 }
 </script>
 

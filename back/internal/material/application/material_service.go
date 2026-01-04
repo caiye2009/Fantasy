@@ -5,14 +5,19 @@ import (
 
 	"back/internal/material/domain"
 	"back/internal/material/infra"
+	"back/pkg/es"
 )
 
 type MaterialService struct {
-	repo *infra.MaterialRepo
+	repo   *infra.MaterialRepo
+	syncer *es.EntitySyncer[*domain.Material]
 }
 
-func NewMaterialService(repo *infra.MaterialRepo) *MaterialService {
-	return &MaterialService{repo: repo}
+func NewMaterialService(repo *infra.MaterialRepo, esSync *es.ESSync) *MaterialService {
+	return &MaterialService{
+		repo:   repo,
+		syncer: es.NewEntitySyncer[*domain.Material](esSync),
+	}
 }
 
 func (s *MaterialService) Create(ctx context.Context, req *CreateMaterialRequest) (*MaterialResponse, error) {
@@ -26,6 +31,9 @@ func (s *MaterialService) Create(ctx context.Context, req *CreateMaterialRequest
 	if err := s.repo.Create(ctx, material); err != nil {
 		return nil, err
 	}
+
+	// 同步到 ES
+	s.syncer.SyncCreate(material)
 
 	return toMaterialResponse(material), nil
 }
@@ -75,7 +83,14 @@ func (s *MaterialService) Update(ctx context.Context, id uint, updates map[strin
 		return nil
 	}
 
-	return s.repo.UpdateFields(ctx, id, updates)
+	if err := s.repo.UpdateFields(ctx, id, updates); err != nil {
+		return err
+	}
+
+	// 同步到 ES - 更新后需要获取完整的实体
+	s.syncer.SyncUpdateWithFetch(ctx, id, s.repo.GetByID)
+
+	return nil
 }
 
 func (s *MaterialService) Delete(ctx context.Context, id uint) error {
@@ -87,7 +102,20 @@ func (s *MaterialService) Delete(ctx context.Context, id uint) error {
 		return domain.ErrMaterialNotFound
 	}
 
-	return s.repo.Delete(ctx, id)
+	// 先获取material以获取索引名称
+	material, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.Delete(ctx, id); err != nil {
+		return err
+	}
+
+	// 从 ES 删除
+	s.syncer.SyncDelete(material)
+
+	return nil
 }
 
 func toMaterialResponse(material *domain.Material) *MaterialResponse {
