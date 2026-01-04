@@ -9,13 +9,7 @@
       @topAction="handleTopAction"
     />
 
-    <!-- 新增原料对话框 -->
-    <AddMaterialDialog
-      v-model:visible="addDialogVisible"
-      @success="handleAddSuccess"
-    />
-
-    <!-- 原料详情抽屉 -->
+    <!-- 原料详情/新增抽屉 -->
     <MaterialDetail
       v-model:visible="detailVisible"
       :material="selectedMaterial"
@@ -28,7 +22,6 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import DataTable from '#/components/Table/index.vue'
-import AddMaterialDialog from '#/components/Material/AddMaterialDialog.vue'
 import MaterialDetail from '#/components/Material/MaterialDetail.vue'
 import type { Material } from '#/components/Material/types'
 import type { PageConfig, BulkAction } from '#/components/Table/types'
@@ -42,8 +35,7 @@ const { searchLoading } = useDataTable({
   defaultSort: [{ field: 'created_at', order: 'desc' }]
 })
 
-// 对话框和抽屉
-const addDialogVisible = ref(false)
+// 抽屉状态
 const detailVisible = ref(false)
 const selectedMaterial = ref<Material | null>(null)
 
@@ -198,29 +190,23 @@ const pageConfig: PageConfig = {
   ]
 }
 
-// 新增成功
-const handleAddSuccess = (newMaterial: Material) => {
-  ElMessage.success('新增成功')
-  // 重新加载数据
-  // window.location.reload()
-}
-
 // 打开详情
 const openDetail = (material: Material) => {
   selectedMaterial.value = material
   detailVisible.value = true
 }
 
-// 更新原料信息
+// 更新/新增原料信息
 const handleMaterialUpdate = (updatedMaterial: Material) => {
+  ElMessage.success('操作成功')
   // 重新加载数据
-  window.location.reload()
 }
 
 // 顶部操作
 const handleTopAction = ({ action }: { action: string }) => {
   if (action === 'create') {
-    addDialogVisible.value = true
+    selectedMaterial.value = null  // null 表示新增模式
+    detailVisible.value = true
   }
 }
 

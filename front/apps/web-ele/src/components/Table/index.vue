@@ -37,16 +37,34 @@
               :placeholder="filter.placeholder"
               clearable
               filterable
-              :loading="filterLoadingStates[filter.key]"
+              remote
+              :remote-method="(query) => handleFilterSearch(filter.key, query)"
+              :loading="filterStates[filter.key]?.loading || false"
               @visible-change="(visible) => handleFilterVisibleChange(visible, filter)"
+              @focus="() => handleFilterFocus(filter)"
               style="width: 200px"
             >
               <el-option
-                v-for="option in filterOptions[filter.key] || []"
+                v-for="option in filterStates[filter.key]?.options || []"
                 :key="option.value"
                 :label="option.label"
                 :value="option.value"
               />
+              <template #footer>
+                <div
+                  v-if="filterStates[filter.key]?.hasMore"
+                  class="select-footer"
+                  @click="loadMoreFilterOptions(filter.key)"
+                >
+                  <el-button
+                    link
+                    type="primary"
+                    :loading="filterStates[filter.key]?.loading"
+                  >
+                    {{ filterStates[filter.key]?.loading ? '加载中...' : '加载更多' }}
+                  </el-button>
+                </div>
+              </template>
             </el-select>
             <el-date-picker
               v-else-if="filter.type === 'date'"
@@ -131,31 +149,34 @@
           fixed="left"
         />
 
-        <!-- 中间列 -->
+        <!-- 中间列 - 统一列宽 -->
         <el-table-column
           v-for="column in visibleColumns"
           :key="column.key"
           :prop="column.key"
           :label="column.label"
-          :min-width="120"
+          :width="column.width || 150"
           :show-overflow-tooltip="true"
         >
           <template #default="scope">
             <span v-if="column.formatter">
               {{ column.formatter(scope.row[column.key], scope.row) }}
             </span>
-            <span v-else>{{ scope.row[column.key] }}</span>
+            <span v-else>{{ scope.row[column.key] || '-' }}</span>
           </template>
         </el-table-column>
 
         <!-- 操作列固定右边 -->
         <el-table-column
           label="操作"
-          width="100"
+          width="120"
           fixed="right"
+          align="center"
         >
           <template #default="scope">
-            <el-button link type="primary" @click="handleView(scope.row)">查看</el-button>
+            <el-button link type="primary" size="small" @click="handleView(scope.row)">
+              查看
+            </el-button>
           </template>
         </el-table-column>
 
@@ -209,24 +230,34 @@ const {
   tableData,
   query,
   filters,
-  sort,
   selectedRows,
   selectedCount,
   hasMore,
   hasPrevious,
+  scrollPosition,
   initialize,
   reload,
   slideWindowDown,
   slideWindowUp,
+  saveScrollPosition,
 } = useDataTable(props.config.index, props.config.pageSize)
 
 // 本地状态
 const tableWrapperRef = ref<HTMLElement>()
 const searchQuery = ref('')
 const filterForm = ref<Record<string, any>>({})
-const filterOptions = ref<Record<string, Array<{ label: string; value: any }>>>({})
-const filterLoadingStates = ref<Record<string, boolean>>({}) // 加载状态
-const filterLoadedFlags = ref<Record<string, boolean>>({}) // 是否已加载
+
+// 筛选器状态（支持分页和搜索）
+interface FilterState {
+  options: Array<{ label: string; value: any }>
+  searchQuery: string
+  page: number
+  pageSize: number
+  hasMore: boolean
+  loading: boolean
+  initialized: boolean
+}
+const filterStates = ref<Record<string, FilterState>>({})
 
 // 可见列
 const visibleColumns = computed(() => columns.value.filter((col) => col.visible !== false))
@@ -236,6 +267,10 @@ let scrollTimer: number | null = null
 const handleTableScroll = (e: Event) => {
   const target = e.target as HTMLElement
   if (!target) return
+
+  // 保存滚动位置
+  saveScrollPosition(target.scrollTop)
+
   if (scrollTimer) clearTimeout(scrollTimer)
   scrollTimer = window.setTimeout(() => {
     const scrollTop = target.scrollTop
@@ -263,7 +298,7 @@ const handleSelectionChange = (selection: any[]) => {
 }
 const handleClearSelection = () => { selectedRows.value = [] }
 const handleSelectAll = (val: boolean) => {
-  if (val) tableData.forEach(row => { if (!selectedRows.value.includes(row)) selectedRows.value.push(row) })
+  if (val) tableData.value.forEach((row: any) => { if (!selectedRows.value.includes(row)) selectedRows.value.push(row) })
   else selectedRows.value = []
 }
 
@@ -281,8 +316,7 @@ const handleBulkAction = async (action: BulkAction) => {
   emit('bulkAction', { action: action.key, rows: selectedRows.value })
 }
 
-// 刷新 & 查看
-const handleRefresh = () => reload()
+// 查看
 const handleView = (row: any) => emit('view', row)
 
 // 顶部操作
@@ -305,116 +339,159 @@ const getEmptyDescription = () => {
   return `请新增${pageName}`
 }
 
-// 一次性获取所有 filter 选项（优化：合并聚合请求）
-const loadAllFilterOptions = async () => {
-  if (!props.config.filters) return
-
-  // 收集所有需要聚合的 filter
-  const aggRequests: Record<string, any> = {}
-  const filtersNeedAgg: any[] = []
-
-  for (const filter of props.config.filters) {
-    // 跳过静态选项
-    if (filter.options) {
-      filterOptions.value[filter.key] = filter.options
-      filterLoadedFlags.value[filter.key] = true
-      continue
-    }
-
-    // 收集需要聚合的字段
-    if (filter.fetchOptions && filter.key) {
-      filtersNeedAgg.push(filter)
-      // 假设 fetchOptions 内部使用聚合请求
-      aggRequests[filter.key] = {
-        type: 'terms',
-        field: filter.key,
-        size: 100, // 一次性获取更多数据
-      }
+// 初始化筛选器状态
+const initFilterState = (filterKey: string) => {
+  if (!filterStates.value[filterKey]) {
+    filterStates.value[filterKey] = {
+      options: [],
+      searchQuery: '',
+      page: 0,
+      pageSize: 20, // 每页20个选项
+      hasMore: true,
+      loading: false,
+      initialized: false,
     }
   }
+}
 
-  // 如果有需要聚合的字段，一次性请求
-  if (Object.keys(aggRequests).length > 0) {
-    try {
+// 获取筛选器配置
+const getFilterConfig = (filterKey: string) => {
+  return props.config.filters?.find((f) => f.key === filterKey)
+}
+
+// 加载筛选器选项（支持分页和搜索）
+const loadFilterOptions = async (
+  filterKey: string,
+  searchQuery: string = '',
+  page: number = 1,
+  append: boolean = false
+) => {
+  const state = filterStates.value[filterKey]
+  if (!state || state.loading) return
+
+  const filterConfig = getFilterConfig(filterKey)
+  if (!filterConfig) return
+
+  state.loading = true
+
+  try {
+    let newOptions: Array<{ label: string; value: any }> = []
+
+    // 如果配置了 fetchOptions，优先使用它（向后兼容）
+    if (filterConfig.fetchOptions) {
+      newOptions = await filterConfig.fetchOptions()
+
+      // 如果有搜索词，在客户端过滤
+      if (searchQuery) {
+        newOptions = newOptions.filter((opt) =>
+          String(opt.label).toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      }
+
+      // 模拟分页
+      if (!append) {
+        newOptions = newOptions.slice(0, state.pageSize)
+      }
+    } else {
+      // 否则使用默认的 ES 聚合方式
+      const aggRequests: Record<string, any> = {
+        [filterKey]: {
+          type: 'terms',
+          field: filterKey,
+          size: state.pageSize,
+          // 如果有搜索词，添加搜索过滤
+          ...(searchQuery ? { include: `.*${searchQuery}.*` } : {}),
+        }
+      }
+
       const response = await elasticsearchService.search({
         index: props.config.index,
         pagination: { offset: 0, size: 0 },
         aggRequests,
       })
 
-      // 处理聚合结果
-      for (const filter of filtersNeedAgg) {
-        const buckets = response.aggregations?.[filter.key]?.buckets || []
-        filterOptions.value[filter.key] = buckets.map((bucket: any) => ({
-          label: String(bucket.key),
-          value: bucket.key,
-        }))
-        filterLoadedFlags.value[filter.key] = true
-      }
-    } catch (error) {
-      console.error('Failed to load filter options:', error)
-      // 失败时回退到逐个加载
-      for (const filter of filtersNeedAgg) {
-        filterOptions.value[filter.key] = []
-      }
+      const buckets = response.aggregations?.[filterKey]?.buckets || []
+      newOptions = buckets.map((bucket: any) => ({
+        label: String(bucket.key),
+        value: bucket.key,
+      }))
     }
+
+    // 更新状态
+    if (append) {
+      state.options = [...state.options, ...newOptions]
+    } else {
+      state.options = newOptions
+    }
+
+    state.page = page
+    state.searchQuery = searchQuery
+    state.hasMore = newOptions.length === state.pageSize
+    state.initialized = true
+  } catch (error) {
+    console.error(`Failed to load options for filter ${filterKey}:`, error)
+    state.options = []
+    state.hasMore = false
+  } finally {
+    state.loading = false
   }
 }
 
-// 加载单个 filter 的选项（懒加载备用）
-const loadFilterOption = async (filter: any) => {
-  // 如果已经加载过，不重复加载
-  if (filterLoadedFlags.value[filter.key]) {
-    return
-  }
+// 处理筛选器搜索
+const handleFilterSearch = async (filterKey: string, searchQuery: string) => {
+  initFilterState(filterKey)
+  await loadFilterOptions(filterKey, searchQuery, 1, false)
+}
 
-  // 如果有静态 options，直接使用
-  if (filter.options) {
-    filterOptions.value[filter.key] = filter.options
-    filterLoadedFlags.value[filter.key] = true
-    return
-  }
+// 加载更多筛选器选项
+const loadMoreFilterOptions = async (filterKey: string) => {
+  const state = filterStates.value[filterKey]
+  if (!state) return
+  if (!state.hasMore || state.loading) return
 
-  // 如果有 fetchOptions 函数，调用它获取选项
-  if (filter.fetchOptions) {
-    filterLoadingStates.value[filter.key] = true
-    try {
-      filterOptions.value[filter.key] = await filter.fetchOptions()
-      filterLoadedFlags.value[filter.key] = true
-    } catch (error) {
-      console.error(`Failed to load options for filter ${filter.key}:`, error)
-      filterOptions.value[filter.key] = []
-    } finally {
-      filterLoadingStates.value[filter.key] = false
-    }
-  } else {
-    // 默认为空数组
-    filterOptions.value[filter.key] = []
-    filterLoadedFlags.value[filter.key] = true
+  await loadFilterOptions(filterKey, state.searchQuery, state.page + 1, true)
+}
+
+// 处理下拉框聚焦
+const handleFilterFocus = async (filter: any) => {
+  initFilterState(filter.key)
+  const state = filterStates.value[filter.key]
+
+  // 如果未初始化，加载第一页
+  if (!state.initialized) {
+    await loadFilterOptions(filter.key, '', 1, false)
   }
 }
 
 // 处理下拉框显示/隐藏
-const handleFilterVisibleChange = (visible: boolean, filter: any) => {
-  if (visible && !filterLoadedFlags.value[filter.key]) {
-    // 如果使用懒加载模式，才在这里加载
-    if (!props.config.eagerLoadFilters) {
-      loadFilterOption(filter)
-    }
-  }
+const handleFilterVisibleChange = (_visible: boolean, _filter: any) => {
+  // 可以在这里添加其他逻辑，比如清空搜索等
 }
 
 // 初始化
 onMounted(async () => {
-  // 如果配置了 eagerLoadFilters，一次性加载所有 filter 选项
-  if (props.config.eagerLoadFilters) {
-    await loadAllFilterOptions()
+  // 初始化所有筛选器状态（懒加载，在用户聚焦时才加载数据）
+  if (props.config.filters) {
+    for (const filter of props.config.filters) {
+      if (filter.type === 'select') {
+        initFilterState(filter.key)
+      }
+    }
   }
-  // 否则使用懒加载，在用户点击下拉框时才加载
 
-  initialize()
+  await initialize()
+
   const tableBody = tableWrapperRef.value?.querySelector('.el-table__body-wrapper')
-  if (tableBody) tableBody.addEventListener('scroll', handleTableScroll)
+  if (tableBody) {
+    tableBody.addEventListener('scroll', handleTableScroll)
+
+    // 恢复滚动位置
+    if (scrollPosition.value > 0) {
+      setTimeout(() => {
+        tableBody.scrollTop = scrollPosition.value
+      }, 100)
+    }
+  }
 })
 onUnmounted(() => {
   const tableBody = tableWrapperRef.value?.querySelector('.el-table__body-wrapper')
@@ -496,6 +573,35 @@ onUnmounted(() => {
   :deep(.el-table) {
     overflow: hidden;
   }
+
+  // 优化表格样式
+  :deep(.el-table__row) {
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #f5f7fa !important;
+    }
+  }
+
+  // 优化表头样式
+  :deep(.el-table__header-wrapper) {
+    .el-table__header th {
+      font-weight: 600;
+      color: #606266;
+    }
+  }
+
+  // 优化单元格内容
+  :deep(.el-table__cell) {
+    padding: 12px 0;
+
+    .cell {
+      padding: 0 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
 }
 
 .rounded-table { border-radius: 8px; overflow: hidden; }
@@ -506,5 +612,15 @@ onUnmounted(() => {
   color: #909399;
   font-size: 14px;
   .el-icon { margin-right: 8px; }
+}
+
+.select-footer {
+  text-align: center;
+  padding: 8px 0;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f5f7fa;
+  }
 }
 </style>

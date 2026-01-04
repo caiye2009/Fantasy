@@ -1,8 +1,8 @@
 package domain
 
 import (
+	"fmt"
 	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -23,4 +23,31 @@ type Order struct {
 // TableName 表名
 func (Order) TableName() string {
 	return "orders"
+}
+
+// ES Indexable 接口实现
+
+// GetIndexName 返回 ES 索引名称
+func (o *Order) GetIndexName() string {
+	return "order"
+}
+
+// GetDocumentID 返回文档 ID
+func (o *Order) GetDocumentID() string {
+	return fmt.Sprintf("%d", o.ID)
+}
+
+// ToDocument 转换为 ES 文档
+func (o *Order) ToDocument() map[string]interface{} {
+	return map[string]interface{}{
+		"id":           o.ID,
+		"orderCode":    o.OrderCode,
+		"clientCode":   o.ClientCode,
+		"orderDate":    o.OrderDate,
+		"deliveryDate": o.DeliveryDate,
+		"orderStatus":  o.OrderStatus,
+		"createdBy":    o.CreatedBy,
+		"createdAt":    o.CreatedAt,
+		"updatedAt":    o.UpdatedAt,
+	}
 }

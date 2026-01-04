@@ -12,17 +12,14 @@ import (
 	"back/pkg/endpoint"
 )
 
-// ProcessQuoteHandler ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ· Handler
 type ProcessQuoteHandler struct {
 	service *application.ProcessQuoteService
 }
 
-// NewProcessQuoteHandler ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¥ÃÂÃÂ»ÃÂÃÂº Handler
 func NewProcessQuoteHandler(service *application.ProcessQuoteService) *ProcessQuoteHandler {
 	return &ProcessQuoteHandler{service: service}
 }
 
-// Create ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¥ÃÂÃÂ»ÃÂÃÂºÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·
 func (h *ProcessQuoteHandler) Create(c *gin.Context) {
 	var req application.CreateProcessQuoteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -39,7 +36,6 @@ func (h *ProcessQuoteHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// Get ÃÂÃÂ¨ÃÂÃÂÃÂÃÂ·ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·
 func (h *ProcessQuoteHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -56,7 +52,6 @@ func (h *ProcessQuoteHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// List ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¨ÃÂÃÂ¡ÃÂÃÂ¨
 func (h *ProcessQuoteHandler) List(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
@@ -73,7 +68,6 @@ func (h *ProcessQuoteHandler) List(c *gin.Context) {
 	})
 }
 
-// Update ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ´ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ°ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·
 func (h *ProcessQuoteHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -95,7 +89,6 @@ func (h *ProcessQuoteHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "updated successfully"})
 }
 
-// Delete ÃÂÃÂ¥ÃÂÃÂÃÂÃÂ ÃÂÃÂ©ÃÂÃÂÃÂÃÂ¤ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·
 func (h *ProcessQuoteHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -111,7 +104,6 @@ func (h *ProcessQuoteHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "deleted successfully"})
 }
 
-// GetRoutes ÃÂÃÂ¨ÃÂÃÂÃÂÃÂ·ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¨ÃÂÃÂ·ÃÂÃÂ¯ÃÂÃÂ§ÃÂÃÂÃÂÃÂ±ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂÃÂÃÂ¤ÃÂÃÂ¹ÃÂÃÂ
 func (h *ProcessQuoteHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
 		{Method: "POST", Path: "/process_quotes", Handler: h.Create, Domain: "process_quote", Action: "create"},

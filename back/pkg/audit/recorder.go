@@ -162,20 +162,22 @@ func (r *Recorder) Save() error {
 	}
 
 	// 序列化 old 和 new 数据
-	var oldDataJSON, newDataJSON string
+	var oldDataJSON, newDataJSON *string
 	if r.oldData != nil {
 		if bytes, err := json.Marshal(r.oldData); err == nil {
-			oldDataJSON = string(bytes)
+			jsonStr := string(bytes)
+			oldDataJSON = &jsonStr
 		}
 	}
 	if r.newData != nil {
 		if bytes, err := json.Marshal(r.newData); err == nil {
-			newDataJSON = string(bytes)
+			jsonStr := string(bytes)
+			newDataJSON = &jsonStr
 		}
 	}
 
 	// 构建审计日志
-	auditLog := &AuditLog{
+	auditLog := &Audit{
 		LoginID:     r.loginID,
 		Username:    r.username,
 		Domain:      r.domain,

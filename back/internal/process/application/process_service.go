@@ -19,7 +19,6 @@ func (s *ProcessService) Create(ctx context.Context, req *CreateProcessRequest) 
 	process := &domain.Process{
 		ProcessCode: req.ProcessCode,
 		ProcessName: req.ProcessName,
-		ProcessCountry: req.ProcessCountry,
 		CreatedBy: req.CreatedBy,
 	}
 
@@ -95,7 +94,6 @@ func toProcessResponse(process *domain.Process) *ProcessResponse {
 		ID: process.ID,
 		ProcessCode: process.ProcessCode,
 		ProcessName: process.ProcessName,
-		ProcessCountry: process.ProcessCountry,
 		CreatedBy: process.CreatedBy,
 		CreatedAt: process.CreatedAt,
 		UpdatedAt: process.UpdatedAt,

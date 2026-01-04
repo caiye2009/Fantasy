@@ -9,13 +9,11 @@ import (
 	"back/pkg/repo"
 )
 
-// OrderMaterialRepo ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·ÃÂÃÂ¤ÃÂÃÂ»ÃÂÃÂÃÂÃÂ¥ÃÂÃÂÃÂÃÂ¨
 type OrderMaterialRepo struct {
 	*repo.Repo[domain.OrderMaterial]
 	db *gorm.DB
 }
 
-// NewOrderMaterialRepo ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¥ÃÂÃÂ»ÃÂÃÂºÃÂÃÂ¤ÃÂÃÂ»ÃÂÃÂÃÂÃÂ¥ÃÂÃÂÃÂÃÂ¨
 func NewOrderMaterialRepo(db *gorm.DB) *OrderMaterialRepo {
 	return &OrderMaterialRepo{
 		Repo: repo.NewRepo[domain.OrderMaterial](db),
@@ -23,12 +21,10 @@ func NewOrderMaterialRepo(db *gorm.DB) *OrderMaterialRepo {
 	}
 }
 
-// Exists ÃÂÃÂ¦ÃÂÃÂ£ÃÂÃÂÃÂÃÂ¦ÃÂÃÂÃÂÃÂ¥ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ¯ÃÂÃÂ¥ÃÂÃÂÃÂÃÂ¦ÃÂÃÂ¥ÃÂÃÂ­ÃÂÃÂÃÂÃÂ¥ÃÂÃÂÃÂÃÂ¨
 func (r *OrderMaterialRepo) Exists(ctx context.Context, id uint) (bool, error) {
 	return r.Repo.Exists(ctx, map[string]interface{}{"id": id})
 }
 
-// Count ÃÂÃÂ§ÃÂÃÂ»ÃÂÃÂÃÂÃÂ¨ÃÂÃÂ®ÃÂÃÂ¡ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ°ÃÂÃÂ©ÃÂÃÂÃÂÃÂ
 func (r *OrderMaterialRepo) Count(ctx context.Context) (int64, error) {
 	return r.Repo.Count(ctx, map[string]interface{}{})
 }

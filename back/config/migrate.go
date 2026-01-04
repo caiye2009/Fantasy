@@ -44,7 +44,7 @@ func AutoMigrate(db *gorm.DB) error {
 
 	err := db.AutoMigrate(
 		// 审计日志表
-		&audit.AuditLog{},
+		&audit.Audit{},
 
 		// 基础数据表（8个）
 		&clientDomain.Client{},

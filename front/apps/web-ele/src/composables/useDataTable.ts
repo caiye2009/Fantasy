@@ -65,6 +65,28 @@ export function useDataTable(indexOrOptions: string | DataTableOptions, pageSize
     return minPage > 1
   })
 
+  // 滚动位置保存和恢复
+  const scrollPosition = ref(0)
+  const storageKey = `scroll-position-${index}`
+
+  /** 保存滚动位置到 sessionStorage */
+  const saveScrollPosition = (position: number) => {
+    scrollPosition.value = position
+    sessionStorage.setItem(storageKey, String(position))
+  }
+
+  /** 从 sessionStorage 恢复滚动位置 */
+  const restoreScrollPosition = (): number => {
+    const saved = sessionStorage.getItem(storageKey)
+    return saved ? Number(saved) : 0
+  }
+
+  /** 清除保存的滚动位置 */
+  const clearScrollPosition = () => {
+    scrollPosition.value = 0
+    sessionStorage.removeItem(storageKey)
+  }
+
   /** URL → 内存 */
   const syncFromURL = () => {
     if (route.query.q) query.value = route.query.q as string
@@ -82,6 +104,8 @@ export function useDataTable(indexOrOptions: string | DataTableOptions, pageSize
         sort.value = []
       }
     }
+    // 恢复滚动位置
+    scrollPosition.value = restoreScrollPosition()
   }
 
   /** 内存 → URL */
@@ -228,6 +252,7 @@ export function useDataTable(indexOrOptions: string | DataTableOptions, pageSize
     hasPrevious,
     totalCount,
     currentPage,
+    scrollPosition,
 
     initialize,
     handleScroll,
@@ -235,5 +260,8 @@ export function useDataTable(indexOrOptions: string | DataTableOptions, pageSize
     slideWindowDown,
     slideWindowUp,
     reload,
+    saveScrollPosition,
+    restoreScrollPosition,
+    clearScrollPosition,
   }
 }

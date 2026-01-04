@@ -1,29 +1,29 @@
 <template>
   <el-drawer
     :model-value="visible"
-    title="原料详情"
+    :title="isCreateMode ? '新增原料' : '原料详情'"
     size="60%"
     @close="handleClose"
   >
-    <div v-if="material" class="material-detail">
+    <div v-if="isCreateMode || material" class="material-detail">
       <!-- 基本信息 -->
       <el-card class="detail-card" shadow="never">
         <template #header>
           <div class="card-header">
             <span>基本信息</span>
-            <el-button v-if="!isEditing" type="primary" size="small" @click="startEdit">
+            <el-button v-if="!isCreateMode && !isEditing" type="primary" size="small" @click="startEdit">
               修改
             </el-button>
-            <div v-else>
+            <div v-if="isCreateMode || isEditing">
               <el-button size="small" @click="cancelEdit">取消</el-button>
               <el-button type="primary" size="small" :loading="saving" @click="saveEdit">
-                保存
+                {{ isCreateMode ? '创建' : '保存' }}
               </el-button>
             </div>
           </div>
         </template>
 
-        <el-form v-if="isEditing" :model="editForm" label-width="100px">
+        <el-form v-if="isCreateMode || isEditing" :model="editForm" :rules="formRules" ref="formRef" label-width="100px">
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="原料编码">
@@ -114,8 +114,8 @@
         </el-descriptions>
       </el-card>
 
-      <!-- 价格趋势图 -->
-      <el-card v-if="priceHistory.length > 0" class="detail-card" shadow="never">
+      <!-- 价格趋势图（仅在查看/编辑模式显示） -->
+      <el-card v-if="!isCreateMode && priceHistory.length > 0" class="detail-card" shadow="never">
         <template #header>
           <div class="card-header">
             <span>价格趋势</span>
@@ -124,8 +124,8 @@
         <div v-loading="loadingPriceHistory" ref="priceChartRef" class="price-chart"></div>
       </el-card>
 
-      <!-- 供应商报价 -->
-      <el-card class="detail-card" shadow="never">
+      <!-- 供应商报价（仅在查看/编辑模式显示） -->
+      <el-card v-if="!isCreateMode" class="detail-card" shadow="never">
         <template #header>
           <div class="card-header">
             <div>
@@ -161,14 +161,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, watch, nextTick, computed } from 'vue'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import * as echarts from 'echarts'
 import type { EChartsOption } from 'echarts'
 import type { Material, SupplierQuote } from './types'
 import AddQuoteDialog from './AddQuoteDialog.vue'
 import { elasticsearchService } from '#/api/core/es'
 import { getMaterialPriceHistoryApi, type MaterialPriceHistory } from '#/api/core/material_quote'
+import { createMaterial } from '#/api/core/material'
 
 type PriceData = MaterialPriceHistory
 
@@ -198,6 +199,16 @@ const priceChartRef = ref<HTMLElement>()
 const isEditing = ref(false)
 const saving = ref(false)
 const editForm = ref<Partial<Material>>({})
+const formRef = ref<FormInstance>()
+
+// 新增模式（当 material 为 null 时）
+const isCreateMode = computed(() => !props.material)
+
+// 表单验证规则
+const formRules: FormRules = {
+  code: [{ required: true, message: '请输入原料编码', trigger: 'blur' }],
+  name: [{ required: true, message: '请输入原料名称', trigger: 'blur' }]
+}
 
 // 开始编辑
 const startEdit = () => {
@@ -215,25 +226,57 @@ const cancelEdit = () => {
 
 // 保存编辑
 const saveEdit = async () => {
-  if (!props.material?._id) {
-    ElMessage.error('缺少必要的ID信息')
-    return
-  }
+  // 表单验证
+  const valid = await formRef.value?.validate()
+  if (!valid) return
 
   saving.value = true
   try {
-    const { _id, id, createdAt, updatedAt, ...updateData } = editForm.value as any
+    if (isCreateMode.value) {
+      // 新增模式
+      const result = await createMaterial({
+        materialCode: editForm.value.code!,
+        materialName: editForm.value.name!,
+        createdBy: 1 // TODO: 从用户状态获取实际用户ID
+      })
 
-    await elasticsearchService.update(props.material._id, 'material', updateData)
+      ElMessage.success('创建成功')
 
-    ElMessage.success('保存成功')
-    isEditing.value = false
+      // 通知父组件新增成功
+      const newMaterial: Material = {
+        id: `mat-${result.id}`,
+        code: result.materialCode,
+        name: result.materialName,
+        category: editForm.value.category || '',
+        unit: editForm.value.unit || 'kg',
+        currentPrice: editForm.value.currentPrice || 0,
+        status: editForm.value.status || 'active',
+        updatedBy: '当前用户',
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt
+      }
+      emit('updateMaterial', newMaterial)
+      emit('update:visible', false)
+    } else {
+      // 编辑模式
+      if (!props.material?._id) {
+        ElMessage.error('缺少必要的ID信息')
+        return
+      }
 
-    // 通知父组件更新
-    emit('updateMaterial', { ...props.material, ...updateData } as Material)
+      const { _id, id, createdAt, updatedAt, ...updateData } = editForm.value as any
+
+      await elasticsearchService.update(props.material._id, 'material', updateData)
+
+      ElMessage.success('保存成功')
+      isEditing.value = false
+
+      // 通知父组件更新
+      emit('updateMaterial', { ...props.material, ...updateData } as Material)
+    }
   } catch (error) {
-    console.error('保存失败:', error)
-    ElMessage.error('保存失败')
+    console.error(isCreateMode.value ? '创建失败:' : '保存失败:', error)
+    ElMessage.error(isCreateMode.value ? '创建失败，请稍后重试' : '保存失败')
   } finally {
     saving.value = false
   }
@@ -346,8 +389,18 @@ watch(() => props.material, async (newMaterial) => {
       }
     }
   } else {
+    // 新增模式：初始化表单
     supplierQuotes.value = []
     priceHistory.value = []
+    editForm.value = {
+      code: '',
+      name: '',
+      category: '',
+      unit: 'kg',
+      currentPrice: 0,
+      status: 'active',
+      description: ''
+    }
   }
 }, { immediate: true })
 

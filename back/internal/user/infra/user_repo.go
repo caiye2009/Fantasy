@@ -9,13 +9,11 @@ import (
 	"back/pkg/repo"
 )
 
-// UserRepo ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·ÃÂÃÂ¤ÃÂÃÂ»ÃÂÃÂÃÂÃÂ¥ÃÂÃÂÃÂÃÂ¨
 type UserRepo struct {
 	*repo.Repo[domain.User]
 	db *gorm.DB
 }
 
-// NewUserRepo ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¥ÃÂÃÂ»ÃÂÃÂºÃÂÃÂ¤ÃÂÃÂ»ÃÂÃÂÃÂÃÂ¥ÃÂÃÂÃÂÃÂ¨
 func NewUserRepo(db *gorm.DB) *UserRepo {
 	return &UserRepo{
 		Repo: repo.NewRepo[domain.User](db),
@@ -23,12 +21,10 @@ func NewUserRepo(db *gorm.DB) *UserRepo {
 	}
 }
 
-// Exists ÃÂÃÂ¦ÃÂÃÂ£ÃÂÃÂÃÂÃÂ¦ÃÂÃÂÃÂÃÂ¥ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ¯ÃÂÃÂ¥ÃÂÃÂÃÂÃÂ¦ÃÂÃÂ¥ÃÂÃÂ­ÃÂÃÂÃÂÃÂ¥ÃÂÃÂÃÂÃÂ¨
 func (r *UserRepo) Exists(ctx context.Context, id uint) (bool, error) {
 	return r.Repo.Exists(ctx, map[string]interface{}{"id": id})
 }
 
-// Count ÃÂÃÂ§ÃÂÃÂ»ÃÂÃÂÃÂÃÂ¨ÃÂÃÂ®ÃÂÃÂ¡ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ°ÃÂÃÂ©ÃÂÃÂÃÂÃÂ
 func (r *UserRepo) Count(ctx context.Context) (int64, error) {
 	return r.Repo.Count(ctx, map[string]interface{}{})
 }

@@ -12,17 +12,14 @@ import (
 	"back/pkg/endpoint"
 )
 
-// OrderParticipantHandler ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ· Handler
 type OrderParticipantHandler struct {
 	service *application.OrderParticipantService
 }
 
-// NewOrderParticipantHandler ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¥ÃÂÃÂ»ÃÂÃÂº Handler
 func NewOrderParticipantHandler(service *application.OrderParticipantService) *OrderParticipantHandler {
 	return &OrderParticipantHandler{service: service}
 }
 
-// Create ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¥ÃÂÃÂ»ÃÂÃÂºÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·
 func (h *OrderParticipantHandler) Create(c *gin.Context) {
 	var req application.CreateOrderParticipantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -39,7 +36,6 @@ func (h *OrderParticipantHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// Get ÃÂÃÂ¨ÃÂÃÂÃÂÃÂ·ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·
 func (h *OrderParticipantHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -56,7 +52,6 @@ func (h *OrderParticipantHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// List ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¨ÃÂÃÂ¡ÃÂÃÂ¨
 func (h *OrderParticipantHandler) List(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
@@ -73,7 +68,6 @@ func (h *OrderParticipantHandler) List(c *gin.Context) {
 	})
 }
 
-// Update ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ´ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ°ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·
 func (h *OrderParticipantHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -95,7 +89,6 @@ func (h *OrderParticipantHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "updated successfully"})
 }
 
-// Delete ÃÂÃÂ¥ÃÂÃÂÃÂÃÂ ÃÂÃÂ©ÃÂÃÂÃÂÃÂ¤ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·
 func (h *OrderParticipantHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -111,7 +104,6 @@ func (h *OrderParticipantHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "deleted successfully"})
 }
 
-// GetRoutes ÃÂÃÂ¨ÃÂÃÂÃÂÃÂ·ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¨ÃÂÃÂ·ÃÂÃÂ¯ÃÂÃÂ§ÃÂÃÂÃÂÃÂ±ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂÃÂÃÂ¤ÃÂÃÂ¹ÃÂÃÂ
 func (h *OrderParticipantHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
 		{Method: "POST", Path: "/order_participants", Handler: h.Create, Domain: "order_participant", Action: "create"},

@@ -5,7 +5,7 @@ import (
 )
 
 // AuditLog 审计日志实体
-type AuditLog struct {
+type Audit struct {
 	ID            uint      `gorm:"primaryKey" json:"id"`
 	LoginID       uint      `gorm:"not null;index" json:"login_id"`                 // 操作人ID
 	Username      string    `gorm:"size:100;not null" json:"username"`              // 操作人姓名
@@ -20,14 +20,14 @@ type AuditLog struct {
 	DurationMs    int64     `gorm:"not null" json:"duration_ms"`                    // 操作耗时（毫秒）
 	UserAgent     string    `gorm:"size:500" json:"user_agent,omitempty"`           // 客户端信息
 	RequestID     string    `gorm:"size:100;index" json:"request_id,omitempty"`     // 请求追踪ID
-	OldData       string    `gorm:"type:jsonb" json:"old_data,omitempty"`           // 变更前数据（JSON）
-	NewData       string    `gorm:"type:jsonb" json:"new_data,omitempty"`           // 变更后数据（JSON）
+	OldData       *string   `gorm:"type:jsonb" json:"old_data,omitempty"`           // 变更前数据（JSON）
+	NewData       *string   `gorm:"type:jsonb" json:"new_data,omitempty"`           // 变更后数据（JSON）
 	CreatedAt     time.Time `gorm:"autoCreateTime;index" json:"created_at"`
 }
 
 // TableName 表名
-func (AuditLog) TableName() string {
-	return "audit_logs"
+func (Audit) TableName() string {
+	return "audits"
 }
 
 // 常用的业务域

@@ -12,17 +12,14 @@ import (
 	"back/pkg/endpoint"
 )
 
-// OrderMaterialHandler ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ· Handler
 type OrderMaterialHandler struct {
 	service *application.OrderMaterialService
 }
 
-// NewOrderMaterialHandler ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¥ÃÂÃÂ»ÃÂÃÂº Handler
 func NewOrderMaterialHandler(service *application.OrderMaterialService) *OrderMaterialHandler {
 	return &OrderMaterialHandler{service: service}
 }
 
-// Create ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¥ÃÂÃÂ»ÃÂÃÂºÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·
 func (h *OrderMaterialHandler) Create(c *gin.Context) {
 	var req application.CreateOrderMaterialRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -39,7 +36,6 @@ func (h *OrderMaterialHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// Get ÃÂÃÂ¨ÃÂÃÂÃÂÃÂ·ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·
 func (h *OrderMaterialHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -56,7 +52,6 @@ func (h *OrderMaterialHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// List ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¨ÃÂÃÂ¡ÃÂÃÂ¨
 func (h *OrderMaterialHandler) List(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
@@ -73,7 +68,6 @@ func (h *OrderMaterialHandler) List(c *gin.Context) {
 	})
 }
 
-// Update ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ´ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ°ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·
 func (h *OrderMaterialHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -95,7 +89,6 @@ func (h *OrderMaterialHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "updated successfully"})
 }
 
-// Delete ÃÂÃÂ¥ÃÂÃÂÃÂÃÂ ÃÂÃÂ©ÃÂÃÂÃÂÃÂ¤ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂ¢ÃÂÃÂ¦ÃÂÃÂÃÂÃÂ·
 func (h *OrderMaterialHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -111,7 +104,6 @@ func (h *OrderMaterialHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "deleted successfully"})
 }
 
-// GetRoutes ÃÂÃÂ¨ÃÂÃÂÃÂÃÂ·ÃÂÃÂ¥ÃÂÃÂÃÂÃÂÃÂÃÂ¨ÃÂÃÂ·ÃÂÃÂ¯ÃÂÃÂ§ÃÂÃÂÃÂÃÂ±ÃÂÃÂ¥ÃÂÃÂ®ÃÂÃÂÃÂÃÂ¤ÃÂÃÂ¹ÃÂÃÂ
 func (h *OrderMaterialHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
 		{Method: "POST", Path: "/order_materials", Handler: h.Create, Domain: "order_material", Action: "create"},

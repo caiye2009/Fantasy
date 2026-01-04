@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -21,4 +22,29 @@ type Client struct {
 // TableName 表名
 func (Client) TableName() string {
 	return "clients"
+}
+
+// ES Indexable 接口实现
+
+// GetIndexName 返回 ES 索引名称
+func (c *Client) GetIndexName() string {
+	return "client"
+}
+
+// GetDocumentID 返回文档 ID
+func (c *Client) GetDocumentID() string {
+	return fmt.Sprintf("%d", c.ID)
+}
+
+// ToDocument 转换为 ES 文档
+func (c *Client) ToDocument() map[string]interface{} {
+	return map[string]interface{}{
+		"id":            c.ID,
+		"clientCode":    c.ClientCode,
+		"clientName":    c.ClientName,
+		"clientCountry": c.ClientCountry,
+		"createdBy":     c.CreatedBy,
+		"createdAt":     c.CreatedAt,
+		"updatedAt":     c.UpdatedAt,
+	}
 }

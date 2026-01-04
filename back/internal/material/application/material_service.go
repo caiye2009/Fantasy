@@ -19,7 +19,7 @@ func (s *MaterialService) Create(ctx context.Context, req *CreateMaterialRequest
 	material := &domain.Material{
 		MaterialCode: req.MaterialCode,
 		MaterialName: req.MaterialName,
-		MaterialCountry: req.MaterialCountry,
+		MaterialCategory: req.MaterialCategory,
 		CreatedBy: req.CreatedBy,
 	}
 
@@ -95,7 +95,7 @@ func toMaterialResponse(material *domain.Material) *MaterialResponse {
 		ID: material.ID,
 		MaterialCode: material.MaterialCode,
 		MaterialName: material.MaterialName,
-		MaterialCountry: material.MaterialCountry,
+		MaterialCategory: material.MaterialCategory,
 		CreatedBy: material.CreatedBy,
 		CreatedAt: material.CreatedAt,
 		UpdatedAt: material.UpdatedAt,
