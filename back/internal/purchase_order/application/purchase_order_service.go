@@ -5,6 +5,7 @@ import (
 
 	"back/internal/purchase_order/domain"
 	"back/internal/purchase_order/infra"
+	"back/pkg/auth"
 )
 
 type PurchaseOrderService struct {
@@ -16,13 +17,15 @@ func NewPurchaseOrderService(repo *infra.PurchaseOrderRepo) *PurchaseOrderServic
 }
 
 func (s *PurchaseOrderService) Create(ctx context.Context, req *CreatePurchaseOrderRequest) (*PurchaseOrderResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	purchaseOrder := &domain.PurchaseOrder{
 		PurchaseCode: req.PurchaseCode,
 		OrderCode: req.OrderCode,
 		SupplierCode: req.SupplierCode,
 		PurchaseDate: req.PurchaseDate,
 		PurchaseStatus: req.PurchaseStatus,
-		CreatedBy: req.CreatedBy,
+		CreatedBy: createdBy,
 	}
 
 	if err := s.repo.Create(ctx, purchaseOrder); err != nil {

@@ -5,6 +5,7 @@ import (
 
 	"back/internal/material_quote/domain"
 	"back/internal/material_quote/infra"
+	"back/pkg/auth"
 )
 
 type MaterialQuoteService struct {
@@ -16,12 +17,14 @@ func NewMaterialQuoteService(repo *infra.MaterialQuoteRepo) *MaterialQuoteServic
 }
 
 func (s *MaterialQuoteService) Create(ctx context.Context, req *CreateMaterialQuoteRequest) (*MaterialQuoteResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	materialQuote := &domain.MaterialQuote{
 		QuoteID: req.QuoteID,
 		MaterialCode: req.MaterialCode,
 		SupplierCode: req.SupplierCode,
 		QuotePrice: req.QuotePrice,
-		CreatedBy: req.CreatedBy,
+		CreatedBy: createdBy,
 	}
 
 	if err := s.repo.Create(ctx, materialQuote); err != nil {

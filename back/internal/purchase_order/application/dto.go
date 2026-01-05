@@ -8,7 +8,6 @@ type CreatePurchaseOrderRequest struct {
 	SupplierCode string `json:"supplierCode" validate:"required,max=50"`
 	PurchaseDate time.Time `json:"purchaseDate" validate:"required"`
 	PurchaseStatus string `json:"purchaseStatus" validate:"required"`
-	CreatedBy uint `json:"createdBy" validate:"required"`
 }
 
 type PurchaseOrderResponse struct {
@@ -18,7 +17,7 @@ type PurchaseOrderResponse struct {
 	SupplierCode string `json:"supplierCode"`
 	PurchaseDate time.Time `json:"purchaseDate"`
 	PurchaseStatus string `json:"purchaseStatus"`
-	CreatedBy uint `json:"createdBy"`
+	CreatedBy string `json:"createdBy"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }

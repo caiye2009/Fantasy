@@ -5,6 +5,7 @@ import (
 
 	"back/internal/supplier/domain"
 	"back/internal/supplier/infra"
+	"back/pkg/auth"
 	"back/pkg/es"
 )
 
@@ -24,11 +25,13 @@ func NewSupplierService(repo *infra.SupplierRepo, esSync *es.ESSync) *SupplierSe
 
 // Create 创建供应商
 func (s *SupplierService) Create(ctx context.Context, req *CreateSupplierRequest) (*SupplierResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	supplier := &domain.Supplier{
 		SupplierCode:     req.SupplierCode,
 		SupplierName:     req.SupplierName,
 		SupplierCategory: req.SupplierCategory,
-		CreatedBy:        req.CreatedBy,
+		CreatedBy:        createdBy,
 	}
 
 	if err := s.repo.Create(ctx, supplier); err != nil {

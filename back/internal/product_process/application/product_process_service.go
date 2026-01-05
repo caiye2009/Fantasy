@@ -5,6 +5,7 @@ import (
 
 	"back/internal/product_process/domain"
 	"back/internal/product_process/infra"
+	"back/pkg/auth"
 )
 
 type ProductProcessService struct {
@@ -16,11 +17,13 @@ func NewProductProcessService(repo *infra.ProductProcessRepo) *ProductProcessSer
 }
 
 func (s *ProductProcessService) Create(ctx context.Context, req *CreateProductProcessRequest) (*ProductProcessResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	productProcess := &domain.ProductProcess{
 		ProductCode: req.ProductCode,
 		ProcessCode: req.ProcessCode,
 		ProcessSeq: req.ProcessSeq,
-		CreatedBy: req.CreatedBy,
+		CreatedBy: createdBy,
 	}
 
 	if err := s.repo.Create(ctx, productProcess); err != nil {

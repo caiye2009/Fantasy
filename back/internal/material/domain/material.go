@@ -13,7 +13,7 @@ type Material struct {
 	MaterialCode string `gorm:"size:50;uniqueIndex;not null" json:"materialCode"`
 	MaterialName string `gorm:"size:100;not null" json:"materialName"`
 	MaterialCategory string `gorm:"size:50" json:"materialCategory"`
-	CreatedBy uint           `gorm:"not null" json:"createdBy"`
+	CreatedBy string         `gorm:"size:50;not null" json:"createdBy"`
 	CreatedAt time.Time      `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`

@@ -7,7 +7,6 @@ type CreateSupplierRequest struct {
 	SupplierCode     string `json:"supplierCode" binding:"required,max=50"`
 	SupplierName     string `json:"supplierName" binding:"required,max=100"`
 	SupplierCategory string `json:"supplierCategory" binding:"max=50"`
-	CreatedBy        uint   `json:"createdBy" binding:"required"`
 }
 
 // SupplierResponse 供应商响应
@@ -16,7 +15,7 @@ type SupplierResponse struct {
 	SupplierCode     string    `json:"supplierCode"`
 	SupplierName     string    `json:"supplierName"`
 	SupplierCategory string    `json:"supplierCategory"`
-	CreatedBy        uint      `json:"createdBy"`
+	CreatedBy        string    `json:"createdBy"`
 	CreatedAt        time.Time `json:"createdAt"`
 	UpdatedAt        time.Time `json:"updatedAt"`
 }

@@ -5,6 +5,7 @@ import (
 
 	"back/internal/order_material/domain"
 	"back/internal/order_material/infra"
+	"back/pkg/auth"
 )
 
 type OrderMaterialService struct {
@@ -16,11 +17,13 @@ func NewOrderMaterialService(repo *infra.OrderMaterialRepo) *OrderMaterialServic
 }
 
 func (s *OrderMaterialService) Create(ctx context.Context, req *CreateOrderMaterialRequest) (*OrderMaterialResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	orderMaterial := &domain.OrderMaterial{
 		OrderCode: req.OrderCode,
 		MaterialCode: req.MaterialCode,
 		RequiredQty: req.RequiredQty,
-		CreatedBy: req.CreatedBy,
+		CreatedBy: createdBy,
 	}
 
 	if err := s.repo.Create(ctx, orderMaterial); err != nil {

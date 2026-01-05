@@ -5,6 +5,7 @@ import (
 
 	"back/internal/material/domain"
 	"back/internal/material/infra"
+	"back/pkg/auth"
 	"back/pkg/es"
 )
 
@@ -21,11 +22,13 @@ func NewMaterialService(repo *infra.MaterialRepo, esSync *es.ESSync) *MaterialSe
 }
 
 func (s *MaterialService) Create(ctx context.Context, req *CreateMaterialRequest) (*MaterialResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	material := &domain.Material{
 		MaterialCode: req.MaterialCode,
 		MaterialName: req.MaterialName,
 		MaterialCategory: req.MaterialCategory,
-		CreatedBy: req.CreatedBy,
+		CreatedBy: createdBy,
 	}
 
 	if err := s.repo.Create(ctx, material); err != nil {

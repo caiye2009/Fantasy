@@ -5,6 +5,7 @@ import (
 
 	"back/internal/product/domain"
 	"back/internal/product/infra"
+	"back/pkg/auth"
 	"back/pkg/es"
 )
 
@@ -21,10 +22,12 @@ func NewProductService(repo *infra.ProductRepo, esSync *es.ESSync) *ProductServi
 }
 
 func (s *ProductService) Create(ctx context.Context, req *CreateProductRequest) (*ProductResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	product := &domain.Product{
 		ProductCode: req.ProductCode,
 		ProductName: req.ProductName,
-		CreatedBy:   req.CreatedBy,
+		CreatedBy:   createdBy,
 	}
 
 	if err := s.repo.Create(ctx, product); err != nil {

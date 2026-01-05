@@ -14,7 +14,7 @@ type PurchaseOrder struct {
 	SupplierCode string `gorm:"size:50;not null;index" json:"supplierCode"`
 	PurchaseDate time.Time `gorm:"type:date;not null" json:"purchaseDate"`
 	PurchaseStatus string `gorm:"size:50;not null;default:'pending'" json:"purchaseStatus"`
-	CreatedBy uint           `gorm:"not null" json:"createdBy"`
+	CreatedBy string         `gorm:"size:50;not null" json:"createdBy"`
 	CreatedAt time.Time      `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`

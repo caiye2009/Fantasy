@@ -12,7 +12,7 @@ type OrderProcess struct {
 	OrderCode string `gorm:"size:50;not null;index" json:"orderCode"`
 	ProcessCode string `gorm:"size:50;not null;index" json:"processCode"`
 	ProcessSeq int `gorm:"not null" json:"processSeq"`
-	CreatedBy uint           `gorm:"not null" json:"createdBy"`
+	CreatedBy string         `gorm:"size:50;not null" json:"createdBy"`
 	CreatedAt time.Time      `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`

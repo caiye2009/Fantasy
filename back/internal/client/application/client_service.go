@@ -5,6 +5,7 @@ import (
 
 	"back/internal/client/domain"
 	"back/internal/client/infra"
+	"back/pkg/auth"
 	"back/pkg/es"
 )
 
@@ -24,11 +25,14 @@ func NewClientService(repo *infra.ClientRepo, esSync *es.ESSync) *ClientService 
 
 // Create 创建客户
 func (s *ClientService) Create(ctx context.Context, req *CreateClientRequest) (*ClientResponse, error) {
+	// 从 context 获取 createdBy
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	client := &domain.Client{
 		ClientCode:    req.ClientCode,
 		ClientName:    req.ClientName,
 		ClientCountry: req.ClientCountry,
-		CreatedBy:     req.CreatedBy,
+		CreatedBy:     createdBy,
 	}
 
 	if err := s.repo.Create(ctx, client); err != nil {

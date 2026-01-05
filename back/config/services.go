@@ -28,8 +28,8 @@ import (
 	userRoleInfra "back/internal/user_role/infra"
 
 	// 关联配置模块
-	productMaterialApp "back/internal/product_material/application"
-	productMaterialInfra "back/internal/product_material/infra"
+	productFabricApp "back/internal/product_fabric/application"
+	productFabricInfra "back/internal/product_fabric/infra"
 	productProcessApp "back/internal/product_process/application"
 	productProcessInfra "back/internal/product_process/infra"
 	materialQuoteApp "back/internal/material_quote/application"
@@ -67,6 +67,19 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	searchApp "back/internal/search/application"
 	searchInfra "back/internal/search/infra"
+
+	// material_shrinkage
+	materialShrinkageApp "back/internal/material_shrinkage/application"
+	materialShrinkageInfra "back/internal/material_shrinkage/infra"
+
+	fabricApp "back/internal/fabric/application"
+	fabricInfra "back/internal/fabric/infra"
+
+	fabricMaterialApp "back/internal/fabric_material/application"
+	fabricMaterialInfra "back/internal/fabric_material/infra"
+
+	fabricProcessApp "back/internal/fabric_process/application"
+	fabricProcessInfra "back/internal/fabric_process/infra"
 )
 
 type Services struct {
@@ -84,7 +97,7 @@ type Services struct {
 	UserRole *userRoleApp.UserRoleService
 
 	// 关联配置
-	ProductMaterial *productMaterialApp.ProductMaterialService
+	ProductFabric *productFabricApp.ProductFabricService
 	ProductProcess  *productProcessApp.ProductProcessService
 	MaterialQuote   *materialQuoteApp.MaterialQuoteService
 	ProcessQuote    *processQuoteApp.ProcessQuoteService
@@ -107,6 +120,13 @@ type Services struct {
 
 	//搜索服务
 	Search *searchApp.SearchService
+
+	// material_shrinkage
+	MaterialShrinkage *materialShrinkageApp.MaterialShrinkageService
+
+	Fabric *fabricApp.FabricService
+	FabricMaterial *fabricMaterialApp.FabricMaterialService
+	FabricProcess * fabricProcessApp.FabricProcessService
 }
 
 func InitServices(db *gorm.DB, esClient *elasticsearch.Client, esSync *es.ESSync, searchRegistry *searchInfra.DomainAwareRegistry, jwtWang *auth.JWTWang, whitelistManager *auth.WhitelistManager) *Services {
@@ -139,8 +159,8 @@ func InitServices(db *gorm.DB, esClient *elasticsearch.Client, esSync *es.ESSync
 	authService := authApp.NewAuthService(userService, jwtWang, whitelistManager)
 
 	// ========== 关联配置模块 ==========
-	productMaterialRepo := productMaterialInfra.NewProductMaterialRepo(db)
-	productMaterialService := productMaterialApp.NewProductMaterialService(productMaterialRepo)
+	productFabricRepo := productFabricInfra.NewProductFabricRepo(db)
+	productFabricService := productFabricApp.NewProductFabricService(productFabricRepo)
 
 	productProcessRepo := productProcessInfra.NewProductProcessRepo(db)
 	productProcessService := productProcessApp.NewProductProcessService(productProcessRepo)
@@ -188,6 +208,23 @@ func InitServices(db *gorm.DB, esClient *elasticsearch.Client, esSync *es.ESSync
 	searchRepo := searchInfra.NewESSearchRepository(esClient)
 	searchService := searchApp.NewSearchService(searchRegistry, searchRepo)
 
+	// material_shrinkage
+	materialShrinkageRepo := materialShrinkageInfra.NewMaterialShrinkageRepo(db)
+	materialShrinkageService := materialShrinkageApp.NewMaterialShrinkageService(materialShrinkageRepo)
+
+	// fabric
+	fabricRepo := fabricInfra.NewFabricRepo(db)
+	fabricService := fabricApp.NewFabricService(fabricRepo, esSync)
+
+	// fabric_material
+	fabricMaterialRepo := fabricMaterialInfra.NewFabricMaterialRepo(db)
+	fabricMaterialService := fabricMaterialApp.NewFabricMaterialService(fabricMaterialRepo)
+
+	// fabric_process
+	fabricProcessRepo := fabricProcessInfra.NewFabricProcessRepo(db)
+	fabricProcessService := fabricProcessApp.NewFabricProcessService(fabricProcessRepo)
+
+
 	return &Services{
 		Auth:               authService,
 		Client:             clientService,
@@ -198,7 +235,7 @@ func InitServices(db *gorm.DB, esClient *elasticsearch.Client, esSync *es.ESSync
 		User:               userService,
 		UserDept:           userDeptService,
 		UserRole:           userRoleService,
-		ProductMaterial:    productMaterialService,
+		ProductFabric:    productFabricService,
 		ProductProcess:     productProcessService,
 		MaterialQuote:      materialQuoteService,
 		ProcessQuote:       processQuoteService,
@@ -212,6 +249,10 @@ func InitServices(db *gorm.DB, esClient *elasticsearch.Client, esSync *es.ESSync
 		ProductAllocation:  productAllocationService,
 		OrderParticipant:   orderParticipantService,
 		OrderEvent:         orderEventService,
-		Search:                searchService,
+		Search:             searchService,
+		MaterialShrinkage:  materialShrinkageService,
+		Fabric:             fabricService,
+		FabricMaterial:     fabricMaterialService,
+		FabricProcess:      fabricProcessService,
 	}
 }

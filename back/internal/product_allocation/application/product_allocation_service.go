@@ -5,6 +5,7 @@ import (
 
 	"back/internal/product_allocation/domain"
 	"back/internal/product_allocation/infra"
+	"back/pkg/auth"
 )
 
 type ProductAllocationService struct {
@@ -16,6 +17,8 @@ func NewProductAllocationService(repo *infra.ProductAllocationRepo) *ProductAllo
 }
 
 func (s *ProductAllocationService) Create(ctx context.Context, req *CreateProductAllocationRequest) (*ProductAllocationResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	productAllocation := &domain.ProductAllocation{
 		AllocationCode: req.AllocationCode,
 		OrderCode: req.OrderCode,
@@ -25,7 +28,7 @@ func (s *ProductAllocationService) Create(ctx context.Context, req *CreateProduc
 		AllocationStatus: req.AllocationStatus,
 		AllocatedBy: req.AllocatedBy,
 		AllocatedAt: req.AllocatedAt,
-		CreatedBy: req.CreatedBy,
+		CreatedBy: createdBy,
 	}
 
 	if err := s.repo.Create(ctx, productAllocation); err != nil {

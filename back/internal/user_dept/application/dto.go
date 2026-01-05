@@ -7,7 +7,6 @@ type CreateUserDeptRequest struct {
 	DeptCode    string `json:"deptCode" validate:"required"`
 	DeptName    string `json:"deptName" validate:"required"`
 	Description string `json:"description"`
-	CreatedBy   uint   `json:"createdBy" validate:"required"`
 }
 
 // UserDeptResponse 部门响应
@@ -16,7 +15,7 @@ type UserDeptResponse struct {
 	DeptCode    string    `json:"deptCode"`
 	DeptName    string    `json:"deptName"`
 	Description string    `json:"description"`
-	CreatedBy   uint      `json:"createdBy"`
+	CreatedBy   string    `json:"createdBy"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }

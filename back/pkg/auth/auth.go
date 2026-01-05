@@ -153,3 +153,12 @@ func GetRequestContext(c *gin.Context) *RequestContext {
 		Department: department.(string),
 	}
 }
+
+// GetLoginIDFromContext 从 context 中获取当前登录用户的 LoginID
+// 用于作为 createdBy 字段
+func GetLoginIDFromContext(ctx context.Context) string {
+	if loginID, ok := ctx.Value(LoginIDContextKey).(string); ok {
+		return loginID
+	}
+	return ""
+}

@@ -15,7 +15,7 @@ import (
 	userRoleDomain "back/internal/user_role/domain"
 
 	// 关联配置表
-	productMaterialDomain "back/internal/product_material/domain"
+	productFabricDomain "back/internal/product_fabric/domain"
 	productProcessDomain "back/internal/product_process/domain"
 	materialQuoteDomain "back/internal/material_quote/domain"
 	processQuoteDomain "back/internal/process_quote/domain"
@@ -35,6 +35,9 @@ import (
 	// 订单辅助表
 	orderParticipantDomain "back/internal/order_participant/domain"
 	orderEventDomain "back/internal/order_event/domain"
+
+	// material_shrinkage
+	materialShrinkageDomain "back/internal/material_shrinkage/domain"
 
 	"back/pkg/audit"
 )
@@ -57,7 +60,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&userRoleDomain.UserRole{},
 
 		// 关联配置表（4个）
-		&productMaterialDomain.ProductMaterial{},
+		&productFabricDomain.ProductFabric{},
 		&productProcessDomain.ProductProcess{},
 		&materialQuoteDomain.MaterialQuote{},
 		&processQuoteDomain.ProcessQuote{},
@@ -77,6 +80,9 @@ func AutoMigrate(db *gorm.DB) error {
 		// 订单辅助表（2个）
 		&orderParticipantDomain.OrderParticipant{},
 		&orderEventDomain.OrderEvent{},
+
+		// material_shrinkage
+		&materialShrinkageDomain.MaterialShrinkage{},
 	)
 
 	if err != nil {

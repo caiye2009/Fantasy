@@ -9,7 +9,6 @@ type CreateProductionOrderRequest struct {
 	SupplierCode string `json:"supplierCode" validate:"required,max=50"`
 	ProductionQty float64 `json:"productionQty" validate:"required,gt=0"`
 	ProductionStatus string `json:"productionStatus" validate:"required"`
-	CreatedBy uint `json:"createdBy" validate:"required"`
 }
 
 type ProductionOrderResponse struct {
@@ -20,7 +19,7 @@ type ProductionOrderResponse struct {
 	SupplierCode string `json:"supplierCode"`
 	ProductionQty float64 `json:"productionQty"`
 	ProductionStatus string `json:"productionStatus"`
-	CreatedBy uint `json:"createdBy"`
+	CreatedBy string `json:"createdBy"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }

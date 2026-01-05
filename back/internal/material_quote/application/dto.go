@@ -7,7 +7,6 @@ type CreateMaterialQuoteRequest struct {
 	MaterialCode string `json:"materialCode" validate:"required,max=50"`
 	SupplierCode string `json:"supplierCode" validate:"required,max=50"`
 	QuotePrice float64 `json:"quotePrice" validate:"required,gt=0"`
-	CreatedBy uint `json:"createdBy" validate:"required"`
 }
 
 type MaterialQuoteResponse struct {
@@ -16,7 +15,7 @@ type MaterialQuoteResponse struct {
 	MaterialCode string `json:"materialCode"`
 	SupplierCode string `json:"supplierCode"`
 	QuotePrice float64 `json:"quotePrice"`
-	CreatedBy uint `json:"createdBy"`
+	CreatedBy string `json:"createdBy"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }

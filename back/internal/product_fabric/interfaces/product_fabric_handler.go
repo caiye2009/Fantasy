@@ -7,21 +7,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"back/internal/product_material/application"
-	"back/internal/product_material/domain"
+	"back/internal/product_fabric/application"
+	"back/internal/product_fabric/domain"
 	"back/pkg/endpoint"
 )
 
-type ProductMaterialHandler struct {
-	service *application.ProductMaterialService
+type ProductFabricHandler struct {
+	service *application.ProductFabricService
 }
 
-func NewProductMaterialHandler(service *application.ProductMaterialService) *ProductMaterialHandler {
-	return &ProductMaterialHandler{service: service}
+func NewProductFabricHandler(service *application.ProductFabricService) *ProductFabricHandler {
+	return &ProductFabricHandler{service: service}
 }
 
-func (h *ProductMaterialHandler) Create(c *gin.Context) {
-	var req application.CreateProductMaterialRequest
+func (h *ProductFabricHandler) Create(c *gin.Context) {
+	var req application.CreateProductFabricRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -36,13 +36,13 @@ func (h *ProductMaterialHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-func (h *ProductMaterialHandler) Get(c *gin.Context) {
+func (h *ProductFabricHandler) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	resp, err := h.service.Get(c.Request.Context(), uint(id))
 	if err != nil {
-		if errors.Is(err, domain.ErrProductMaterialNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "product_material not found"})
+		if errors.Is(err, domain.ErrProductFabricNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "product_fabric not found"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -52,7 +52,7 @@ func (h *ProductMaterialHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-func (h *ProductMaterialHandler) List(c *gin.Context) {
+func (h *ProductFabricHandler) List(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
@@ -68,7 +68,7 @@ func (h *ProductMaterialHandler) List(c *gin.Context) {
 	})
 }
 
-func (h *ProductMaterialHandler) Update(c *gin.Context) {
+func (h *ProductFabricHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	var updates map[string]interface{}
@@ -78,8 +78,8 @@ func (h *ProductMaterialHandler) Update(c *gin.Context) {
 	}
 
 	if err := h.service.Update(c.Request.Context(), uint(id), updates); err != nil {
-		if errors.Is(err, domain.ErrProductMaterialNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "product_material not found"})
+		if errors.Is(err, domain.ErrProductFabricNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "product_fabric not found"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -89,12 +89,12 @@ func (h *ProductMaterialHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "updated successfully"})
 }
 
-func (h *ProductMaterialHandler) Delete(c *gin.Context) {
+func (h *ProductFabricHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	if err := h.service.Delete(c.Request.Context(), uint(id)); err != nil {
-		if errors.Is(err, domain.ErrProductMaterialNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "product_material not found"})
+		if errors.Is(err, domain.ErrProductFabricNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "product_fabric not found"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -104,12 +104,12 @@ func (h *ProductMaterialHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "deleted successfully"})
 }
 
-func (h *ProductMaterialHandler) GetRoutes() []endpoint.RouteDefinition {
+func (h *ProductFabricHandler) GetRoutes() []endpoint.RouteDefinition {
 	return []endpoint.RouteDefinition{
-		{Method: "POST", Path: "/product_materials", Handler: h.Create, Domain: "product_material", Action: "create"},
-		{Method: "GET", Path: "/product_materials/:id", Handler: h.Get, Domain: "product_material", Action: "get"},
-		{Method: "GET", Path: "/product_materials", Handler: h.List, Domain: "product_material", Action: "list"},
-		{Method: "PUT", Path: "/product_materials/:id", Handler: h.Update, Domain: "product_material", Action: "update"},
-		{Method: "DELETE", Path: "/product_materials/:id", Handler: h.Delete, Domain: "product_material", Action: "delete"},
+		{Method: "POST", Path: "/product_fabrics", Handler: h.Create, Domain: "product_fabric", Action: "create"},
+		{Method: "GET", Path: "/product_fabrics/:id", Handler: h.Get, Domain: "product_fabric", Action: "get"},
+		{Method: "GET", Path: "/product_fabrics", Handler: h.List, Domain: "product_fabric", Action: "list"},
+		{Method: "PUT", Path: "/product_fabrics/:id", Handler: h.Update, Domain: "product_fabric", Action: "update"},
+		{Method: "DELETE", Path: "/product_fabrics/:id", Handler: h.Delete, Domain: "product_fabric", Action: "delete"},
 	}
 }

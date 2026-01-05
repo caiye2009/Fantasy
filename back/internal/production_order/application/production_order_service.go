@@ -5,6 +5,7 @@ import (
 
 	"back/internal/production_order/domain"
 	"back/internal/production_order/infra"
+	"back/pkg/auth"
 )
 
 type ProductionOrderService struct {
@@ -16,6 +17,8 @@ func NewProductionOrderService(repo *infra.ProductionOrderRepo) *ProductionOrder
 }
 
 func (s *ProductionOrderService) Create(ctx context.Context, req *CreateProductionOrderRequest) (*ProductionOrderResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	productionOrder := &domain.ProductionOrder{
 		ProductionCode: req.ProductionCode,
 		OrderCode: req.OrderCode,
@@ -23,7 +26,7 @@ func (s *ProductionOrderService) Create(ctx context.Context, req *CreateProducti
 		SupplierCode: req.SupplierCode,
 		ProductionQty: req.ProductionQty,
 		ProductionStatus: req.ProductionStatus,
-		CreatedBy: req.CreatedBy,
+		CreatedBy: createdBy,
 	}
 
 	if err := s.repo.Create(ctx, productionOrder); err != nil {

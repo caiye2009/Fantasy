@@ -15,7 +15,7 @@ type ProductionOrder struct {
 	SupplierCode string `gorm:"size:50;not null;index" json:"supplierCode"`
 	ProductionQty float64 `gorm:"type:decimal(10,2);not null" json:"productionQty"`
 	ProductionStatus string `gorm:"size:50;not null;default:'pending'" json:"productionStatus"`
-	CreatedBy uint           `gorm:"not null" json:"createdBy"`
+	CreatedBy string         `gorm:"size:50;not null" json:"createdBy"`
 	CreatedAt time.Time      `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`

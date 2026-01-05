@@ -5,6 +5,7 @@ import (
 
 	"back/internal/order/domain"
 	"back/internal/order/infra"
+	"back/pkg/auth"
 )
 
 type OrderService struct {
@@ -16,13 +17,15 @@ func NewOrderService(repo *infra.OrderRepo) *OrderService {
 }
 
 func (s *OrderService) Create(ctx context.Context, req *CreateOrderRequest) (*OrderResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	order := &domain.Order{
 		OrderCode: req.OrderCode,
 		ClientCode: req.ClientCode,
 		OrderDate: req.OrderDate,
 		DeliveryDate: req.DeliveryDate,
 		OrderStatus: req.OrderStatus,
-		CreatedBy: req.CreatedBy,
+		CreatedBy: createdBy,
 	}
 
 	if err := s.repo.Create(ctx, order); err != nil {

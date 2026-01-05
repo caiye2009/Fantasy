@@ -8,7 +8,6 @@ type CreateOrderRequest struct {
 	OrderDate time.Time `json:"orderDate" validate:"required"`
 	DeliveryDate time.Time `json:"deliveryDate"`
 	OrderStatus string `json:"orderStatus" validate:"required"`
-	CreatedBy uint `json:"createdBy" validate:"required"`
 }
 
 type OrderResponse struct {
@@ -18,7 +17,7 @@ type OrderResponse struct {
 	OrderDate time.Time `json:"orderDate"`
 	DeliveryDate time.Time `json:"deliveryDate"`
 	OrderStatus string `json:"orderStatus"`
-	CreatedBy uint `json:"createdBy"`
+	CreatedBy string `json:"createdBy"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }

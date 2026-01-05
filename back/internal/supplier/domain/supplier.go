@@ -13,7 +13,7 @@ type Supplier struct {
 	SupplierCode     string         `gorm:"size:50;uniqueIndex;not null" json:"supplierCode"`
 	SupplierName     string         `gorm:"size:100;not null" json:"supplierName"`
 	SupplierCategory string         `gorm:"size:50" json:"supplierCategory"`
-	CreatedBy        uint           `gorm:"not null" json:"createdBy"`
+	CreatedBy        string         `gorm:"size:50;not null" json:"createdBy"`
 	CreatedAt        time.Time      `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt        time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt        gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`

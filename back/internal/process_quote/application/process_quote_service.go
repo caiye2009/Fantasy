@@ -5,6 +5,7 @@ import (
 
 	"back/internal/process_quote/domain"
 	"back/internal/process_quote/infra"
+	"back/pkg/auth"
 )
 
 type ProcessQuoteService struct {
@@ -16,12 +17,14 @@ func NewProcessQuoteService(repo *infra.ProcessQuoteRepo) *ProcessQuoteService {
 }
 
 func (s *ProcessQuoteService) Create(ctx context.Context, req *CreateProcessQuoteRequest) (*ProcessQuoteResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	processQuote := &domain.ProcessQuote{
 		QuoteID: req.QuoteID,
 		ProcessCode: req.ProcessCode,
 		SupplierCode: req.SupplierCode,
 		QuotePrice: req.QuotePrice,
-		CreatedBy: req.CreatedBy,
+		CreatedBy: createdBy,
 	}
 
 	if err := s.repo.Create(ctx, processQuote); err != nil {

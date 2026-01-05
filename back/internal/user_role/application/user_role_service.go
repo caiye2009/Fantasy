@@ -5,6 +5,7 @@ import (
 
 	"back/internal/user_role/domain"
 	"back/internal/user_role/infra"
+	"back/pkg/auth"
 )
 
 type UserRoleService struct {
@@ -16,6 +17,8 @@ func NewUserRoleService(repo *infra.UserRoleRepo) *UserRoleService {
 }
 
 func (s *UserRoleService) Create(ctx context.Context, req *CreateUserRoleRequest) (*UserRoleResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	// 检查角色代码是否已存在
 	exists, err := s.repo.ExistsByCode(ctx, req.RoleCode)
 	if err != nil {
@@ -29,7 +32,7 @@ func (s *UserRoleService) Create(ctx context.Context, req *CreateUserRoleRequest
 		RoleCode:    req.RoleCode,
 		RoleName:    req.RoleName,
 		Description: req.Description,
-		CreatedBy:   req.CreatedBy,
+		CreatedBy:   createdBy,
 	}
 
 	if err := s.repo.Create(ctx, userRole); err != nil {

@@ -11,7 +11,6 @@ type CreateMaterialAllocationRequest struct {
 	AllocationStatus string `json:"allocationStatus" validate:"required"`
 	AllocatedBy uint `json:"allocatedBy" validate:"required"`
 	AllocatedAt time.Time `json:"allocatedAt"`
-	CreatedBy uint `json:"createdBy" validate:"required"`
 }
 
 type MaterialAllocationResponse struct {
@@ -24,7 +23,7 @@ type MaterialAllocationResponse struct {
 	AllocationStatus string `json:"allocationStatus"`
 	AllocatedBy uint `json:"allocatedBy"`
 	AllocatedAt time.Time `json:"allocatedAt"`
-	CreatedBy uint `json:"createdBy"`
+	CreatedBy string `json:"createdBy"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }

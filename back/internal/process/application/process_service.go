@@ -6,6 +6,7 @@ import (
 
 	"back/internal/process/domain"
 	"back/internal/process/infra"
+	"back/pkg/auth"
 	"back/pkg/es"
 )
 
@@ -22,11 +23,13 @@ func NewProcessService(repo *infra.ProcessRepo, esSync *es.ESSync) *ProcessServi
 }
 
 func (s *ProcessService) Create(ctx context.Context, req *CreateProcessRequest) (*ProcessResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	process := &domain.Process{
 		ProcessCode: req.ProcessCode,
 		ProcessName: req.ProcessName,
 		ProcessCategory: req.ProcessCategory,
-		CreatedBy: req.CreatedBy,
+		CreatedBy: createdBy,
 	}
 
 	if err := s.repo.Create(ctx, process); err != nil {

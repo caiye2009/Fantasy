@@ -5,6 +5,7 @@ import (
 
 	"back/internal/material_allocation/domain"
 	"back/internal/material_allocation/infra"
+	"back/pkg/auth"
 )
 
 type MaterialAllocationService struct {
@@ -16,6 +17,8 @@ func NewMaterialAllocationService(repo *infra.MaterialAllocationRepo) *MaterialA
 }
 
 func (s *MaterialAllocationService) Create(ctx context.Context, req *CreateMaterialAllocationRequest) (*MaterialAllocationResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	materialAllocation := &domain.MaterialAllocation{
 		AllocationCode: req.AllocationCode,
 		OrderCode: req.OrderCode,
@@ -25,7 +28,7 @@ func (s *MaterialAllocationService) Create(ctx context.Context, req *CreateMater
 		AllocationStatus: req.AllocationStatus,
 		AllocatedBy: req.AllocatedBy,
 		AllocatedAt: req.AllocatedAt,
-		CreatedBy: req.CreatedBy,
+		CreatedBy: createdBy,
 	}
 
 	if err := s.repo.Create(ctx, materialAllocation); err != nil {

@@ -17,7 +17,7 @@ type ProductAllocation struct {
 	AllocationStatus string `gorm:"size:50;not null;default:'pending'" json:"allocationStatus"`
 	AllocatedBy uint `gorm:"not null" json:"allocatedBy"`
 	AllocatedAt time.Time `json:"allocatedAt"`
-	CreatedBy uint           `gorm:"not null" json:"createdBy"`
+	CreatedBy string         `gorm:"size:50;not null" json:"createdBy"`
 	CreatedAt time.Time      `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`

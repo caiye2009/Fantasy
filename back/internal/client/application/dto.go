@@ -7,7 +7,6 @@ type CreateClientRequest struct {
 	ClientCode    string `json:"clientCode" binding:"required,max=50"`
 	ClientName    string `json:"clientName" binding:"required,max=100"`
 	ClientCountry string `json:"clientCountry" binding:"max=50"`
-	CreatedBy     uint   `json:"createdBy" binding:"required"`
 }
 
 // ClientResponse 客户响应
@@ -16,7 +15,7 @@ type ClientResponse struct {
 	ClientCode    string    `json:"clientCode"`
 	ClientName    string    `json:"clientName"`
 	ClientCountry string    `json:"clientCountry"`
-	CreatedBy     uint      `json:"createdBy"`
+	CreatedBy     string    `json:"createdBy"`
 	CreatedAt     time.Time `json:"createdAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
 }

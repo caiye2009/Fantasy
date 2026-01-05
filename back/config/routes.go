@@ -24,7 +24,7 @@ import (
 	userRoleInterfaces "back/internal/user_role/interfaces"
 
 	// 关联配置模块
-	productMaterialInterfaces "back/internal/product_material/interfaces"
+	productFabricInterfaces "back/internal/product_fabric/interfaces"
 	productProcessInterfaces "back/internal/product_process/interfaces"
 	materialQuoteInterfaces "back/internal/material_quote/interfaces"
 	processQuoteInterfaces "back/internal/process_quote/interfaces"
@@ -46,6 +46,11 @@ import (
 	orderEventInterfaces "back/internal/order_event/interfaces"
 
 	searchInterfaces "back/internal/search/interfaces"
+	materialShrinkageInterfaces "back/internal/material_shrinkage/interfaces"
+
+	fabricInterfaces "back/internal/fabric/interfaces"
+	fabricMaterialInterfaces "back/internal/fabric_material/interfaces"
+	fabricProcessinterfaces "back/internal/fabric_process/interfaces"
 
 	"back/pkg/audit"
 	"back/pkg/auth"
@@ -116,8 +121,8 @@ func InitRoutes(authWang *auth.AuthWang, services *Services, db *gorm.DB) *gin.E
 		endpoint.RegisterRoutes(protected, userRoleHandler.GetRoutes())
 
 		// ========== 关联配置模块（4个）==========
-		productMaterialHandler := productMaterialInterfaces.NewProductMaterialHandler(services.ProductMaterial)
-		endpoint.RegisterRoutes(protected, productMaterialHandler.GetRoutes())
+		productFabricHandler := productFabricInterfaces.NewProductFabricHandler(services.ProductFabric)
+		endpoint.RegisterRoutes(protected, productFabricHandler.GetRoutes())
 
 		productProcessHandler := productProcessInterfaces.NewProductProcessHandler(services.ProductProcess)
 		endpoint.RegisterRoutes(protected, productProcessHandler.GetRoutes())
@@ -163,6 +168,19 @@ func InitRoutes(authWang *auth.AuthWang, services *Services, db *gorm.DB) *gin.E
 
 		searchHandler := searchInterfaces.NewSearchHandler(services.Search)
 		endpoint.RegisterRoutes(protected, searchHandler.GetRoutes())
+
+		materialShrinkageHandler := materialShrinkageInterfaces.NewMaterialShrinkageHandler(services.MaterialShrinkage)
+		endpoint.RegisterRoutes(protected, materialShrinkageHandler.GetRoutes())
+
+		fabricHandler := fabricInterfaces.NewFabricHandler(services.Fabric)
+        endpoint.RegisterRoutes(protected, fabricHandler.GetRoutes())
+
+        fabricMaterialHandler := fabricMaterialInterfaces.NewFabricMaterialHandler(services.FabricMaterial)
+        endpoint.RegisterRoutes(protected, fabricMaterialHandler.GetRoutes())
+
+        fabricProcessHandler := fabricProcessinterfaces.NewFabricProcessHandler(services.FabricProcess)
+        endpoint.RegisterRoutes(protected, fabricProcessHandler.GetRoutes())
+
 	}
 
 	return router

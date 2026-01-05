@@ -13,7 +13,7 @@ export * from './process';
 export * from './process_quote';
 export * from './product';
 export * from './product_allocation';
-export * from './product_material';
+// export * from './product_fabric';
 export * from './product_process';
 export * from './production_order';
 export * from './purchase_order';

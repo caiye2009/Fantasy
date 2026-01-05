@@ -5,6 +5,7 @@ import (
 
 	"back/internal/user_dept/domain"
 	"back/internal/user_dept/infra"
+	"back/pkg/auth"
 )
 
 type UserDeptService struct {
@@ -16,6 +17,8 @@ func NewUserDeptService(repo *infra.UserDeptRepo) *UserDeptService {
 }
 
 func (s *UserDeptService) Create(ctx context.Context, req *CreateUserDeptRequest) (*UserDeptResponse, error) {
+	createdBy := auth.GetLoginIDFromContext(ctx)
+
 	// 检查部门代码是否已存在
 	exists, err := s.repo.ExistsByCode(ctx, req.DeptCode)
 	if err != nil {
@@ -29,7 +32,7 @@ func (s *UserDeptService) Create(ctx context.Context, req *CreateUserDeptRequest
 		DeptCode:    req.DeptCode,
 		DeptName:    req.DeptName,
 		Description: req.Description,
-		CreatedBy:   req.CreatedBy,
+		CreatedBy:   createdBy,
 	}
 
 	if err := s.repo.Create(ctx, userDept); err != nil {
