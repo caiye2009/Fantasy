@@ -25,10 +25,8 @@ export const elasticsearchService = {
     }
 
     const result = await searchApi(searchParams);
-    return {
-      ...result,
-      items: result.hits,
-    };
+    // 后端已经返回 items 字段，直接透传
+    return result;
   },
 
   update: async (_id: string, index: string, data: any) => {

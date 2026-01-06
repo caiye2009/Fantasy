@@ -224,9 +224,9 @@ const saveEdit = async () => {
       })
 
       ElMessage.success('创建成功')
+      // 通知父组件刷新列表
+      emit('updateMaterial', result as Material)
       emit('update:visible', false)
-
-      // 刷新页面以显示新数据
     } else {
       // 编辑模式
       if (!props.material?._id) {

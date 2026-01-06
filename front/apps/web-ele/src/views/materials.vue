@@ -1,13 +1,22 @@
 <template>
   <div class="material-management">
+    <!-- 数据表格 -->
     <DataTable
       :config="pageConfig"
       :loading="searchLoading"
+      :table-data="tableData"
+      :has-more="hasMore"
+      :has-previous="hasPrevious"
+      :selected-rows="selectedRows"
+      :selected-count="selectedCount"
       @view="openDetail"
       @edit="openDetail"
       @quote="handleQuote"
       @bulkAction="handleBulkAction"
       @topAction="handleTopAction"
+      @scroll="handleScroll"
+      @search="handleSearch"
+      @filter="handleFilter"
     />
 
     <!-- 原料详情/新增抽屉 -->
@@ -69,78 +78,89 @@ import { ElMessage } from 'element-plus'
 import DataTable from '#/components/Table/index.vue'
 import MaterialDetail from '#/components/Material/MaterialDetail.vue'
 import type { Material } from '#/components/Material/types'
-import type { PageConfig, BulkAction } from '#/components/Table/types'
+import type { PageConfig } from '#/components/Table/types'
 import { useDataTable } from '#/composables/useDataTable'
 import { elasticsearchService } from '#/api/core/es'
 import { getSupplierListApi, type Supplier } from '#/api/core/supplier'
 import { quoteMaterialPriceApi } from '#/api/core/material_quote'
 
-// 数据表格配置
-const { searchLoading } = useDataTable({
+// =====================
+// 数据表格逻辑
+// =====================
+const {
+  searchLoading,
+  tableData,
+  query,
+  filters,
+  selectedRows,
+  selectedCount,
+  hasMore,
+  hasPrevious,
+  initialize,
+  handleScroll,
+  reload
+} = useDataTable({
   index: 'material',
-  pageSize: 20,
+  pageSize: 40,
   defaultSort: [{ field: 'created_at', order: 'desc' }]
 })
 
-// 抽屉状态
+console.log("dllm", tableData.value)
+
+// 搜索处理
+const handleSearch = (searchQuery: string) => {
+  query.value = searchQuery
+}
+
+// 筛选处理
+const handleFilter = (filterValues: Record<string, any>) => {
+  filters.value = filterValues
+}
+
+// 初始化数据
+initialize()
+
+// =====================
+// 抽屉逻辑
+// =====================
 const detailVisible = ref(false)
 const selectedMaterial = ref<Material | null>(null)
 
-// 页面配置
+// =====================
+// 表格配置
+// =====================
 const pageConfig: PageConfig = {
   pageType: 'material',
   index: 'material',
-  pageSize: 20,
+  pageSize: 40,
   columns: [
+    // 只展示四个字段
     {
-      key: 'code',
+      key: 'materialCode',
       label: '原料编号',
       showOverflowTooltip: true,
       formatter: (v: string) => v || '-'
     },
     {
-      key: 'name',
+      key: 'materialName',
       label: '原料名称',
       showOverflowTooltip: true
     },
     {
-      key: 'spec',
+      key: 'materialCategory',
       label: '规格',
       showOverflowTooltip: true,
       formatter: (v: string) => v || '-'
     },
     {
-      key: 'category',
-      label: '分类',
-      showOverflowTooltip: true,
-      formatter: (v: string) => v || '-'
-    },
-    {
-      key: 'unit',
-      label: '单位',
-      showOverflowTooltip: true,
-      formatter: (v: string) => v || '-'
-    },
-    {
-      key: 'currentPrice',
-      label: '当前价格',
-      showOverflowTooltip: true,
-      formatter: (v: number, row: any) => v ? `¥${v.toFixed(2)}/${row.unit}` : '-'
-    },
-    {
-      key: 'status',
+      key: 'materialStatus',
       label: '状态',
       showOverflowTooltip: true,
-      formatter: (v: string) => v === 'active' ? '在用' : '停用'
+      formatter: (v: string) => v || '-'
     },
-    {
-      key: 'created_at',
-      label: '创建时间',
-      showOverflowTooltip: true,
-      formatter: (v: string) => v ? new Date(v).toLocaleString('zh-CN') : '-'
-    }
   ],
   filters: [
+    // 保留现有筛选逻辑
     {
       key: 'category',
       label: '分类',
@@ -152,11 +172,7 @@ const pageConfig: PageConfig = {
             index: 'material',
             pagination: { offset: 0, size: 0 },
             aggRequests: {
-              category: {
-                type: 'terms',
-                field: 'category',
-                size: 20,
-              },
+              category: { type: 'terms', field: 'category', size: 20 },
             },
           })
           const buckets = response.aggregations?.category?.buckets || []
@@ -181,11 +197,7 @@ const pageConfig: PageConfig = {
             index: 'material',
             pagination: { offset: 0, size: 0 },
             aggRequests: {
-              status: {
-                type: 'terms',
-                field: 'status',
-                size: 20,
-              },
+              status: { type: 'terms', field: 'status', size: 20 },
             },
           })
           const buckets = response.aggregations?.status?.buckets || []
@@ -210,11 +222,7 @@ const pageConfig: PageConfig = {
             index: 'material',
             pagination: { offset: 0, size: 0 },
             aggRequests: {
-              unit: {
-                type: 'terms',
-                field: 'unit',
-                size: 20,
-              },
+              unit: { type: 'terms', field: 'unit', size: 20 },
             },
           })
           const buckets = response.aggregations?.unit?.buckets || []
@@ -244,7 +252,9 @@ const pageConfig: PageConfig = {
   ],
 }
 
-// 打开详情
+// =====================
+// 行操作逻辑
+// =====================
 const openDetail = (material: Material) => {
   selectedMaterial.value = material
   detailVisible.value = true
@@ -269,7 +279,9 @@ const handleBulkAction = ({ action }: { action: string; rows: any[] }) => {
   // TODO: 实现批量删除功能
 }
 
-// 报价对话框
+// =====================
+// 报价逻辑
+// =====================
 const quoteDialogVisible = ref(false)
 const quoting = ref(false)
 const quoteForm = ref({
@@ -280,7 +292,6 @@ const quoteForm = ref({
 const quoteMaterialName = ref('')
 const suppliers = ref<Supplier[]>([])
 
-// 加载供应商列表
 const loadSuppliers = async () => {
   try {
     const res = await getSupplierListApi({ limit: 1000, offset: 0 })
@@ -290,7 +301,6 @@ const loadSuppliers = async () => {
   }
 }
 
-// 报价
 const handleQuote = async (row: any) => {
   quoteForm.value = {
     target_id: row.id,
@@ -302,7 +312,6 @@ const handleQuote = async (row: any) => {
   quoteDialogVisible.value = true
 }
 
-// 提交报价
 const handleQuoteSubmit = async () => {
   if (!quoteForm.value.supplier_id) {
     ElMessage.warning('请选择供应商')
@@ -327,7 +336,6 @@ const handleQuoteSubmit = async () => {
   }
 }
 
-// 关闭报价对话框
 const handleQuoteDialogClose = () => {
   quoteForm.value = {
     target_id: 0,

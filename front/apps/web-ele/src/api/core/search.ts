@@ -24,7 +24,7 @@ export interface SearchRequest {
 
 export interface SearchResponse {
   total: number;
-  hits: any[];
+  items: any[];  // 后端返回的是 items，不是 hits
   aggregations?: Record<string, any>;
 }
 
@@ -58,7 +58,7 @@ export async function getClientListApi(params?: { limit?: number; offset?: numbe
   });
   return {
     total: result.total || 0,
-    list: result.hits || [],
+    list: result.items || [],
   };
 }
 
@@ -71,7 +71,7 @@ export async function getMaterialListApi(params?: { limit?: number; offset?: num
   });
   return {
     total: result.total || 0,
-    list: result.hits || [],
+    list: result.items || [],
   };
 }
 
@@ -84,7 +84,7 @@ export async function getOrderListApi(params?: { limit?: number; offset?: number
   });
   return {
     total: result.total || 0,
-    list: result.hits || [],
+    list: result.items || [],
   };
 }
 
@@ -97,7 +97,7 @@ export async function getProductListApi(params?: { limit?: number; offset?: numb
   });
   return {
     total: result.total || 0,
-    list: result.hits || [],
+    list: result.items || [],
   };
 }
 
@@ -110,7 +110,7 @@ export async function getProcessListApi(params?: { limit?: number; offset?: numb
   });
   return {
     total: result.total || 0,
-    list: result.hits || [],
+    list: result.items || [],
   };
 }
 
@@ -123,6 +123,6 @@ export async function getSupplierListApi(params?: { limit?: number; offset?: num
   });
   return {
     total: result.total || 0,
-    list: result.hits || [],
+    list: result.items || [],
   };
 }

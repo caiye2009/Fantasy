@@ -9,14 +9,14 @@ export interface DataTableOptions {
   defaultSort?: Array<{ field: string; order: string }>
 }
 
-export function useDataTable(indexOrOptions: string | DataTableOptions, pageSize: number = 20) {
+export function useDataTable(indexOrOptions: string | DataTableOptions, pageSize: number = 40) {
   const router = useRouter()
   const route = useRoute()
 
   // 支持两种调用方式：useDataTable('index', 20) 或 useDataTable({ index: 'index', pageSize: 20, defaultSort: [...] })
   const options: DataTableOptions = typeof indexOrOptions === 'string'
     ? { index: indexOrOptions, pageSize, defaultSort: [] }
-    : { pageSize: 20, defaultSort: [], ...indexOrOptions }
+    : { pageSize: 40, defaultSort: [], ...indexOrOptions }
 
   const index = options.index
   const finalPageSize = options.pageSize || pageSize
@@ -147,7 +147,7 @@ export function useDataTable(indexOrOptions: string | DataTableOptions, pageSize
 
       totalCount.value = response.total || 0
 
-      const data = response.items?.map((item) => ({
+      const data = response.data.items?.map((item) => ({
         _id: item.id || item._id,
         ...item,
       })) || []

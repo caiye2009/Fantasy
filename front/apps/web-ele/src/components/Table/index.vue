@@ -108,10 +108,10 @@
     <transition name="el-fade-in">
       <div
         class="bulk-action-bar-floating"
-        v-if="selectedCount > 0"
+        v-if="currentSelectedCount > 0"
       >
         <div class="selected-info">
-          已选择 <strong>{{ selectedCount }}</strong> 项
+          已选择 <strong>{{ currentSelectedCount }}</strong> 项
           <el-button link @click="handleClearSelection">清空</el-button>
         </div>
         <div class="bulk-actions">
@@ -132,7 +132,7 @@
     <div class="table-wrapper" ref="tableWrapperRef">
       <el-table
         v-loading="props.loading"
-        :data="tableData"
+        :data="props.tableData"
         stripe
         style="width: 100%"
         height="calc(100vh - 180px)"
@@ -185,7 +185,7 @@
             <el-icon class="is-loading"><Loading /></el-icon>
             加载中...
           </div>
-          <div v-else-if="!hasMore && tableData.length > 0" class="no-more-tip">
+          <div v-else-if="!props.hasMore && props.tableData.length > 0" class="no-more-tip">
             没有更多数据了
           </div>
         </template>
@@ -202,10 +202,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { Search, Loading } from '@element-plus/icons-vue'
-import { useDataTable } from '#/composables/useDataTable'
 import { useTablePreference } from '#/composables/useTablePreference'
 import { elasticsearchService } from '#/api/core/es'
 import type { PageConfig, BulkAction } from './types'
@@ -213,10 +212,22 @@ import type { PageConfig, BulkAction } from './types'
 interface Props {
   config: PageConfig
   loading?: boolean
+  tableData?: any[]
+  hasMore?: boolean
+  hasPrevious?: boolean
+  selectedRows?: any[]
+  selectedCount?: number
 }
 
-const props = withDefaults(defineProps<Props>(), { loading: false })
-const emit = defineEmits(['view', 'bulkAction', 'topAction'])
+const props = withDefaults(defineProps<Props>(), {
+  loading: false,
+  tableData: () => [],
+  hasMore: false,
+  hasPrevious: false,
+  selectedRows: () => [],
+  selectedCount: 0
+})
+const emit = defineEmits(['view', 'bulkAction', 'topAction', 'scroll', 'search', 'filter'])
 
 // 用户偏好
 const { columns } = useTablePreference(
@@ -224,28 +235,12 @@ const { columns } = useTablePreference(
   props.config.columns
 )
 
-// 数据表格
-const {
-  loading,
-  tableData,
-  query,
-  filters,
-  selectedRows,
-  selectedCount,
-  hasMore,
-  hasPrevious,
-  scrollPosition,
-  initialize,
-  reload,
-  slideWindowDown,
-  slideWindowUp,
-  saveScrollPosition,
-} = useDataTable(props.config.index, props.config.pageSize)
-
 // 本地状态
 const tableWrapperRef = ref<HTMLElement>()
 const searchQuery = ref('')
 const filterForm = ref<Record<string, any>>({})
+const internalSelectedRows = ref<any[]>([])
+const loading = ref(false)
 
 // 筛选器状态（支持分页和搜索）
 interface FilterState {
@@ -266,54 +261,78 @@ const visibleColumns = computed(() => columns.value.filter((col) => col.visible 
 let scrollTimer: number | null = null
 const handleTableScroll = (e: Event) => {
   const target = e.target as HTMLElement
-  if (!target) return
+  if (!target) {
+    console.warn('⚠️ 滚动事件没有 target')
+    return
+  }
 
-  // 保存滚动位置
-  saveScrollPosition(target.scrollTop)
+  console.log('📜 Table 滚动事件触发')
 
   if (scrollTimer) clearTimeout(scrollTimer)
   scrollTimer = window.setTimeout(() => {
     const scrollTop = target.scrollTop
     const scrollHeight = target.scrollHeight
     const clientHeight = target.clientHeight
-    if (scrollHeight - scrollTop - clientHeight < 100 && hasMore.value && !loading.value) slideWindowDown()
-    if (scrollTop < 100 && hasPrevious.value && !loading.value && scrollTop > 0) slideWindowUp()
+
+    console.log('📤 发送滚动事件到父组件:', { scrollTop, scrollHeight, clientHeight })
+
+    // 触发父组件的滚动事件
+    emit('scroll', scrollTop, scrollHeight, clientHeight)
   }, 150)
 }
 
 // 搜索 & 筛选
-const handleSearch = () => { query.value = searchQuery.value }
+const handleSearch = () => {
+  emit('search', searchQuery.value)
+}
 const handleFilter = () => {
   const activeFilters: Record<string, any> = {}
   Object.keys(filterForm.value).forEach((key) => {
     if (filterForm.value[key] !== null && filterForm.value[key] !== '') activeFilters[key] = filterForm.value[key]
   })
-  filters.value = activeFilters
+  emit('filter', activeFilters)
 }
-const handleResetFilter = () => { filterForm.value = {}; searchQuery.value = ''; query.value = ''; filters.value = {} }
+const handleResetFilter = () => {
+  filterForm.value = {}
+  searchQuery.value = ''
+  emit('search', '')
+  emit('filter', {})
+}
 
 // 选择
 const handleSelectionChange = (selection: any[]) => {
-  selectedRows.value = selection
+  internalSelectedRows.value = selection
 }
-const handleClearSelection = () => { selectedRows.value = [] }
+const handleClearSelection = () => {
+  internalSelectedRows.value = []
+}
 const handleSelectAll = (val: boolean) => {
-  if (val) tableData.value.forEach((row: any) => { if (!selectedRows.value.includes(row)) selectedRows.value.push(row) })
-  else selectedRows.value = []
+  if (val) {
+    props.tableData.forEach((row: any) => {
+      if (!internalSelectedRows.value.includes(row)) {
+        internalSelectedRows.value.push(row)
+      }
+    })
+  } else {
+    internalSelectedRows.value = []
+  }
 }
+
+// 当前选中数量
+const currentSelectedCount = computed(() => internalSelectedRows.value.length)
 
 // 批量操作
 const handleBulkAction = async (action: BulkAction) => {
-  if (selectedRows.value.length === 0) return
+  if (internalSelectedRows.value.length === 0) return
   if (action.confirm) {
     try {
       await ElMessageBox.confirm(
-        action.confirmMessage || `确定要${action.label}选中的 ${selectedCount.value} 项吗？`,
+        action.confirmMessage || `确定要${action.label}选中的 ${currentSelectedCount.value} 项吗？`,
         '确认操作', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
       )
     } catch { return }
   }
-  emit('bulkAction', { action: action.key, rows: selectedRows.value })
+  emit('bulkAction', { action: action.key, rows: internalSelectedRows.value })
 }
 
 // 查看
@@ -430,10 +449,14 @@ const loadFilterOptions = async (
     state.initialized = true
   } catch (error) {
     console.error(`Failed to load options for filter ${filterKey}:`, error)
-    state.options = []
-    state.hasMore = false
+    if (state) {
+      state.options = []
+      state.hasMore = false
+    }
   } finally {
-    state.loading = false
+    if (state) {
+      state.loading = false
+    }
   }
 }
 
@@ -458,7 +481,7 @@ const handleFilterFocus = async (filter: any) => {
   const state = filterStates.value[filter.key]
 
   // 如果未初始化，加载第一页
-  if (!state.initialized) {
+  if (state && !state.initialized) {
     await loadFilterOptions(filter.key, '', 1, false)
   }
 }
@@ -470,6 +493,8 @@ const handleFilterVisibleChange = (_visible: boolean, _filter: any) => {
 
 // 初始化
 onMounted(async () => {
+  console.log('🚀 Table 组件 onMounted 开始')
+
   // 初始化所有筛选器状态（懒加载，在用户聚焦时才加载数据）
   if (props.config.filters) {
     for (const filter of props.config.filters) {
@@ -479,19 +504,21 @@ onMounted(async () => {
     }
   }
 
-  await initialize()
+  // 使用 nextTick 确保 DOM 完全渲染
+  await nextTick()
+  console.log('✅ nextTick 完成')
 
-  const tableBody = tableWrapperRef.value?.querySelector('.el-table__body-wrapper')
-  if (tableBody) {
-    tableBody.addEventListener('scroll', handleTableScroll)
-
-    // 恢复滚动位置
-    if (scrollPosition.value > 0) {
-      setTimeout(() => {
-        tableBody.scrollTop = scrollPosition.value
-      }, 100)
+  // 延迟一点确保 el-table 完全渲染
+  setTimeout(() => {
+    const tableBody = tableWrapperRef.value?.querySelector('.el-table__body-wrapper')
+    if (tableBody) {
+      tableBody.addEventListener('scroll', handleTableScroll)
+      console.log('✅ 滚动监听器已绑定', tableBody)
+    } else {
+      console.error('❌ 未找到表格滚动容器 .el-table__body-wrapper')
+      console.log('tableWrapperRef:', tableWrapperRef.value)
     }
-  }
+  }, 500)
 })
 onUnmounted(() => {
   const tableBody = tableWrapperRef.value?.querySelector('.el-table__body-wrapper')
