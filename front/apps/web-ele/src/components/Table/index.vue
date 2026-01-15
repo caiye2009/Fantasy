@@ -150,21 +150,36 @@
         />
 
         <!-- 中间列 - 统一列宽 -->
-        <el-table-column
-          v-for="column in visibleColumns"
-          :key="column.key"
-          :prop="column.key"
-          :label="column.label"
-          :width="column.width || 150"
-          :show-overflow-tooltip="true"
-        >
-          <template #default="scope">
-            <span v-if="column.formatter">
-              {{ column.formatter(scope.row[column.key], scope.row) }}
-            </span>
-            <span v-else>{{ scope.row[column.key] || '-' }}</span>
-          </template>
-        </el-table-column>
+<el-table-column
+  v-for="column in visibleColumns"
+  :key="column.key"
+  :prop="column.key"
+  :label="column.label"
+  :width="column.width || 150"
+  :show-overflow-tooltip="true"
+>
+  <template #default="scope">
+    <!-- 新增 tagMap 渲染 -->
+    <el-tag
+      v-if="column.tagMap"
+      :type="column.tagMap[scope.row[column.key]]?.type || 'info'"
+      disable-transitions
+    >
+      {{ column.tagMap[scope.row[column.key]]?.text || '-' }}
+    </el-tag>
+
+    <!-- 保留原 formatter -->
+    <span v-else-if="column.formatter">
+      {{ column.formatter(scope.row[column.key], scope.row) }}
+    </span>
+
+    <!-- 默认显示原值 -->
+    <span v-else>
+      {{ scope.row[column.key] || '-' }}
+    </span>
+  </template>
+</el-table-column>
+
 
         <!-- 操作列固定右边 -->
         <el-table-column
@@ -493,7 +508,6 @@ const handleFilterVisibleChange = (_visible: boolean, _filter: any) => {
 
 // 初始化
 onMounted(async () => {
-  console.log('🚀 Table 组件 onMounted 开始')
 
   // 初始化所有筛选器状态（懒加载，在用户聚焦时才加载数据）
   if (props.config.filters) {
@@ -506,17 +520,13 @@ onMounted(async () => {
 
   // 使用 nextTick 确保 DOM 完全渲染
   await nextTick()
-  console.log('✅ nextTick 完成')
 
   // 延迟一点确保 el-table 完全渲染
   setTimeout(() => {
     const tableBody = tableWrapperRef.value?.querySelector('.el-table__body-wrapper')
     if (tableBody) {
       tableBody.addEventListener('scroll', handleTableScroll)
-      console.log('✅ 滚动监听器已绑定', tableBody)
     } else {
-      console.error('❌ 未找到表格滚动容器 .el-table__body-wrapper')
-      console.log('tableWrapperRef:', tableWrapperRef.value)
     }
   }, 500)
 })

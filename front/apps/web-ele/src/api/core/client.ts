@@ -1,5 +1,4 @@
 import { requestClient } from '../request';
-import { getClientListApi as getClientListFromSearch } from './search';
 
 export interface Client {
   id: number;
@@ -49,7 +48,6 @@ export async function deleteClient(id: number) {
 }
 
 // Backward compatibility aliases
-export const getClientListApi = getClientListFromSearch;
 export const getClientDetailApi = getClient;
 export const createClientApi = createClient;
 export const updateClientApi = updateClient;

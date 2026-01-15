@@ -7,6 +7,7 @@ export interface ColumnConfig {
   visible?: boolean
   order?: number
   formatter?: (value: any, row: any) => string
+  tagMap?: Record<string, { text: string; type: 'primary' | 'success' | 'warning' | 'danger' | string }>
 }
 
 export interface SortConfig {

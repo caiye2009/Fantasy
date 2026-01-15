@@ -1,5 +1,22 @@
 <template>
   <div class="material-management">
+ <div>
+    <!-- 输入框组件 -->
+    <Sousuo v-model="query" />
+    
+    <!-- 下拉框组件 - 可复用 -->
+    <Xiala 
+    filterKey="status" 
+    index="material"
+    v-model="filters.status" 
+  />
+  
+  <Xiala 
+    filterKey="materialCategory" 
+    index="material"
+    v-model="filters.category" 
+  />
+  </div>
     <!-- 数据表格 -->
     <DataTable
       :config="pageConfig"
@@ -9,8 +26,6 @@
       :has-previous="hasPrevious"
       :selected-rows="selectedRows"
       :selected-count="selectedCount"
-      @view="openDetail"
-      @edit="openDetail"
       @quote="handleQuote"
       @bulkAction="handleBulkAction"
       @topAction="handleTopAction"
@@ -19,12 +34,15 @@
       @filter="handleFilter"
     />
 
-    <!-- 原料详情/新增抽屉 -->
-    <MaterialDetail
-      v-model:visible="detailVisible"
-      :material="selectedMaterial"
-      @update-material="handleMaterialUpdate"
-    />
+    <!-- 原料抽屉 -->
+    <!-- <Drawer
+      v-model:visible="materialDrawer.visible"
+      :drawer-id="materialDrawer.drawerId"
+      :config="materialDrawerConfig"
+      :entity="materialDrawer.currentEntity"
+      :mode="materialDrawer.mode"
+      @submit="handleMaterialSubmit"
+    /> -->
 
     <!-- 报价对话框 -->
     <el-dialog
@@ -73,58 +91,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import DataTable from '#/components/Table/index.vue'
-import MaterialDetail from '#/components/Material/MaterialDetail.vue'
-import type { Material } from '#/components/Material/types'
+import Drawer from '#/components/Drawer/index.vue'
+import { useDrawer } from '#/components/Drawer/useDrawer'
+import type { DrawerConfig } from '#/components/Drawer/types'
 import type { PageConfig } from '#/components/Table/types'
 import { useDataTable } from '#/composables/useDataTable'
 import { elasticsearchService } from '#/api/core/es'
 import { getSupplierListApi, type Supplier } from '#/api/core/supplier'
 import { quoteMaterialPriceApi } from '#/api/core/material_quote'
+import { ref, watch } from 'vue'
 
-// =====================
-// 数据表格逻辑
-// =====================
-const {
-  searchLoading,
-  tableData,
-  query,
-  filters,
-  selectedRows,
-  selectedCount,
-  hasMore,
-  hasPrevious,
-  initialize,
-  handleScroll,
-  reload
-} = useDataTable({
-  index: 'material',
-  pageSize: 40,
-  defaultSort: [{ field: 'created_at', order: 'desc' }]
+// Query state
+const query = ref('')
+
+// Filters state (动态添加)
+const filters = ref<Record<string, any>>({
+  status: '',
+  category: ''
 })
 
-console.log("dllm", tableData.value)
+// 监听变化重新获取数据
+watch([query, filters], () => {
+  fetchData()
+}, { deep: true })
 
-// 搜索处理
-const handleSearch = (searchQuery: string) => {
-  query.value = searchQuery
+const fetchData = () => {
+  console.log('fetch with:', query.value, filters.value)
 }
 
-// 筛选处理
-const handleFilter = (filterValues: Record<string, any>) => {
-  filters.value = filterValues
-}
-
-// 初始化数据
-initialize()
-
-// =====================
-// 抽屉逻辑
-// =====================
-const detailVisible = ref(false)
-const selectedMaterial = ref<Material | null>(null)
 
 // =====================
 // 表格配置
@@ -252,25 +248,10 @@ const pageConfig: PageConfig = {
   ],
 }
 
-// =====================
-// 行操作逻辑
-// =====================
-const openDetail = (material: Material) => {
-  selectedMaterial.value = material
-  detailVisible.value = true
-}
-
-// 更新/新增原料信息
-const handleMaterialUpdate = (updatedMaterial: Material) => {
-  ElMessage.success('操作成功')
-  // 重新加载数据
-}
-
 // 顶部操作
 const handleTopAction = ({ action }: { action: string }) => {
   if (action === 'create') {
-    selectedMaterial.value = null  // null 表示新增模式
-    detailVisible.value = true
+    materialDrawer.openCreate()
   }
 }
 
